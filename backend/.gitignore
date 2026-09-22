@@ -1,0 +1,44 @@
+# Build and Production
+/node_modules
+/public/build
+/public/hot
+/public/storage/*.key
+/vendor
+
+# Environment
+.env
+.env.backup
+.phpunit.xml
+.phpunit.xml.dist
+# Environment
+.php
+.php
+phpunit.xml
+.phpunit.xml.dist
+.php.ini
+php.ini
+.php_cs
+.php_cs.dist
+.phpunit.php
+.phpunit.php.dist
+.phpunit.coverage
+.phpunit.php.coverage
+.php_cs.php
+.php_cs.php.dist
+.php-cs-fixer.php
+.php-cs-fixer.dist.php
+
+# IDE
+.vscode
+.idea
+
+# Scripts
+tests/logs
+tests/results
+
+# Sensitive
+bootstrap/cache/*.sql
+bootstrap/cache/config.php
+storage/database/*.sql
+storage/database/*.php
+storage/database/*
