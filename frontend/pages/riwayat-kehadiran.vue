@@ -16,7 +16,7 @@
       </template>
     </AppHeader>
 
-    <main class="px-8 pb-8 space-y-6">
+    <main class="px-4 pb-6 space-y-5">
       <!-- 4 Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Hadir Bulan Ini" :value="(summary?.hadir || 18) + ' Hari'" :subtext="(summary?.hadir_percent || 90) + '% Kehadiran'" color="green" />

@@ -24,7 +24,7 @@
       </template>
     </AppHeader>
 
-    <main class="px-6 md:px-8 pb-10 space-y-6">
+    <main class="px-4 pb-6 space-y-5">
 
     <!-- Filter & Selectors -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-4 md:p-5 flex flex-wrap items-center justify-between gap-4">

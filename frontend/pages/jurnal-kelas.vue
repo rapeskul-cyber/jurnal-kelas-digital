@@ -16,7 +16,7 @@
       </template>
     </AppHeader>
 
-    <main class="px-6 md:px-8 pb-10 space-y-5">
+    <main class="px-4 pb-6 space-y-5">
       <!-- Filter Controls: Tanggal, Kelas, Export PDF -->
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">

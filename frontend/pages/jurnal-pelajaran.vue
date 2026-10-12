@@ -5,7 +5,7 @@
       subtitle="Materi terbaru dan bahan ajar yang dipublikasikan oleh guru"
     />
 
-    <main class="px-8 pb-8 space-y-6">
+    <main class="px-4 pb-6 space-y-5">
       <!-- Filter Bar & Schedule Pop-up Button -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <!-- Left: Month picker & search -->

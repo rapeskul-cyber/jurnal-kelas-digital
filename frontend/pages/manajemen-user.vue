@@ -5,7 +5,7 @@
       subtitle="Kelola kredensial akun, rombongan belajar, dan hak akses sistem"
     />
 
-    <main class="px-6 md:px-8 pb-10 space-y-6">
+    <main class="px-4 pb-6 space-y-5">
       <!-- Tabs (Daftar Pengguna, Konfigurasi Hak Akses) -->
       <div class="flex items-center gap-6 border-b border-gray-200">
         <button

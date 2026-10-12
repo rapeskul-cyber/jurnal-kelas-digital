@@ -5,7 +5,7 @@
       :subtitle="dateFormatted + ' • ' + (authStore.user?.school_class?.name || 'XI RPL 1')"
     />
 
-    <main class="px-8 pb-8 space-y-6">
+    <main class="px-4 pb-6 space-y-5">
       <!-- 5 Summary Metric Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-2xs">

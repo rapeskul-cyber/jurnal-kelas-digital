@@ -5,7 +5,7 @@
       :subtitle="dashboardSubtitle"
     />
 
-    <main class="px-8 pb-8 space-y-6">
+    <main class="px-4 pb-6 space-y-5">
       <!-- Loading Skeleton -->
       <div v-if="isLoading" class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-pulse">
         <div v-for="i in 4" :key="i" class="h-28 bg-gray-200 rounded-2xl"></div>

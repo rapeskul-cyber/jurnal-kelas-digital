@@ -18,7 +18,7 @@
       </template>
     </AppHeader>
 
-    <main class="px-6 md:px-8 pb-10 space-y-6">
+    <main class="px-4 pb-6 space-y-5">
       <!-- Card Section 1: Pemberitahuan Terbaru -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-5 md:p-6 space-y-4">
         <!-- Filter Pills: Semua, Belum Dibaca, Jurnal, Surat Izin (Matching mockups) -->

@@ -1,57 +1,68 @@
 <template>
-  <header class="h-20 bg-transparent flex items-center justify-between px-6 md:px-8 select-none">
-    <div class="flex items-center gap-3 min-w-0">
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 h-14 flex items-center justify-between select-none shadow-2xs">
+    <!-- Left: Back / Logo + Title -->
+    <div class="flex items-center gap-2.5 min-w-0">
       <button
         v-if="showBack"
         @click="handleBack"
         type="button"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs flex-shrink-0 cursor-pointer"
+        class="w-8 h-8 rounded-full bg-gray-100 active:scale-95 flex items-center justify-center text-gray-700 transition flex-shrink-0 cursor-pointer"
+        aria-label="Kembali"
       >
         <ArrowLeft class="w-4 h-4" />
-        <span>Kembali</span>
       </button>
+      <div v-else class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white flex-shrink-0">
+        <Book class="w-4 h-4" />
+      </div>
 
       <div class="min-w-0">
-        <h2 class="text-xl font-bold text-gray-900 tracking-tight truncate">{{ title }}</h2>
-        <p v-if="subtitle" class="text-xs text-gray-500 mt-0.5 truncate">{{ subtitle }}</p>
+        <h1 class="text-sm font-bold text-gray-900 tracking-tight truncate leading-tight">{{ title }}</h1>
+        <p v-if="subtitle" class="text-[11px] text-gray-500 truncate leading-tight">{{ subtitle }}</p>
       </div>
     </div>
 
-    <div class="flex items-center gap-3 flex-shrink-0">
-      <slot name="actions" />
+    <!-- Right: Role badge + Notification + Logout -->
+    <div class="flex items-center gap-1.5 flex-shrink-0">
+      <span
+        v-if="roleBadge"
+        class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+        :class="roleBadge.class"
+      >
+        {{ roleBadge.label }}
+      </span>
 
-      <!-- Notification Bell -->
       <NuxtLink
         v-if="!hideNotifications"
         to="/notifikasi"
-        class="relative w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:border-gray-300 transition shadow-2xs"
+        class="relative w-8 h-8 rounded-full bg-gray-50 active:scale-95 flex items-center justify-center text-gray-600 transition"
         title="Pemberitahuan"
       >
-        <Bell class="w-5 h-5" />
+        <Bell class="w-4 h-4" />
         <span
           v-if="unreadCount > 0"
-          class="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[11px] font-bold rounded-full flex items-center justify-center ring-2 ring-white"
+          class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 bg-primary text-white text-[9px] font-bold rounded-full flex items-center justify-center ring-2 ring-white"
         >
-          {{ unreadCount }}
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
         </span>
       </NuxtLink>
 
-      <!-- Logout Button -->
       <button
         v-if="!hideLogout"
         @click="handleLogout"
         type="button"
-        class="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 hover:border-red-200 hover:text-primary rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
+        class="w-8 h-8 rounded-full bg-gray-50 active:scale-95 flex items-center justify-center text-gray-500 transition cursor-pointer"
+        title="Keluar"
       >
         <LogOut class="w-4 h-4" />
-        <span class="hidden sm:inline">Keluar</span>
       </button>
+
+      <slot name="actions" />
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { Bell, LogOut, ArrowLeft } from 'lucide-vue-next'
+import { Bell, LogOut, ArrowLeft, Book } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
 const props = withDefaults(
@@ -75,7 +86,16 @@ const props = withDefaults(
 
 const router = useRouter()
 const authStore = useAuthStore()
-const unreadCount = ref(2)
+const unreadCount = ref(0)
+
+const roleBadge = computed(() => {
+  const role = authStore.user?.role
+  if (role === 'SISWA') return { label: 'Siswa', class: 'bg-emerald-50 text-emerald-700 border border-emerald-200' }
+  if (role === 'SEKRETARIS') return { label: 'Sekretaris', class: 'bg-amber-50 text-amber-700 border border-amber-200' }
+  if (role === 'GURU_PENGAJAR') return { label: 'Guru', class: 'bg-blue-50 text-blue-700 border border-blue-200' }
+  if (role === 'GURU_PEMBIMBING') return { label: 'Pembimbing', class: 'bg-purple-50 text-purple-700 border border-purple-200' }
+  return null
+})
 
 onMounted(async () => {
   if (authStore.token) {
@@ -87,7 +107,7 @@ onMounted(async () => {
         unreadCount.value = res.unread_count
       }
     } catch (e) {
-      // fallback
+      // badge stays hidden when API unreachable
     }
   }
 })

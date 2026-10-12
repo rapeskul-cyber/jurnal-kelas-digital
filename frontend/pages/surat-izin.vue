@@ -6,7 +6,7 @@
       :show-back="true"
     />
 
-    <main class="px-6 md:px-8 pb-10 space-y-6">
+    <main class="px-4 pb-6 space-y-5">
       <!-- Alert / Notif -->
       <div v-if="successMsg" class="p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 flex items-center justify-between">
         <div class="flex items-center gap-2 text-sm font-medium">

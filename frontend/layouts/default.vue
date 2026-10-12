@@ -1,17 +1,12 @@
 <template>
   <div class="min-h-screen bg-[#FAFAFA] flex flex-col antialiased">
-    <!-- Desktop Sidebar -->
-    <div class="hidden md:block">
-      <AppSidebar />
-    </div>
-
-    <!-- Mobile Navigation -->
-    <MobileNav />
-
-    <!-- Main Content Area -->
-    <div class="flex-1 md:pl-64 pt-16 md:pt-0 pb-20 md:pb-8 flex flex-col">
+    <!-- Main Content Area (mobile-first: header in page, bottom nav fixed) -->
+    <div class="flex-1 flex flex-col pb-20">
       <slot />
     </div>
+
+    <!-- Bottom Navigation -->
+    <MobileNav />
   </div>
 </template>
 
