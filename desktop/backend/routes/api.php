@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/attendance/today', [AttendanceController::class, 'getToday']);
     Route::post('/attendance/draft', [AttendanceController::class, 'saveDraft']);
     Route::post('/attendance/lock', [AttendanceController::class, 'lockSession']);
+    Route::post('/attendance/confirm', [AttendanceController::class, 'confirmSession']);
     Route::get('/attendance/history', [AttendanceController::class, 'studentHistory']);
     Route::get('/attendance/daily-recap', [AttendanceController::class, 'dailyRecap']);
     Route::get('/attendance/semester-recap', [AttendanceController::class, 'semesterRecap']);

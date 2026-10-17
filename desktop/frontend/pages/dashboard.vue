@@ -238,11 +238,32 @@
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs">
-              <h3 class="text-sm font-bold text-gray-900 mb-3">Pengingat</h3>
-              <ul class="space-y-2 text-xs text-gray-600">
-                <li v-for="(rem, idx) in data?.reminders || []" :key="idx" class="flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span>
-                  <span>{{ rem }}</span>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-bold text-gray-900">Pengingat Pembelajaran</h3>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  {{ (data?.reminders || []).length }} Tugas
+                </span>
+              </div>
+              <ul class="space-y-2.5 text-xs text-gray-600">
+                <li v-for="(rem, idx) in data?.reminders || []" :key="idx" class="flex items-start gap-2 bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
+                  <span class="w-2 h-2 rounded-full bg-amber-500 mt-1 flex-shrink-0"></span>
+                  <div class="flex-1">
+                    <p class="font-medium text-gray-800">{{ rem }}</p>
+                    <NuxtLink
+                      v-if="rem.includes('jurnal belum diisi')"
+                      to="/jurnal-materi"
+                      class="inline-block mt-1 text-[11px] font-bold text-brand-red hover:underline"
+                    >
+                      Buka Form Jurnal KBM →
+                    </NuxtLink>
+                    <NuxtLink
+                      v-else-if="rem.includes('surat izin')"
+                      to="/persetujuan-izin"
+                      class="inline-block mt-1 text-[11px] font-bold text-primary hover:underline"
+                    >
+                      Buka Persetujuan Izin →
+                    </NuxtLink>
+                  </div>
                 </li>
               </ul>
             </div>

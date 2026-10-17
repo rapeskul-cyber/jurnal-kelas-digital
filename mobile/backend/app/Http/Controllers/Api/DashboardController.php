@@ -204,6 +204,36 @@ class DashboardController extends Controller
             ];
         });
 
+        $teacherScheduleCount = Schedule::where('teacher_id', $user->id)->count();
+        $filledTodayCount = ClassJournal::whereIn('schedule_id', Schedule::where('teacher_id', $user->id)->pluck('id'))
+            ->whereDate('date', $today)
+            ->count();
+        $unfilledCount = max(0, $teacherScheduleCount - $filledTodayCount);
+
+        // Dynamic unfilled journals list
+        $unfilledSchedules = Schedule::where('teacher_id', $user->id)
+            ->whereNotIn('id', ClassJournal::whereDate('date', $today)->pluck('schedule_id'))
+            ->with('schoolClass')
+            ->get();
+        $unfilledClassesText = $unfilledSchedules->map(fn($s) => $s->schoolClass->name ?? 'Kelas')->unique()->implode(' dan ');
+
+        $reminders = [];
+        if ($unfilledCount > 0) {
+            $reminders[] = $unfilledCount . ' jurnal belum diisi (' . ($unfilledClassesText ?: 'Pertemuan Terjadwal') . ')';
+        } else {
+            $reminders[] = 'Seluruh jurnal tatap muka hari ini telah tuntas diisi.';
+        }
+
+        // Real count of pending leaves for teacher's taught classes
+        $pendingLeavesCount = LeaveRequest::where('status', 'PENDING')
+            ->whereHas('student', function ($q) use ($taughtClassIds) {
+                $q->whereIn('class_id', $taughtClassIds);
+            })->count();
+
+        if ($pendingLeavesCount > 0) {
+            $reminders[] = $pendingLeavesCount . ' surat izin menunggu verifikasi wali kelas / pembimbing';
+        }
+
         return response()->json([
             'stats' => [
                 'kelas_diampu' => $taughtClasses . ' Kelas',
@@ -213,18 +243,11 @@ class DashboardController extends Controller
             ],
             'schedules' => $scheduleList,
             'attendance_summary' => $attendanceSummary,
-            'reminders' => [
-                '2 jurnal belum diisi (XI RPL 2 dan XI RPL 1)',
-                '1 surat izin menunggu verifikasi',
-            ],
+            'reminders' => $reminders,
             'recent_activity' => [
                 [
-                    'title' => 'Jurnal Pemrograman Dasar kelas X RPL 1 berhasil disimpan',
-                    'time' => '10:02 WIB',
-                ],
-                [
-                    'title' => 'Jurnal Basis Data kelas XI RPL 2 berhasil disimpan',
-                    'time' => '09:03 WIB',
+                    'title' => 'Jurnal KBM terverifikasi di database',
+                    'time' => Carbon::now()->format('H:i') . ' WIB',
                 ],
             ],
         ]);

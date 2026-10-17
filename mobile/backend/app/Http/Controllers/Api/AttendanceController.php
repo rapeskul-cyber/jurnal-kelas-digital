@@ -186,7 +186,44 @@ class AttendanceController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        return response()->json(['message' => 'Presensi berhasil disimpan dan dikunci']);
+        return response()->json([
+            'message' => 'Presensi berhasil disimpan dan dikunci',
+            'session' => $session,
+        ]);
+    }
+
+    public function confirmSession(Request $request)
+    {
+        $user = $request->user();
+        if (!in_array($user->role, ['GURU_PENGAJAR', 'GURU_PEMBIMBING'])) {
+            return response()->json(['message' => 'Hanya Guru Pengajar atau Guru Pembimbing yang berhak mengesahkan presensi.'], 403);
+        }
+
+        $classId = $request->input('class_id', 1);
+        $date = $request->input('date', Carbon::today()->toDateString());
+
+        $session = AttendanceSession::where('class_id', $classId)
+            ->whereDate('date', $date)
+            ->first();
+
+        if (!$session) {
+            return response()->json(['message' => 'Sesi presensi belum dibuat oleh sekretaris kelas.'], 422);
+        }
+
+        $session->update([
+            'verification_status' => 'TERVERIFIKASI',
+        ]);
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'Mengesahkan presensi harian kelas ID #' . $classId . ' tanggal ' . $date,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Presensi harian kelas berhasil disahkan & terverifikasi!',
+            'session' => $session,
+        ]);
     }
 
     public function studentHistory(Request $request)
