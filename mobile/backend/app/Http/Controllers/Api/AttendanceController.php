@@ -194,125 +194,47 @@ class AttendanceController extends Controller
             ->latest()
             ->get();
 
-        $monthRecords = $records;
-        $totalMonth = $monthRecords->count();
-        if ($totalMonth > 0) {
-            $total = $totalMonth;
-            $hadir = $monthRecords->where('status', 'HADIR')->count();
-            $sakit = $monthRecords->where('status', 'SAKIT')->count();
-            $izin = $monthRecords->where('status', 'IZIN')->count();
-            $alpha = $monthRecords->where('status', 'ALPHA')->count();
+        $total = $records->count();
+        $hadir = $records->where('status', 'HADIR')->count();
+        $sakit = $records->where('status', 'SAKIT')->count();
+        $izin = $records->where('status', 'IZIN')->count();
+        $alpha = $records->where('status', 'ALPHA')->count();
+        $percentage = $total > 0 ? round(($hadir / $total) * 100) : 0;
 
-            $detailedList = $records->map(function ($rec) {
-                return [
-                    'id' => $rec->id,
-                    'day_date' => Carbon::parse($rec->session->date)->translatedFormat('l, d M Y'),
-                    'room' => $rec->session->room ?? 'Lab. 1',
-                    'subject' => 'Kelas Industri',
-                    'hours' => $rec->session->school_hours ?? '13:30 - Selesai',
-                    'status' => $rec->status,
-                    'note' => $rec->note ?: 'Presensi terverifikasi',
-                ];
-            });
-        } else {
-            $total = 20;
-            $hadir = 18;
-            $sakit = 1;
-            $izin = 1;
-            $alpha = 0;
+        $detailedList = $records->map(function ($rec) {
+            return [
+                'id' => $rec->id,
+                'day_date' => Carbon::parse($rec->session->date)->translatedFormat('l, d M Y'),
+                'room' => $rec->session->room ?? 'Lab. 1',
+                'subject' => 'Kelas Industri',
+                'hours' => $rec->session->school_hours ?? '13:30 - Selesai',
+                'status' => $rec->status,
+                'note' => $rec->note ?: 'Presensi terverifikasi',
+            ];
+        });
 
-            // Generate sample data for the chosen month
-            $parsedMonth = Carbon::createFromFormat('Y-m', $month) ?: Carbon::now();
-            $monthName = $parsedMonth->translatedFormat('M Y');
-            $detailedList = collect([
-                [
-                    'id' => 1,
-                    'day_date' => 'Selasa, 06 ' . $monthName,
-                    'room' => 'Lab. 1',
-                    'subject' => 'Kelas Industri',
-                    'hours' => '13:30 - Selesai',
-                    'status' => 'HADIR',
-                    'note' => 'Presensi terverifikasi'
-                ],
-                [
-                    'id' => 2,
-                    'day_date' => 'Jumat, 09 ' . $monthName,
-                    'room' => 'Lab. 1',
-                    'subject' => 'Kelas Industri',
-                    'hours' => '13:30 - Selesai',
-                    'status' => 'HADIR',
-                    'note' => 'Presensi terverifikasi'
-                ],
-                [
-                    'id' => 3,
-                    'day_date' => 'Selasa, 13 ' . $monthName,
-                    'room' => 'Lab. 1',
-                    'subject' => 'Kelas Industri',
-                    'hours' => '13:30 - Selesai',
-                    'status' => 'HADIR',
-                    'note' => 'Presensi terverifikasi'
-                ],
-                [
-                    'id' => 4,
-                    'day_date' => 'Jumat, 16 ' . $monthName,
-                    'room' => 'Lab. 1',
-                    'subject' => 'Kelas Industri',
-                    'hours' => '13:30 - Selesai',
-                    'status' => 'SAKIT',
-                    'note' => 'Surat dokter terlampir'
-                ],
-                [
-                    'id' => 5,
-                    'day_date' => 'Selasa, 20 ' . $monthName,
-                    'room' => 'Lab. 1',
-                    'subject' => 'Kelas Industri',
-                    'hours' => '13:30 - Selesai',
-                    'status' => 'HADIR',
-                    'note' => 'Presensi terverifikasi'
-                ],
-                [
-                    'id' => 6,
-                    'day_date' => 'Jumat, 23 ' . $monthName,
-                    'room' => 'Lab. 1',
-                    'subject' => 'Kelas Industri',
-                    'hours' => '13:30 - Selesai',
-                    'status' => 'IZIN',
-                    'note' => 'Izin keperluan keluarga'
-                ],
-                [
-                    'id' => 7,
-                    'day_date' => 'Selasa, 27 ' . $monthName,
-                    'room' => 'Lab. 1',
-                    'subject' => 'Kelas Industri',
-                    'hours' => '13:30 - Selesai',
-                    'status' => 'HADIR',
-                    'note' => 'Presensi terverifikasi'
-                ],
-            ]);
-        }
-
-        // Weekly breakdown
+        // Weekly breakdown computed from actual records
         $weekly = [
-            ['week' => 'Minggu 1', 'count' => 5],
-            ['week' => 'Minggu 2', 'count' => 5],
-            ['week' => 'Minggu 3', 'count' => 4],
-            ['week' => 'Minggu 4', 'count' => 4],
+            ['week' => 'Minggu 1', 'count' => $records->filter(fn($r) => Carbon::parse($r->session->date)->day <= 7 && $r->status === 'HADIR')->count()],
+            ['week' => 'Minggu 2', 'count' => $records->filter(fn($r) => Carbon::parse($r->session->date)->day > 7 && Carbon::parse($r->session->date)->day <= 14 && $r->status === 'HADIR')->count()],
+            ['week' => 'Minggu 3', 'count' => $records->filter(fn($r) => Carbon::parse($r->session->date)->day > 14 && Carbon::parse($r->session->date)->day <= 21 && $r->status === 'HADIR')->count()],
+            ['week' => 'Minggu 4', 'count' => $records->filter(fn($r) => Carbon::parse($r->session->date)->day > 21 && $r->status === 'HADIR')->count()],
         ];
 
         return response()->json([
             'summary' => [
                 'total' => $total,
                 'hadir' => $hadir,
-                'hadir_percent' => round(($hadir / $total) * 100),
+                'hadir_percent' => $percentage,
                 'sakit' => $sakit,
                 'izin' => $izin,
                 'alpha' => $alpha,
             ],
             'donut' => [
-                ['label' => 'Hadir', 'count' => $hadir, 'color' => '#16A34A', 'percent' => round(($hadir / $total) * 100)],
-                ['label' => 'Sakit', 'count' => $sakit, 'color' => '#EA580C', 'percent' => round(($sakit / $total) * 100)],
-                ['label' => 'Izin', 'count' => $izin, 'color' => '#2563EB', 'percent' => round(($izin / $total) * 100)],
-                ['label' => 'Alpha', 'count' => $alpha, 'color' => '#DC2626', 'percent' => round(($alpha / $total) * 100)],
+                ['label' => 'Hadir', 'count' => $hadir, 'color' => '#16A34A', 'percent' => $total > 0 ? round(($hadir / $total) * 100) : 0],
+                ['label' => 'Sakit', 'count' => $sakit, 'color' => '#EA580C', 'percent' => $total > 0 ? round(($sakit / $total) * 100) : 0],
+                ['label' => 'Izin', 'count' => $izin, 'color' => '#2563EB', 'percent' => $total > 0 ? round(($izin / $total) * 100) : 0],
+                ['label' => 'Alpha', 'count' => $alpha, 'color' => '#DC2626', 'percent' => $total > 0 ? round(($alpha / $total) * 100) : 0],
             ],
             'weekly' => $weekly,
             'details' => $detailedList,

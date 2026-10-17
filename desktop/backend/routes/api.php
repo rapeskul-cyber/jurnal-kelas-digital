@@ -35,7 +35,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Journals (Jurnal Kelas & Jurnal Materi)
     Route::get('/journals/class', [JournalController::class, 'getClassJournals']);
     Route::post('/journals/class', [JournalController::class, 'storeClassJournal']);
+    Route::put('/journals/class/{id}', [JournalController::class, 'updateClassJournal']);
+    Route::post('/journals/class/{id}', [JournalController::class, 'updateClassJournal']);
     Route::put('/journals/class/{id}/confirm', [JournalController::class, 'confirmClassJournal']);
+    Route::post('/journals/class/{id}/confirm', [JournalController::class, 'confirmClassJournal']);
     Route::get('/journals/material', [JournalController::class, 'getMaterialJournals']);
     Route::post('/journals/material', [JournalController::class, 'storeMaterialJournal']);
 

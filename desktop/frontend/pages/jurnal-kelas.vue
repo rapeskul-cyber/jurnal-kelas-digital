@@ -6,6 +6,15 @@
     >
       <template #actions>
         <button
+          v-if="authStore.user?.role === 'SEKRETARIS' || authStore.user?.role === 'GURU_PENGAJAR'"
+          @click="showAddJournalModal = true"
+          type="button"
+          class="px-3.5 py-2 rounded-xl bg-brand-red text-white hover:bg-brand-red-dark transition-colors text-xs font-semibold flex items-center gap-2 shadow-2xs cursor-pointer"
+        >
+          <PlusIcon class="w-3.5 h-3.5" />
+          <span>Isi Jurnal KBM</span>
+        </button>
+        <button
           @click="exportPdf"
           type="button"
           class="px-3.5 py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-xs font-semibold flex items-center gap-2 shadow-2xs cursor-pointer"
@@ -17,6 +26,14 @@
     </AppHeader>
 
     <main class="px-6 md:px-8 pb-10 space-y-5">
+      <!-- Success Toast -->
+      <div v-if="successMsg" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between shadow-2xs">
+        <div class="flex items-center gap-2 text-xs font-semibold">
+          <CheckCircle2Icon class="w-4 h-4 text-emerald-600" />
+          {{ successMsg }}
+        </div>
+        <button @click="successMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer">✕</button>
+      </div>
       <!-- Filter Controls: Tanggal, Kelas, Export PDF -->
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
@@ -220,6 +237,118 @@
           <span>Alfa: <strong class="text-rose-600">{{ summary.alpha }}</strong></span>
         </div>
       </div>
+
+      <!-- Modal Input Jurnal KBM (Sekretaris / Pengajar) -->
+      <div
+        v-if="showAddJournalModal"
+        class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+      >
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-gray-900">Pengisian Jurnal Kelas Harian</h3>
+              <p class="text-xs text-gray-400 mt-0.5">Input catatan agenda & realisasi tatap muka KBM</p>
+            </div>
+            <button
+              type="button"
+              @click="showAddJournalModal = false"
+              class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+            >
+              <XIcon class="w-5 h-5" />
+            </button>
+          </div>
+
+          <form @submit.prevent="submitJournal" class="space-y-4">
+            <!-- Pilih Jadwal Pelajaran -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Jadwal / Mata Pelajaran
+              </label>
+              <select
+                v-model="journalForm.schedule_id"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white"
+                required
+              >
+                <option value="" disabled>-- Pilih Jadwal Pelajaran --</option>
+                <option v-for="sch in schedules" :key="sch.id" :value="sch.id">
+                  {{ sch.start_time }} - {{ sch.end_time }} | {{ sch.subject?.name }} ({{ sch.teacher?.name }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Tanggal -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Tanggal Pembelajaran
+              </label>
+              <input
+                v-model="journalForm.date"
+                type="date"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white"
+                required
+              />
+            </div>
+
+            <!-- Pokok Bahasan / KD -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Pokok Bahasan / KD
+              </label>
+              <input
+                v-model="journalForm.topic"
+                type="text"
+                placeholder="Contoh: Optimasi Query Relasional & Desain API"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+                required
+              />
+            </div>
+
+            <!-- Rangkuman Aktivitas -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Rangkuman Aktivitas & Materi KBM
+              </label>
+              <textarea
+                v-model="journalForm.activity"
+                rows="3"
+                placeholder="Rangkuman jalannya pembelajaran kelas, topik bahasan, dan kegiatan siswa..."
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+                required
+              ></textarea>
+            </div>
+
+            <!-- Catatan Tambahan -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Catatan dari Sekretaris / Kelas
+              </label>
+              <input
+                v-model="journalForm.notes"
+                type="text"
+                placeholder="Contoh: Praktikum berlangsung tertib di Lab Komputer 1"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+              />
+            </div>
+
+            <div class="pt-2 flex items-center justify-end gap-3 border-t border-gray-100">
+              <button
+                type="button"
+                @click="showAddJournalModal = false"
+                class="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                :disabled="isSubmittingJournal"
+                class="px-5 py-2.5 rounded-xl bg-brand-red hover:bg-brand-red-dark text-white text-xs font-semibold shadow-sm transition disabled:opacity-50 cursor-pointer"
+              >
+                {{ isSubmittingJournal ? 'Mengirim...' : 'Kirim Jurnal KBM' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -235,7 +364,10 @@ import {
   AlertCircle as AlertCircleIcon,
   Search as SearchIcon,
   CalendarCheck2 as CalendarCheck2Icon,
-  BookOpen as BookOpenIcon
+  BookOpen as BookOpenIcon,
+  Plus as PlusIcon,
+  CheckCircle2 as CheckCircle2Icon,
+  X as XIcon
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
@@ -245,25 +377,27 @@ const filterDate = ref(new Date().toISOString().slice(0, 10))
 const filterClass = ref('1')
 const searchQuery = ref('')
 const loading = ref(false)
+const successMsg = ref('')
+const showAddJournalModal = ref(false)
+const isSubmittingJournal = ref(false)
+const schedules = ref<any[]>([])
 
-const summary = ref({
-  hadir: 3,
-  sakit: 2,
-  izin: 1,
-  alpha: 1
+const journalForm = reactive({
+  schedule_id: '',
+  date: new Date().toISOString().slice(0, 10),
+  topic: '',
+  activity: '',
+  notes: ''
 })
 
-const defaultMockRecords = [
-  { id: 1, name: 'Nabila Azzahra', nis: '241101', status: 'HADIR', time_note: 'Tepat waktu - 06.52', verification: 'Terverifikasi' },
-  { id: 2, name: 'Farhan Maulana', nis: '241102', status: 'SAKIT', time_note: 'Demam sejak pagi', verification: 'Form Attached' },
-  { id: 3, name: 'Salsabila Putri', nis: '241103', status: 'IZIN', time_note: 'Keperluan keluarga', verification: 'Terverifikasi' },
-  { id: 4, name: 'Rizky Ramadhan', nis: '241104', status: 'ALFA', time_note: 'Belum ada keterangan', verification: '-' },
-  { id: 5, name: 'Alif Pratama', nis: '241105', status: 'HADIR', time_note: 'Tepat waktu - 06.01', verification: 'Terverifikasi' },
-  { id: 6, name: 'Dinda Maharani', nis: '241106', status: 'SAKIT', time_note: 'Kontrol dokter', verification: 'Form Attached' },
-  { id: 7, name: 'Hanif Akbar', nis: '241107', status: 'HADIR', time_note: 'Tepat waktu - 06.19', verification: 'Terverifikasi' },
-]
+const summary = ref({
+  hadir: 0,
+  sakit: 0,
+  izin: 0,
+  alpha: 0
+})
 
-const records = ref<any[]>(defaultMockRecords)
+const records = ref<any[]>([])
 
 const formatStatusLabel = (st: string) => {
   switch (st) {
@@ -283,6 +417,51 @@ const filteredRecords = computed(() => {
   )
 })
 
+const fetchSchedules = async () => {
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/schedules`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    schedules.value = res || []
+    if (schedules.value.length > 0 && !journalForm.schedule_id) {
+      journalForm.schedule_id = schedules.value[0].id
+    }
+  } catch (e) {
+    console.error('Error fetching schedules:', e)
+  }
+}
+
+const submitJournal = async () => {
+  if (!journalForm.schedule_id || !journalForm.topic || !journalForm.activity) {
+    alert('Harap lengkapi semua kolom jurnal yang wajib diisi.')
+    return
+  }
+  isSubmittingJournal.value = true
+  try {
+    await $fetch(`${config.public.apiBase}/journals/class`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      body: {
+        schedule_id: journalForm.schedule_id,
+        class_id: filterClass.value,
+        date: journalForm.date,
+        topic: journalForm.topic,
+        activity: journalForm.activity,
+        notes: journalForm.notes
+      }
+    })
+    successMsg.value = 'Jurnal kelas harian berhasil disimpan dan menunggu verifikasi guru pengajar!'
+    showAddJournalModal.value = false
+    journalForm.topic = ''
+    journalForm.activity = ''
+    journalForm.notes = ''
+  } catch (err: any) {
+    alert(err?.data?.message || 'Gagal menyimpan jurnal kelas.')
+  } finally {
+    isSubmittingJournal.value = false
+  }
+}
+
 const fetchRecap = async () => {
   loading.value = true
   try {
@@ -294,11 +473,7 @@ const fetchRecap = async () => {
       }
     })
     if (res.summary) summary.value = res.summary
-    if (res.records && res.records.length > 0) {
-      records.value = res.records
-    } else {
-      records.value = defaultMockRecords
-    }
+    records.value = res.records || []
   } catch (err: any) {
     console.error('Error fetching recap:', err)
   } finally {
@@ -312,5 +487,6 @@ const exportPdf = () => {
 
 onMounted(() => {
   fetchRecap()
+  fetchSchedules()
 })
 </script>

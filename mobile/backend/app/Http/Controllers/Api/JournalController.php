@@ -147,6 +147,38 @@ class JournalController extends Controller
         ]);
     }
 
+    public function updateClassJournal(Request $request, $id)
+    {
+        $user = $request->user();
+        $journal = ClassJournal::findOrFail($id);
+
+        if ($journal->verification_status === 'TERVERIFIKASI') {
+            return response()->json([
+                'message' => 'Jurnal KBM telah disetujui & terverifikasi. Data telah dikunci permanen (read-only) untuk keabsahan arsip akademik.'
+            ], 422);
+        }
+
+        $activity = $request->topic ? ($request->topic . ' - ' . $request->activity) : ($request->activity ?: $journal->activity);
+
+        $journal->update([
+            'activity' => $activity,
+            'notes' => $request->notes !== null ? $request->notes : $journal->notes,
+            'date' => $request->date ?: $journal->date,
+            'schedule_id' => $request->schedule_id ?: $journal->schedule_id,
+        ]);
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'Menyunting draf jurnal kelas ID #' . $journal->id,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Jurnal kelas berhasil disunting',
+            'journal' => $journal,
+        ]);
+    }
+
     public function confirmClassJournal(Request $request, $id)
     {
         $user = $request->user();
