@@ -11,50 +11,58 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'avatar_url'];
-    protected $hidden = ['password', 'remember_token'];
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'phone',
+        'nip_nis',
+        'role',
+        'is_active',
+        'class_id',
     ];
 
-    public function classes()
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected function casts(): array
     {
-        return $this->belongsToMany(ClassModel::class, 'class_user');
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
+        ];
     }
 
-    public function journals()
+    public function schoolClass()
     {
-        return $this->hasMany(JournalEntry::class, 'author_id');
+        return $this->belongsTo(SchoolClass::class, 'class_id');
     }
 
-    public function attendances()
+    public function taughtClasses()
     {
-        return $this->hasMany(Attendance::class, 'student_id');
+        return $this->belongsToMany(SchoolClass::class, 'teacher_classes', 'teacher_id', 'class_id');
     }
 
-    public function ratingsGiven()
+    public function schedules()
     {
-        return $this->hasMany(TeacherRating::class, 'student_id');
+        return $this->hasMany(Schedule::class, 'teacher_id');
     }
 
-    public function ratingsReceived()
+    public function notifications()
     {
-        return $this->hasMany(TeacherRating::class, 'teacher_id');
+        return $this->hasMany(Notification::class, 'user_id');
     }
 
-    public function isAdmin(): bool
+    public function auditLogs()
     {
-        return $this->role === 'admin';
+        return $this->hasMany(AuditLog::class, 'user_id');
     }
 
-    public function isGuru(): bool
+    public function leaveRequests()
     {
-        return $this->role === 'guru';
-    }
-
-    public function isSiswa(): bool
-    {
-        return $this->role === 'siswa';
+        return $this->hasMany(LeaveRequest::class, 'student_id');
     }
 }

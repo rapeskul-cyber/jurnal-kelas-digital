@@ -1,141 +1,80 @@
-# Jurnal Kelas Digital v2.0 - Laravel 12 + Nuxt 3
+# Web Jurnal Kelas Digital
 
-## 📋 Tech Stack
+Aplikasi Web Jurnal Kelas Digital, Presensi, dan Pengelolaan Aktivitas Pembelajaran Siswa dan Guru yang dibangun berdasarkan spesifikasi dan mockup visual presisi tinggi.
 
-- **Backend:** Laravel 12 (PHP 8.2+)
-- **Frontend:** Nuxt 3 (Vue 3)
-- **Styling:** Tailwind CSS
-- **UI Animations:** Vue CSS transitions (Framer Motion equivalent)
-- **Database:** MySQL 8.0 / PostgreSQL 15
+---
 
-## 🚀 Quick Start
+## 🛠️ Tech Stack
 
-### Backend Setup
+- **Frontend**: **Nuxt 3 (Vue 3)**, Tailwind CSS, Pinia, Lucide Icons, Chart.js / Vue-Chartjs.
+- **Backend**: **Laravel 11 (PHP 8.3)**, REST API, Laravel Sanctum Token Authentication, Eloquent ORM.
+- **Database**: **SQL (MySQL / MariaDB)**, 14 tabel relasional lengkap dengan migrasi dan seeder data realistis.
 
+---
+
+## 🚀 Cara Menjalankan Project
+
+### 1. Database (MySQL)
+Pastikan MySQL sudah aktif (misal lewat XAMPP di port `3306`), lalu buat database:
+```sql
+CREATE DATABASE jurnal_kelas_digital;
+```
+
+### 2. Backend (Laravel)
+Masuk ke direktori `backend`:
 ```bash
 cd backend
 composer install
-cp .env.example .env
-php artisan key:generate
-
-# Configure .env:
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=jurnal_kelas
-DB_USERNAME=youruser
-DB_PASSWORD=yourpass
-
-php artisan migrate
-php artisan serve --host=0.0.0.0
+php artisan migrate --seed
+php artisan serve --port=8000
 ```
+Backend API berjalan di: `http://localhost:8000`
 
-### Frontend Setup
-
+### 3. Frontend (Nuxt 3)
+Masuk ke direktori `frontend`:
 ```bash
 cd frontend
 npm install
 npm run dev
-# Access at http://localhost:3000
 ```
+Frontend Web App berjalan di: `http://localhost:3000`
 
-## 📁 Project Structure
+---
 
-### Backend (Laravel 12)
+## 👥 Akun Uji Coba & Hak Akses (Role)
 
-```
-backend/
-├── app/
-│   ├── Console/Commands/
-│   │   └── GenerateDailyReport.php    # 18:00 daily cron job
-│   ├── Http/Controllers/
-│   │   ├── JournalController.php     # CRUD jurnal
-│   │   ├── AttendanceController.php  # Kehadiran siswa
-│   │   ├── RatingController.php      # Rating guru
-│   │   └── DashboardController.php   # Auth & summary
-│   ├── Models/
-│   │   ├── User.php
-│   │   ├── ClassModel.php
-│   │   ├── JournalEntry.php
-│   │   ├── Attendance.php
-│   │   └── TeacherRating.php
-│   └── ...
-├── database/migrations/
-│   └── 2025_01_01_000001_create_all_tables.php
-├── routes/
-│   ├── api.php                        # API endpoints
-│   └── console.php                    # Schedule cron jobs
-└── composer.json
-```
+Semua akun dev menggunakan kata sandi default: **`password123`** (atau gunakan tombol **Quick Login** 1-klik di halaman login):
 
-### Frontend (Nuxt 3)
+| Peran | Nama | Email | Hak Akses Utama |
+|---|---|---|---|
+| **Siswa** | Rina Safitri | `siswa@sekolah.sch.id` | Dashboard Siswa, Riwayat Kehadiran (Donut & Weekly Chart), Jurnal Pelajaran & Unduh Materi |
+| **Sekretaris** | Ahmad Fadillah | `sekretaris@sekolah.sch.id` | Input Presensi Harian (Segmented Buttons), Kunci Sesi (Verifikasi PIN 1234), Input Jurnal Kelas Harian, Pengajuan Surat Izin (Tanda Tangan Digital) |
+| **Guru Pengajar** | Budi Santoso, S.Pd | `pengajar@sekolah.sch.id` | Konfirmasi & Verifikasi Jurnal Kelas Masuk, Publikasi Rencana Belajar / Modul / Tugas |
+| **Guru Pembimbing** | Dra. Siti Aminah, M.Pd | `pembimbing@sekolah.sch.id` | Persetujuan / Penolakan Surat Izin Siswa (Split View), Rekap Semester & Ekspor XLSX/PDF, Manajemen Pengguna & Reset Sandi, Matriks RBAC, Audit Log Trail |
 
-```
-frontend/
-├── app.vue
-├── layouts/
-│   └── default.vue                    # Sidebar + main layout
-├── pages/
-│   └── index.vue                      # Jurnal feed with animations
-├── assets/styles/
-│   └── main.css                       # Tailwind + animations
-├── nuxt.config.ts
-├── tailwind.config.js
-└── package.json
-```
+---
 
-## 📊 Database Schema
+## 📑 Struktur Halaman & Fitur Frontend Nuxt
 
-| Table | Key Features |
-|-------|-------------|
-| `users` | Role-based access (admin/guru/siswa/ortu) |
-| `classes` | Academic year grouping |
-| `journal_entries` | Full-text search, attachments, tags |
-| `attendances` | UNIQUE(student_id, subject_id, date) |
-| `teacher_ratings` | UNIQUE(student_id, teacher_id, date) |
-
-## 🎨 UI Features
-
-- **Sidebar navigation** - responsive collapse
-- **Real-time search** - filter journals instantly
-- **Animated cards** - Vue transitions (Framer Motion equivalent)
-- **Mobile-first** - responsive design
-- **Empty states** - animated fallbacks
-
-## 🔧 API Endpoints
-
-```
-GET    /api/v1/health                # Health check
-POST   /api/v1/auth/login            # Login
-GET    /api/v1/journals              # List journals
-POST   /api/v1/journals              # Create journal
-POST   /api/v1/attendance            # Record attendance
-GET    /api/v1/attendance            # List attendance
-POST   /api/v1/ratings               # Rate teacher
-GET    /api/v1/ratings/{id}          # Teacher ratings summary
-```
-
-## ⏰ Cron Jobs
-
-- **18:00 daily** - Auto-generate PDF/Excel daily reports
-
-## 📦 Deploy
-
-```bash
-# Backend → Railway/Render/Hostinger
-composer install --optimize-autoloader --no-dev
-php artisan config:cache
-php artisan migrate
-
-# Frontend → Vercel/Netlify/Nitro
-npm install
-npm run build
-npm run preview
-```
-
-## 📄 Requirements
-
-- PHP 8.2+
-- Composer
-- Node.js 18+
-- MySQL 8.0 / PostgreSQL 15
+1. **Autentikasi**:
+   - `/login`: Form Login, Show/Hide Password, Tombol Quick Login 4 peran.
+   - `/forgot-password`: 3-Step Wizard Reset Password (Email -> OTP -> Buat Sandi Baru -> Sukses).
+2. **Dashboard**:
+   - `/dashboard`: Tampilan adaptif otomatis mendeteksi role pengguna yang login.
+3. **Presensi & Rekapitulasi**:
+   - `/presensi`: Formulir presensi kelas lengkap dengan tombol Hadir/Sakit/Izin/Alpha, tombol Hadirkan Semua, validasi status, dan modal kunci sesi dengan PIN.
+   - `/riwayat-kehadiran`: Riwayat presensi personal siswa dengan Donut Chart persentase kehadiran dan bar chart mingguan.
+   - `/rekap-harian`: Laporan harian presensi per kelas dengan KPI cards, pencarian, dan tombol ekspor.
+   - `/rekap-semester`: Rekapitulasi presensi kumulatif per semester, persentase kehadiran siswa, predikat, cetak PDF dan Excel.
+4. **Jurnal Pembelajaran**:
+   - `/jurnal-kelas`: Input aktivitas kegiatan belajar mengajar harian oleh sekretaris.
+   - `/jurnal-materi`: Panel guru pengajar untuk konfirmasi jurnal yang masuk dan publikasi materi/tugas baru.
+   - `/jurnal-pelajaran`: Halaman siswa untuk membaca topik bahasan, materi, dan instruksi tugas.
+   - `/laporan-jurnal`: Log komprehensif seluruh aktivitas jurnal kelas dan status verifikasinya.
+5. **Surat Izin**:
+   - `/surat-izin`: Pengajuan izin tidak masuk dengan pad tanda tangan digital HTML5 canvas.
+   - `/persetujuan-izin`: Panel guru pembimbing untuk meninjau, menyetujui, atau menolak izin dengan catatan verifikasi.
+   - `/laporan-izin`: Arsip seluruh permohonan izin dan ekspor data XLSX.
+6. **Administrasi & Sistem**:
+   - `/manajemen-user`: Tab Daftar Pengguna (tambah user, switch aktif/nonaktif, reset sandi) dan Tab Matriks Hak Akses (RBAC).
+   - `/notifikasi`: Pusat notifikasi dengan filter (Jurnal, Surat Izin, Belum Dibaca) dan Log Audit Trail aktivitas sistem.

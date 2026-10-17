@@ -1,15 +1,5 @@
-<script setup lang="ts">
-// App entry point
-</script>
-
 <template>
-  <div class="app">
-    <slot />
-  </div>
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
-
-<style scoped>
-.app {
-  min-height: 100vh;
-}
-</style>

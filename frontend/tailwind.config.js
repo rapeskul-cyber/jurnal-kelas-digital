@@ -1,29 +1,40 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
-    './components/**/*.{js,ts,jsx,tsx,vue}',
+    './components/**/*.{vue,js,ts}',
     './layouts/**/*.vue',
     './pages/**/*.vue',
-    './app/**/*.{js,ts,jsx,tsx,vue}'
+    './app.vue',
+    './plugins/**/*.{js,ts}'
   ],
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+        primary: {
+          DEFAULT: '#C62828',
+          hover: '#B71C1C',
+          light: '#FEE2E2',
+          subtle: '#FEF2F2'
+        },
+        'brand-red': {
+          DEFAULT: '#C62828',
+          dark: '#B71C1C',
+          light: '#FEE2E2',
+          50: '#FEF2F2'
+        },
+        presence: {
+          hadir: '#16A34A',
+          'hadir-bg': '#DCFCE7',
+          sakit: '#EA580C',
+          'sakit-bg': '#FFEDD5',
+          izin: '#2563EB',
+          'izin-bg': '#DBEAFE',
+          alpha: '#DC2626',
+          'alpha-bg': '#FEE2E2'
         }
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial']
+        sans: ['Inter', 'system-ui', 'sans-serif']
       }
     }
   },
