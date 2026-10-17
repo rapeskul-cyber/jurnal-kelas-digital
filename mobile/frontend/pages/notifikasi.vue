@@ -18,7 +18,7 @@
       </template>
     </AppHeader>
 
-    <main class="px-4 pb-6 space-y-5">
+    <main class="px-6 md:px-8 pb-10 space-y-6">
       <!-- Card Section 1: Pemberitahuan Terbaru -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-5 md:p-6 space-y-4">
         <!-- Filter Pills: Semua, Belum Dibaca, Jurnal, Surat Izin (Matching mockups) -->
@@ -208,16 +208,7 @@ const unreadCount = ref(2)
 const defaultNotifications: any[] = []
 
 const notifications = ref<any[]>([])
-
-const defaultAuditLogs = [
-  { id: 1, time: 'Hari ini, 09:41', user: 'Budi, S.Pd', action: 'Mengisi Jurnal Materi' },
-  { id: 2, time: 'Hari ini, 09:12', user: 'Rina Safitri (Sekretaris)', action: 'Mengirimkan data presensi & draf jurnal harian' },
-  { id: 3, time: 'Hari ini, 08:30', user: 'Rina Safitri (Sekretaris)', action: 'Mengajukan permohonan surat izin sakit & upload berkas' },
-  { id: 4, time: 'Kemarin, 15:20', user: 'Siti Aminah, M.Pd (Pembimbing)', action: 'Menyetujui permohonan surat izin belajar siswa' },
-  { id: 5, time: 'Kemarin, 14:00', user: 'Siti Aminah, M.Pd (Pembimbing)', action: 'Mendaftarkan akun pengguna baru Amanda Wijaya' }
-]
-
-const auditLogs = ref<any[]>(defaultAuditLogs)
+const auditLogs = ref<any[]>([])
 
 const filteredNotifications = computed(() => {
   if (filterType.value === 'ALL') return notifications.value
