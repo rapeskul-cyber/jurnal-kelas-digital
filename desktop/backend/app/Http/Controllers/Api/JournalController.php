@@ -9,6 +9,8 @@ use App\Models\MaterialJournal;
 use App\Models\Schedule;
 use App\Models\Notification;
 use App\Models\AuditLog;
+use App\Models\Subject;
+use App\Models\User;
 use Carbon\Carbon;
 
 class JournalController extends Controller
@@ -292,6 +294,21 @@ class JournalController extends Controller
             'assignment' => $request->assignment,
             'attachment_path' => $attachmentPath,
         ]);
+
+        // Blast notification to all students in this class
+        $subjectName = Subject::find($subjectId)->name ?? 'Mata Pelajaran';
+        $classStudents = User::where('class_id', $classId)
+            ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+            ->get();
+
+        foreach ($classStudents as $std) {
+            Notification::create([
+                'user_id' => $std->id,
+                'type' => 'JURNAL',
+                'title' => 'Materi Baru: ' . $subjectName,
+                'body' => $user->name . ' mengunggah materi baru "' . $request->topic . '". Silakan cek dan unduh di menu Jurnal Pelajaran.',
+            ]);
+        }
 
         AuditLog::create([
             'user_id' => $user->id,

@@ -9,7 +9,9 @@ use App\Models\User;
 use App\Models\AttendanceSession;
 use App\Models\AttendanceRecord;
 use App\Models\SchoolClass;
+use App\Models\Schedule;
 use App\Models\AuditLog;
+use App\Models\Notification;
 use Carbon\Carbon;
 
 class AttendanceController extends Controller
@@ -114,8 +116,10 @@ class AttendanceController extends Controller
         }
 
         foreach ($request->records as $r) {
+            $studentId = $r['student_id'] ?? ($r['id'] ?? null);
+            if (!$studentId) continue;
             AttendanceRecord::updateOrCreate(
-                ['session_id' => $session->id, 'student_id' => $r['student_id']],
+                ['session_id' => $session->id, 'student_id' => $studentId],
                 [
                     'status' => $r['status'] ?? 'HADIR',
                     'note' => $r['note'] ?? null,
@@ -164,8 +168,10 @@ class AttendanceController extends Controller
         }
 
         foreach ($request->records as $r) {
+            $studentId = $r['student_id'] ?? ($r['id'] ?? null);
+            if (!$studentId) continue;
             AttendanceRecord::updateOrCreate(
-                ['session_id' => $session->id, 'student_id' => $r['student_id']],
+                ['session_id' => $session->id, 'student_id' => $studentId],
                 [
                     'status' => $r['status'] ?? 'HADIR',
                     'note' => $r['note'] ?? null,
@@ -179,6 +185,42 @@ class AttendanceController extends Controller
             'locked_at' => Carbon::now(),
             'verification_status' => 'PENDING',
         ]);
+
+        // Kirim notifikasi ke Guru Pengajar / Pembimbing bahwa presensi kelas telah dikunci sekretaris
+        $schoolClass = SchoolClass::find($classId);
+        $className = $schoolClass->name ?? 'Kelas';
+        
+        // Cari guru pengajar yang ada jadwal hari ini di kelas tersebut atau guru pembimbing kelas
+        $teacherIds = Schedule::where('class_id', $classId)->pluck('teacher_id')->toArray();
+        if ($schoolClass && $schoolClass->advisor_id) {
+            $teacherIds[] = $schoolClass->advisor_id;
+        }
+        $teacherIds = array_unique(array_filter($teacherIds));
+
+        foreach ($teacherIds as $tid) {
+            Notification::create([
+                'user_id' => $tid,
+                'type' => 'PRESENSI',
+                'title' => 'Presensi Kelas ' . $className . ' Dikunci',
+                'body' => 'Sekretaris ' . $user->name . ' telah mengunci presensi harian ' . $className . ' tanggal ' . $request->date . '. Menunggu pengesahan Anda.',
+            ]);
+        }
+
+        // Kirim juga notifikasi ke siswa jika statusnya bukan HADIR (Sakit/Izin/Alpha)
+        if (is_array($request->records)) {
+            foreach ($request->records as $r) {
+                $st = $r['status'] ?? 'HADIR';
+                $sId = $r['student_id'] ?? ($r['id'] ?? null);
+                if ($sId && in_array($st, ['SAKIT', 'IZIN', 'ALPHA'])) {
+                    Notification::create([
+                        'user_id' => $sId,
+                        'type' => 'PRESENSI',
+                        'title' => 'Status Presensi Harian: ' . $st,
+                        'body' => 'Presensi Anda pada tanggal ' . $request->date . ' tercatat: ' . $st . (!empty($r['note']) ? ' (' . $r['note'] . ')' : '') . '.',
+                    ]);
+                }
+            }
+        }
 
         AuditLog::create([
             'user_id' => $user->id,
@@ -213,6 +255,18 @@ class AttendanceController extends Controller
         $session->update([
             'verification_status' => 'TERVERIFIKASI',
         ]);
+
+        // Notifikasi ke Sekretaris dan Siswa bahwa presensi telah resmi disahkan oleh Guru
+        $schoolClass = SchoolClass::find($classId);
+        $className = $schoolClass->name ?? 'Kelas';
+        if ($session->locked_by_id) {
+            Notification::create([
+                'user_id' => $session->locked_by_id,
+                'type' => 'PRESENSI',
+                'title' => 'Presensi Disahkan oleh Guru',
+                'body' => $user->name . ' telah mengesahkan dan memverifikasi presensi harian kelas ' . $className . ' tanggal ' . $date . '.',
+            ]);
+        }
 
         AuditLog::create([
             'user_id' => $user->id,

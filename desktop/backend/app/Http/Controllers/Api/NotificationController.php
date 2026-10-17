@@ -13,8 +13,9 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $filter = $request->input('filter'); // ALL, UNREAD, JURNAL, SURAT_IZIN
+        $filter = $request->input('filter', 'ALL');
 
+        // Allow both PRESENSI and other notification types
         $query = Notification::where('user_id', $user->id)->latest();
 
         if ($filter === 'UNREAD') {
@@ -23,6 +24,8 @@ class NotificationController extends Controller
             $query->where('type', 'JURNAL');
         } elseif ($filter === 'SURAT_IZIN') {
             $query->where('type', 'SURAT_IZIN');
+        } elseif ($filter === 'PRESENSI') {
+            $query->where('type', 'PRESENSI');
         }
 
         $notifications = $query->get()->map(function ($n) {
