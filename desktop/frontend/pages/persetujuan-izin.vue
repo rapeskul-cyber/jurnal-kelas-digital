@@ -132,7 +132,8 @@
             <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/50">
               <span class="text-[11px] font-semibold text-gray-500 block mb-1">Tanda Tangan Pemohon</span>
               <div class="h-14 bg-white rounded-lg border border-gray-200 flex items-center justify-center p-1">
-                <span class="text-xs italic text-gray-400">Tanda tangan digital terverifikasi</span>
+                <img v-if="selectedItem.signature" :src="selectedItem.signature" class="max-h-12 object-contain" alt="Tanda Tangan Digital" />
+                <span v-else class="text-xs italic text-gray-400">Tanda tangan digital terverifikasi</span>
               </div>
             </div>
           </div>

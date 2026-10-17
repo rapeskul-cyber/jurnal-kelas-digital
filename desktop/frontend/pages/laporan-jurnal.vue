@@ -225,7 +225,29 @@ const fetchJournals = async () => {
 }
 
 const exportReport = () => {
-  alert('Mengunduh Laporan Lengkap Jurnal Kelas Digital (.CSV)... Selesai!')
+  if (!filteredJournals.value || filteredJournals.value.length === 0) {
+    alert('Tidak ada data jurnal kelas untuk diekspor pada filter ini.')
+    return
+  }
+
+  const headers = ['Tanggal & Waktu', 'Mata Pelajaran', 'Guru Pengajar', 'Rangkuman Aktivitas', 'Catatan', 'Status']
+  const rows = filteredJournals.value.map(j => [
+    `"${j.date_time || ''}"`,
+    `"${j.subject || ''}"`,
+    `"${j.teacher || ''}"`,
+    `"${(j.activity || '').replace(/"/g, '""')}"`,
+    `"${(j.notes || '').replace(/"/g, '""')}"`,
+    `"${j.status || ''}"`
+  ])
+
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `laporan_jurnal_kelas_${selectedMonth.value}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 onMounted(() => {

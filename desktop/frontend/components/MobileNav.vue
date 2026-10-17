@@ -100,7 +100,22 @@ import { ROLE_MENUS } from '~/config/access'
 const route = useRoute()
 const authStore = useAuthStore()
 const showMore = ref(false)
-const unreadCount = ref(2)
+const unreadCount = ref(0)
+
+onMounted(async () => {
+  if (authStore.token) {
+    try {
+      const res = await $fetch<{ unread_count: number }>(`${authStore.apiBase}/notifications`, {
+        headers: { Authorization: `Bearer ${authStore.token}` }
+      })
+      if (res && typeof res.unread_count === 'number') {
+        unreadCount.value = res.unread_count
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+})
 
 const allMenus = computed(() => {
   const role = authStore.user?.role || 'SISWA'

@@ -37,9 +37,13 @@
           <label class="block text-[11px] font-semibold text-gray-500 mb-1">Pilih Kelas</label>
           <select
             v-model="classFilter"
-            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white"
+            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
           >
+            <option value="Semua">Semua Kelas</option>
             <option value="1">XI RPL 1</option>
+            <option value="2">XI RPL 2</option>
+            <option value="3">XII RPL 1</option>
+            <option value="4">XII RPL 2</option>
           </select>
         </div>
       </div>
@@ -143,17 +147,18 @@ const authStore = useAuthStore()
 const loading = ref(false)
 const list = ref<any[]>([])
 const statusFilter = ref('Semua')
-const classFilter = ref('1')
+const classFilter = ref('Semua')
 const searchQuery = ref('')
 
 const filteredList = computed(() => {
   return list.value.filter(item => {
     const matchStatus = statusFilter.value === 'Semua' || item.status === statusFilter.value
+    const matchClass = classFilter.value === 'Semua' || String(item.class_id || '') === classFilter.value || (item.class && item.class.includes(classFilter.value))
     const matchSearch =
       !searchQuery.value ||
       item.student_name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       item.reason.toLowerCase().includes(searchQuery.value.toLowerCase())
-    return matchStatus && matchSearch
+    return matchStatus && matchClass && matchSearch
   })
 })
 
@@ -172,7 +177,33 @@ const fetchList = async () => {
 }
 
 const exportExcel = () => {
-  alert('Mengunduh Berkas Arsip Laporan Izin Siswa (.XLSX)... Selesai!')
+  if (!filteredList.value || filteredList.value.length === 0) {
+    alert('Tidak ada data surat izin untuk diekspor.')
+    return
+  }
+
+  const headers = ['No', 'Nama Siswa', 'Kelas', 'NIS', 'Jenis Izin', 'Tanggal Mulai', 'Tanggal Selesai', 'Alasan', 'Status', 'Diverifikasi Oleh']
+  const rows = filteredList.value.map((item, idx) => [
+    idx + 1,
+    `"${item.student_name || ''}"`,
+    `"${item.class || ''}"`,
+    `"${item.nis || ''}"`,
+    `"${item.type || ''}"`,
+    `"${item.start_date || ''}"`,
+    `"${item.end_date || ''}"`,
+    `"${(item.reason || '').replace(/"/g, '""')}"`,
+    `"${item.status || ''}"`,
+    `"${item.reviewer_name || '-'}"`
+  ])
+
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `laporan_izin_siswa_${new Date().toISOString().slice(0, 10)}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 onMounted(() => {

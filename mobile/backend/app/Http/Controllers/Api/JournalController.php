@@ -188,6 +188,9 @@ class JournalController extends Controller
     public function confirmClassJournal(Request $request, $id)
     {
         $user = $request->user();
+        if ($user->role !== 'GURU_PENGAJAR') {
+            return response()->json(['message' => 'Hanya Guru Pengajar yang berhak mengonfirmasi jurnal KBM.'], 403);
+        }
         $journal = ClassJournal::findOrFail($id);
 
         $journal->update([
@@ -255,6 +258,9 @@ class JournalController extends Controller
     public function storeMaterialJournal(Request $request)
     {
         $user = $request->user();
+        if ($user->role !== 'GURU_PENGAJAR') {
+            return response()->json(['message' => 'Hanya Guru Pengajar yang berhak mengunggah materi pelajaran.'], 403);
+        }
         $request->validate([
             'topic' => 'required|string',
             'plan' => 'nullable|string',

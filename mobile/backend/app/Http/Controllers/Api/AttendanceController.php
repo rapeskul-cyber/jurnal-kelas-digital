@@ -84,6 +84,9 @@ class AttendanceController extends Controller
     public function saveDraft(Request $request)
     {
         $user = $request->user();
+        if (!in_array($user->role, ['SEKRETARIS', 'GURU_PEMBIMBING'])) {
+            return response()->json(['message' => 'Hanya Sekretaris Kelas yang berhak menyimpan draf presensi.'], 403);
+        }
         $classId = ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') ? ($user->class_id ?: 1) : $request->class_id;
 
         $request->validate([
@@ -132,6 +135,9 @@ class AttendanceController extends Controller
     public function lockSession(Request $request)
     {
         $user = $request->user();
+        if (!in_array($user->role, ['SEKRETARIS', 'GURU_PEMBIMBING'])) {
+            return response()->json(['message' => 'Hanya Sekretaris Kelas atau Guru Pembimbing yang berhak mengunci presensi.'], 403);
+        }
         $classId = ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') ? ($user->class_id ?: 1) : $request->class_id;
 
         $request->validate([
@@ -298,21 +304,38 @@ class AttendanceController extends Controller
 
     public function semesterRecap(Request $request)
     {
-        $classId = $request->input('class_id', 1);
+        $user = $request->user();
+        if ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') {
+            $classId = $user->class_id ?: 1;
+        } else {
+            $classId = $request->input('class_id', 1);
+        }
 
         $students = User::where('class_id', $classId)
             ->whereIn('role', ['SISWA', 'SEKRETARIS'])
             ->orderBy('name')
             ->get();
 
-        $rows = $students->map(function ($std) {
-            // Simulated realistic calculation for semester
-            $effectiveDays = 108;
-            $hadir = rand(95, 108);
-            $sakit = rand(0, 3);
-            $izin = rand(0, 2);
-            $alpha = max(0, $effectiveDays - ($hadir + $sakit + $izin));
-            $pct = round(($hadir / $effectiveDays) * 100, 1);
+        $sessionIds = AttendanceSession::where('class_id', $classId)->pluck('id');
+        $effectiveDays = $sessionIds->count();
+        if ($effectiveDays === 0) {
+            $effectiveDays = 1; // avoid division by zero
+        }
+
+        $totalHadirAll = 0;
+        $totalAlphaAll = 0;
+
+        $rows = $students->map(function ($std) use ($sessionIds, $effectiveDays, &$totalHadirAll, &$totalAlphaAll) {
+            $hadir = AttendanceRecord::where('student_id', $std->id)->whereIn('session_id', $sessionIds)->where('status', 'HADIR')->count();
+            $sakit = AttendanceRecord::where('student_id', $std->id)->whereIn('session_id', $sessionIds)->where('status', 'SAKIT')->count();
+            $izin = AttendanceRecord::where('student_id', $std->id)->whereIn('session_id', $sessionIds)->where('status', 'IZIN')->count();
+            $alpha = AttendanceRecord::where('student_id', $std->id)->whereIn('session_id', $sessionIds)->where('status', 'ALPHA')->count();
+
+            $totalHadirAll += $hadir;
+            $totalAlphaAll += $alpha;
+
+            $totalRecorded = $hadir + $sakit + $izin + $alpha;
+            $pct = $totalRecorded > 0 ? round(($hadir / $totalRecorded) * 100, 1) : 0;
 
             return [
                 'id' => $std->id,
@@ -326,10 +349,13 @@ class AttendanceController extends Controller
             ];
         });
 
+        $totalStudents = $students->count() ?: 1;
+        $avgAttendancePct = round(($totalHadirAll / ($totalStudents * $effectiveDays)) * 100, 1);
+
         return response()->json([
-            'effective_days' => 108,
-            'average_attendance' => '94.8%',
-            'lowest_alpha' => '0% (Sempurna)',
+            'effective_days' => $effectiveDays,
+            'average_attendance' => min(100, $avgAttendancePct) . '%',
+            'lowest_alpha' => $totalAlphaAll === 0 ? '0% (Sempurna)' : $totalAlphaAll . ' Ketidakhadiran',
             'students' => $rows,
         ]);
     }

@@ -17,10 +17,10 @@
       <template v-else-if="authStore.user?.role === 'SISWA'">
         <!-- 4 Stat Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Hadir Bulan Ini" :value="data?.stats?.hadir_hari || '18 Hari'" :subtext="data?.stats?.hadir_percent || '90% Kehadiran'" color="green" />
-          <StatCard title="Total Sakit" :value="data?.stats?.sakit_hari || '1 Hari'" subtext="Dilengkapi Surat Dokter" color="orange" />
-          <StatCard title="Total Izin Disetujui" :value="data?.stats?.izin_hari || '1 Hari'" subtext="Sesuai Permohonan Online" color="blue" />
-          <StatCard title="Alpha / Tanpa Kabar" :value="data?.stats?.alpha_hari || '0 Hari'" subtext="Sangat Baik, Pertahankan!" color="red" />
+          <StatCard title="Hadir Bulan Ini" :value="data?.stats?.hadir_hari ?? '0 Hari'" :subtext="data?.stats?.hadir_percent ?? '0% Kehadiran'" color="green" />
+          <StatCard title="Total Sakit" :value="data?.stats?.sakit_hari ?? '0 Hari'" subtext="Dilengkapi Surat Dokter" color="orange" />
+          <StatCard title="Total Izin Disetujui" :value="data?.stats?.izin_hari ?? '0 Hari'" subtext="Sesuai Permohonan Online" color="blue" />
+          <StatCard title="Alpha / Tanpa Kabar" :value="data?.stats?.alpha_hari ?? '0 Hari'" subtext="Catatan Presensi Riil" color="red" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -96,10 +96,10 @@
       <template v-else-if="authStore.user?.role === 'SEKRETARIS'">
         <!-- 4 Stat Cards Hari Ini -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Hadir Hari Ini" :value="data?.stats?.hadir_count || '32 Siswa'" :subtext="data?.stats?.hadir_percent || '91% Tingkat Kehadiran'" color="green" />
-          <StatCard title="Izin Keperluan" :value="data?.stats?.izin_count || '2 Siswa'" subtext="Wajib Verifikasi Surat" color="blue" />
-          <StatCard title="Sakit (Disertai Surat)" :value="data?.stats?.sakit_count || '1 Siswa'" subtext="Dalam Konfirmasi Wali Kelas" color="orange" />
-          <StatCard title="Alpha (Tanpa Keterangan)" :value="data?.stats?.alpha_count || '1 Siswa'" subtext="Tindakan Lebih Lanjut" color="red" />
+          <StatCard title="Hadir Hari Ini" :value="data?.stats?.hadir_count ?? '0 Siswa'" :subtext="data?.stats?.hadir_percent ?? '0% Tingkat Kehadiran'" color="green" />
+          <StatCard title="Izin Keperluan" :value="data?.stats?.izin_count ?? '0 Siswa'" subtext="Wajib Verifikasi Surat" color="blue" />
+          <StatCard title="Sakit (Disertai Surat)" :value="data?.stats?.sakit_count ?? '0 Siswa'" subtext="Dalam Konfirmasi Wali Kelas" color="orange" />
+          <StatCard title="Alpha (Tanpa Keterangan)" :value="data?.stats?.alpha_count ?? '0 Siswa'" subtext="Tindakan Lebih Lanjut" color="red" />
         </div>
 
         <!-- Presensi Kelas Hari Ini Table -->
@@ -172,10 +172,10 @@
       <template v-else-if="authStore.user?.role === 'GURU_PENGAJAR'">
         <!-- 4 Stat Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Kelas Diampu" :value="data?.stats?.kelas_diampu || '4 Kelas'" subtext="X dan XI - Kompetensi RPL" color="blue" />
-          <StatCard title="Jam Mengajar Hari Ini" :value="data?.stats?.jam_mengajar || '5 Jam'" subtext="5 pertemuan terjadwal" color="blue" />
-          <StatCard title="Jurnal Terisi" :value="data?.stats?.jurnal_terisi || '3/5 Pertemuan'" subtext="60% jurnal telah dilengkapi" color="orange" />
-          <StatCard title="Jurnal Belum Diisi" :value="data?.stats?.jurnal_belum_diisi || '2 Pertemuan'" subtext="Lengkapi setelah mengajar" color="red" />
+          <StatCard title="Kelas Diampu" :value="data?.stats?.kelas_diampu ?? '0 Kelas'" subtext="Kompetensi Terdaftar" color="blue" />
+          <StatCard title="Jam Mengajar Hari Ini" :value="data?.stats?.jam_mengajar ?? '0 Jam'" subtext="Pertemuan Terjadwal" color="blue" />
+          <StatCard title="Jurnal Terisi" :value="data?.stats?.jurnal_terisi ?? '0 Pertemuan'" subtext="Jurnal KBM Dilengkapi" color="orange" />
+          <StatCard title="Jurnal Belum Diisi" :value="data?.stats?.jurnal_belum_diisi ?? '0 Pertemuan'" subtext="Perlu Verifikasi/Pengisian" color="red" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -256,9 +256,9 @@
       <template v-else-if="authStore.user?.role === 'GURU_PEMBIMBING'">
         <!-- 3 Stat Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard title="Total Kelas Binaan" :value="data?.stats?.total_kelas || '6 Kelas'" subtext="RPL, TKJ, & Multimedia" color="blue" />
-          <StatCard title="Jurnal Terisi Hari Ini" :value="data?.stats?.jurnal_terisi || '4 / 6 Kelas'" subtext="66% Administrasi Terdata" color="green" />
-          <StatCard title="Surat Izin Pending" :value="data?.stats?.surat_izin_pending || '3 Permohonan'" subtext="Butuh Persetujuan Segera" color="orange" />
+          <StatCard title="Total Kelas Binaan" :value="data?.stats?.total_kelas ?? '0 Kelas'" subtext="Kelas Binaan Terdaftar" color="blue" />
+          <StatCard title="Jurnal Terisi Hari Ini" :value="data?.stats?.jurnal_terisi ?? '0 Kelas'" subtext="Administrasi Terdata" color="green" />
+          <StatCard title="Surat Izin Pending" :value="data?.stats?.surat_izin_pending ?? '0 Permohonan'" subtext="Butuh Persetujuan" color="orange" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -19,10 +19,10 @@
     <main class="px-8 pb-8 space-y-6">
       <!-- 4 Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Hadir Bulan Ini" :value="(summary?.hadir || 18) + ' Hari'" :subtext="(summary?.hadir_percent || 90) + '% Kehadiran'" color="green" />
-        <StatCard title="Total Sakit" :value="(summary?.sakit || 1) + ' Hari'" subtext="Dilengkapi Surat Dokter" color="orange" />
-        <StatCard title="Total Izin Disetujui" :value="(summary?.izin || 1) + ' Hari'" subtext="Sesuai Permohonan Online" color="blue" />
-        <StatCard title="Alpha / Tanpa Kabar" :value="(summary?.alpha || 0) + ' Hari'" subtext="Sangat Baik, Pertahankan!" color="red" />
+        <StatCard title="Hadir Bulan Ini" :value="(summary?.hadir ?? 0) + ' Hari'" :subtext="(summary?.hadir_percent ?? 0) + '% Kehadiran'" color="green" />
+        <StatCard title="Total Sakit" :value="(summary?.sakit ?? 0) + ' Hari'" subtext="Dilengkapi Surat Dokter" color="orange" />
+        <StatCard title="Total Izin Disetujui" :value="(summary?.izin ?? 0) + ' Hari'" subtext="Sesuai Permohonan Online" color="blue" />
+        <StatCard title="Alpha / Tanpa Kabar" :value="(summary?.alpha ?? 0) + ' Hari'" subtext="Catatan Kehadiran Riil" color="red" />
       </div>
 
       <!-- Diagram Kehadiran Card -->
@@ -30,7 +30,7 @@
         <div>
           <h3 class="text-sm font-bold text-gray-900">Diagram Kehadiran</h3>
           <p class="text-xs text-gray-400 mt-0.5">
-            Ringkasan kehadiran periode terpilih: {{ summary?.total || 20 }} hari total, {{ summary?.hadir || 18 }} hadir, {{ summary?.sakit || 1 }} sakit, {{ summary?.izin || 1 }} izin disetujui, {{ summary?.alpha || 0 }} alpha.
+            Ringkasan kehadiran periode terpilih: {{ summary?.total ?? 0 }} hari total, {{ summary?.hadir ?? 0 }} hadir, {{ summary?.sakit ?? 0 }} sakit, {{ summary?.izin ?? 0 }} izin disetujui, {{ summary?.alpha ?? 0 }} alpha.
           </p>
         </div>
 
@@ -48,10 +48,10 @@
                   fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
-                <!-- Hadir (Green 90%) -->
+                <!-- Hadir Dynamic Ring -->
                 <path
                   class="text-emerald-500"
-                  stroke-dasharray="90, 100"
+                  :stroke-dasharray="`${summary?.hadir_percent || 0}, 100`"
                   stroke-width="3.5"
                   stroke="currentColor"
                   fill="none"
@@ -60,7 +60,7 @@
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span class="text-[10px] text-gray-400 font-medium">Total</span>
-                <span class="text-lg font-extrabold text-gray-900">{{ summary?.total || 20 }} Hari</span>
+                <span class="text-lg font-extrabold text-gray-900">{{ summary?.total ?? 0 }} Hari</span>
               </div>
             </div>
 
@@ -71,28 +71,28 @@
                   <span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>
                   <span class="text-gray-600">Hadir</span>
                 </div>
-                <span class="font-bold text-gray-900">{{ summary?.hadir || 18 }} (90%)</span>
+                <span class="font-bold text-gray-900">{{ summary?.hadir ?? 0 }} ({{ summary?.hadir_percent ?? 0 }}%)</span>
               </div>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>
                   <span class="text-gray-600">Sakit</span>
                 </div>
-                <span class="font-bold text-gray-900">{{ summary?.sakit || 1 }} (5%)</span>
+                <span class="font-bold text-gray-900">{{ summary?.sakit ?? 0 }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-sm bg-blue-600"></span>
                   <span class="text-gray-600">Izin</span>
                 </div>
-                <span class="font-bold text-gray-900">{{ summary?.izin || 1 }} (5%)</span>
+                <span class="font-bold text-gray-900">{{ summary?.izin ?? 0 }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-sm bg-red-500"></span>
                   <span class="text-gray-600">Alpha</span>
                 </div>
-                <span class="font-bold text-gray-900">{{ summary?.alpha || 0 }} (0%)</span>
+                <span class="font-bold text-gray-900">{{ summary?.alpha ?? 0 }}</span>
               </div>
             </div>
           </div>
@@ -218,20 +218,19 @@ const fetchHistory = async () => {
 }
 
 const exportCsv = () => {
+  if (!filteredDetails.value || filteredDetails.value.length === 0) {
+    alert('Tidak ada data riwayat presensi untuk diekspor pada bulan ini.')
+    return
+  }
+
   const headers = ['Hari / Tanggal', 'Ruangan', 'Mata Pelajaran', 'Jam Sekolah', 'Status', 'Keterangan']
-  const rows = (filteredDetails.value.length > 0 ? filteredDetails.value : [
-    { day_date: 'Selasa, 6 Okt 2026', room: 'Lab. 1', subject: 'Kelas Industri', hours: '13:30 - Selesai', status: 'HADIR', note: 'Presensi terverifikasi' },
-    { day_date: 'Selasa, 13 Okt 2026', room: 'Lab. 1', subject: 'Kelas Industri', hours: '13:30 - Selesai', status: 'HADIR', note: 'Presensi terverifikasi' },
-    { day_date: 'Selasa, 20 Okt 2026', room: 'Lab. 1', subject: 'Kelas Industri', hours: '13:30 - Selesai', status: 'HADIR', note: 'Presensi terverifikasi' },
-    { day_date: 'Selasa, 27 Okt 2026', room: 'Lab. 1', subject: 'Kelas Industri', hours: '13:30 - Selesai', status: 'HADIR', note: 'Presensi terverifikasi' },
-    { day_date: 'Jumat, 3 Okt 2026', room: 'Lab. 1', subject: 'Kelas Industri', hours: '13:30 - Selesai', status: 'HADIR', note: 'Presensi terverifikasi' },
-  ]).map(r => [
-    `"${r.day_date}"`,
-    `"${r.room}"`,
-    `"${r.subject}"`,
-    `"${r.hours}"`,
-    `"${r.status}"`,
-    `"${r.note}"`
+  const rows = filteredDetails.value.map(r => [
+    `"${r.day_date || r.date || ''}"`,
+    `"${r.room || 'Ruang Kelas'}"`,
+    `"${r.subject || 'Kegiatan Pembelajaran'}"`,
+    `"${r.hours || 'Jam Sekolah'}"`,
+    `"${r.status || '-'}"`,
+    `"${r.note || '-'}"`
   ])
 
   const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')

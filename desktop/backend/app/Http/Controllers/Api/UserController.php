@@ -14,6 +14,11 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $currentUser = $request->user();
+        if ($currentUser->role !== 'GURU_PEMBIMBING') {
+            return response()->json(['message' => 'Hanya Guru Pembimbing yang berhak mengelola data pengguna.'], 403);
+        }
+
         $search = $request->input('search');
         $role = $request->input('role');
 

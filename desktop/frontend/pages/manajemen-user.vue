@@ -214,10 +214,10 @@
                   v-model="newUser.class_id"
                   class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
                 >
-                  <option value="1">XI RPL 1, XI RPL 2</option>
-                  <option value="2">XI RPL 1</option>
-                  <option value="3">XI RPL 2</option>
-                  <option value="4">XII RPL 1</option>
+                  <option value="1">XI RPL 1 (Rekayasa Perangkat Lunak 1)</option>
+                  <option value="2">XI RPL 2 (Rekayasa Perangkat Lunak 2)</option>
+                  <option value="3">XII RPL 1 (Rekayasa Perangkat Lunak 1)</option>
+                  <option value="4">XII RPL 2 (Rekayasa Perangkat Lunak 2)</option>
                   <option value="">- (Tidak Terikat Kelas)</option>
                 </select>
               </div>

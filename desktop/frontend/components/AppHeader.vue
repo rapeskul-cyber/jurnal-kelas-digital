@@ -75,7 +75,7 @@ const props = withDefaults(
 
 const router = useRouter()
 const authStore = useAuthStore()
-const unreadCount = ref(2)
+const unreadCount = ref(0)
 
 onMounted(async () => {
   if (authStore.token) {
