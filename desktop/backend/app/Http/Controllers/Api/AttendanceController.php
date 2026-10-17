@@ -23,7 +23,7 @@ class AttendanceController extends Controller
         $classId = ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') ? ($user->class_id ?: 1) : $request->input('class_id', $user->class_id ?? 1);
 
         $session = AttendanceSession::where('class_id', $classId)
-            ->where('date', $date)
+            ->whereDate('date', $date)
             ->with(['records.student'])
             ->first();
 
@@ -343,11 +343,11 @@ class AttendanceController extends Controller
     public function dailyRecap(Request $request)
     {
         $user = $request->user();
-        $classId = ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') ? ($user->class_id ?: 1) : $request->input('class_id', 1);
         $date = $request->input('date', Carbon::today()->toDateString());
+        $classId = ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') ? ($user->class_id ?: 1) : $request->input('class_id', $user->class_id ?? 1);
 
         $session = AttendanceSession::where('class_id', $classId)
-            ->where('date', $date)
+            ->whereDate('date', $date)
             ->with(['records.student'])
             ->first();
 
