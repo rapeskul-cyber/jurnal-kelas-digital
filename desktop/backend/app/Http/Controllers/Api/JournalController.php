@@ -15,11 +15,15 @@ class JournalController extends Controller
 {
     public function getClassJournals(Request $request)
     {
+        $user = $request->user();
         $classId = $request->input('class_id');
         $month = $request->input('month');
         $query = ClassJournal::with(['schoolClass', 'schedule.subject', 'createdBy', 'confirmedBy'])->latest('date');
 
-        if ($classId) {
+        if ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') {
+            $classId = $user->class_id ?: 1;
+            $query->where('class_id', $classId);
+        } elseif ($classId) {
             $query->where('class_id', $classId);
         }
 
@@ -58,6 +62,8 @@ class JournalController extends Controller
         $query = Schedule::with(['schoolClass', 'subject', 'teacher'])->orderBy('start_time');
         if ($user->role === 'GURU_PENGAJAR') {
             $query->where('teacher_id', $user->id);
+        } elseif ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') {
+            $query->where('class_id', $user->class_id ?: 1);
         } elseif ($user->class_id) {
             $query->where('class_id', $user->class_id);
         }
@@ -110,7 +116,7 @@ class JournalController extends Controller
         $user = $request->user();
         $schedule = Schedule::find($request->schedule_id);
 
-        $classId = $request->class_id ?? ($schedule->class_id ?? ($user->class_id ?? 1));
+        $classId = ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') ? ($user->class_id ?: 1) : ($request->class_id ?? ($schedule->class_id ?? ($user->class_id ?? 1)));
         $date = $request->date ?? Carbon::today()->toDateString();
         $activity = $request->topic ? ($request->topic . ' - ' . $request->activity) : $request->activity;
 

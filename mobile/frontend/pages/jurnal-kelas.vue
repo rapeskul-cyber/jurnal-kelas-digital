@@ -48,9 +48,17 @@
             />
           </div>
 
-          <!-- Filter Kelas -->
+          <!-- Filter Kelas: Terkunci untuk Siswa / Sekretaris, Pilihan untuk Guru -->
           <div class="relative">
+            <div
+              v-if="authStore.user?.role === 'SEKRETARIS' || authStore.user?.role === 'SISWA'"
+              class="px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-700 shadow-2xs flex items-center gap-1.5"
+            >
+              <span class="w-2 h-2 rounded-full bg-brand-red"></span>
+              <span>Kelas: {{ authStore.user?.class_name || (authStore.user?.class_id === 2 ? 'XI RPL 2' : 'XI RPL 1') }}</span>
+            </div>
             <select
+              v-else
               v-model="filterClass"
               @change="fetchRecap"
               class="px-3 py-2 pr-8 rounded-xl bg-white border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red shadow-2xs cursor-pointer"
@@ -374,7 +382,7 @@ const config = useRuntimeConfig()
 const authStore = useAuthStore()
 
 const filterDate = ref(new Date().toISOString().slice(0, 10))
-const filterClass = ref('1')
+const filterClass = ref(authStore.user?.class_id ? String(authStore.user.class_id) : '1')
 const searchQuery = ref('')
 const loading = ref(false)
 const successMsg = ref('')
