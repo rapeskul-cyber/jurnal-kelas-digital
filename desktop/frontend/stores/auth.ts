@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const token = ref<string | null>(null)
   const config = useRuntimeConfig()
-  const apiBase = config.public.apiBase || 'http://localhost:8000/api'
+  const apiBase = config.public.apiBase || '/api'
 
   // Initialize from localStorage in client
   if (import.meta.client) {
