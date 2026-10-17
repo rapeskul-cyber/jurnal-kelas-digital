@@ -90,15 +90,20 @@ class AttendanceController extends Controller
             'records' => 'required|array',
         ]);
 
-        $session = AttendanceSession::firstOrCreate(
-            ['class_id' => $request->class_id, 'date' => $request->date],
-            [
+        $session = AttendanceSession::where('class_id', $request->class_id)
+            ->whereDate('date', $request->date)
+            ->first();
+
+        if (!$session) {
+            $session = AttendanceSession::create([
+                'class_id' => $request->class_id,
+                'date' => $request->date,
                 'status' => 'DRAFT',
                 'verification_status' => 'BELUM_KONFIRMASI',
                 'school_hours' => '07:30 - 15:30',
                 'room' => 'Lab. 1',
-            ]
-        );
+            ]);
+        }
 
         if ($session->status === 'LOCKED' && $user->role !== 'GURU_PEMBIMBING') {
             return response()->json(['message' => 'Presensi telah terkunci. Hanya Guru Pembimbing yang dapat mengubah.'], 403);
@@ -137,13 +142,18 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'PIN / Password konfirmasi salah!'], 422);
         }
 
-        $session = AttendanceSession::firstOrCreate(
-            ['class_id' => $request->class_id, 'date' => $request->date],
-            [
+        $session = AttendanceSession::where('class_id', $request->class_id)
+            ->whereDate('date', $request->date)
+            ->first();
+
+        if (!$session) {
+            $session = AttendanceSession::create([
+                'class_id' => $request->class_id,
+                'date' => $request->date,
                 'school_hours' => '07:30 - 15:30',
                 'room' => 'Lab. 1',
-            ]
-        );
+            ]);
+        }
 
         foreach ($request->records as $r) {
             AttendanceRecord::updateOrCreate(
