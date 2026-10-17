@@ -19,6 +19,7 @@ const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
   ],
   GURU_PENGAJAR: [
     '/dashboard',
+    '/presensi',
     '/jurnal-kelas',
     '/jurnal-materi',
     '/laporan-jurnal',
@@ -27,6 +28,7 @@ const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
   ],
   GURU_PEMBIMBING: [
     '/dashboard',
+    '/presensi',
     '/persetujuan-izin',
     '/laporan-izin',
     '/manajemen-user',
@@ -48,7 +50,15 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
     // 1. Check Authentication
     if (!authStore.isAuthenticated) {
-      return navigateTo('/login')
+      // Check localStorage token directly before rejecting
+      const token = localStorage.getItem('token')
+      const user = localStorage.getItem('user')
+      if (token && user) {
+        authStore.token = token
+        authStore.user = JSON.parse(user)
+      } else {
+        return navigateTo('/login')
+      }
     }
 
     // 2. Redirect root path to dashboard

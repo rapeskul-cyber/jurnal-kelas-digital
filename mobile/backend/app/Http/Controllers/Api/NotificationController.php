@@ -31,11 +31,12 @@ class NotificationController extends Controller
         $notifications = $query->get()->map(function ($n) {
             return [
                 'id' => $n->id,
-                'type' => $n->type,
                 'title' => $n->title,
                 'body' => $n->body,
-                'time_ago' => Carbon::parse($n->created_at)->diffForHumans(),
-                'is_read' => $n->read_at !== null,
+                'type' => $n->type,
+                'created_at' => $n->created_at ? $n->created_at->toISOString() : null,
+                'time' => $n->created_at ? $n->created_at->diffForHumans() : 'Baru saja',
+                'read' => !is_null($n->read_at),
             ];
         });
 
