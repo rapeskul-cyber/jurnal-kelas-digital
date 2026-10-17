@@ -205,50 +205,9 @@ const loadingAudit = ref(false)
 
 const unreadCount = ref(2)
 
-const defaultNotifications = [
-  {
-    id: 1,
-    type: 'JURNAL',
-    title: 'Jurnal Pembelajaran Dikirim',
-    body: 'Sekretaris Rina Safitri telah mengirimkan draf jurnal harian XI RPL 1.',
-    time_ago: '10 menit yang lalu',
-    is_read: false
-  },
-  {
-    id: 2,
-    type: 'SURAT_IZIN',
-    title: 'Surat Izin Disetujui',
-    body: 'Surat izin sakit siswa Ahmad Fadillah telah diverifikasi oleh Wali Kelas.',
-    time_ago: '2 jam yang lalu',
-    is_read: true
-  },
-  {
-    id: 3,
-    type: 'USER',
-    title: 'Pengguna Baru Terdaftar',
-    body: 'Sistem mendeteksi penambahan akun guru pendidik baru atas nama Amanda Wijaya.',
-    time_ago: 'Kemarin, 16:30',
-    is_read: true
-  },
-  {
-    id: 4,
-    type: 'JURNAL',
-    title: 'Jurnal Materi Telah Dikirim',
-    body: 'Guru Pemateri telah mengirimkan Materi terbaru untuk Pemrograman Web.',
-    time_ago: 'Kemarin, 10:15',
-    is_read: true
-  },
-  {
-    id: 5,
-    type: 'KEHADIRAN',
-    title: 'Kehadiran Tercatat',
-    body: 'Siswa Ahmad Fadillah telah hadir ke sekolah pada tanggal 29/10/2026.',
-    time_ago: '2 hari yang lalu',
-    is_read: true
-  }
-]
+const defaultNotifications: any[] = []
 
-const notifications = ref<any[]>(defaultNotifications)
+const notifications = ref<any[]>([])
 
 const defaultAuditLogs = [
   { id: 1, time: 'Hari ini, 09:41', user: 'Budi, S.Pd', action: 'Mengisi Jurnal Materi' },
@@ -277,12 +236,10 @@ const fetchNotifications = async () => {
       headers: { Authorization: `Bearer ${authStore.token}` },
       params: { filter: filterType.value }
     })
-    if (res.notifications && res.notifications.length > 0) {
-      notifications.value = res.notifications
-      unreadCount.value = res.unread_count
-    }
+    notifications.value = res.notifications || []
+    unreadCount.value = res.unread_count || 0
   } catch (err: any) {
-    // Keep defaults
+    // Keep empty
   } finally {
     loading.value = false
   }
@@ -326,6 +283,7 @@ const markOneRead = async (item: any) => {
         method: 'POST',
         headers: { Authorization: `Bearer ${authStore.token}` }
       })
+      await fetchNotifications()
     } catch (err: any) {
       // Handled in state
     }

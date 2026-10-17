@@ -128,10 +128,22 @@ class LeaveRequestController extends Controller
             for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
                 if ($date->isWeekend()) continue;
 
-                $session = AttendanceSession::firstOrCreate(
-                    ['class_id' => $leave->student->class_id ?? 1, 'date' => $date->toDateString()],
-                    ['status' => 'DRAFT', 'verification_status' => 'BELUM_KONFIRMASI']
-                );
+                $classId = $leave->student->class_id ?? 1;
+                $dateStr = $date->toDateString();
+                $session = AttendanceSession::where('class_id', $classId)
+                    ->whereDate('date', $dateStr)
+                    ->first();
+
+                if (!$session) {
+                    $session = AttendanceSession::create([
+                        'class_id' => $classId,
+                        'date' => $dateStr,
+                        'status' => 'DRAFT',
+                        'verification_status' => 'BELUM_KONFIRMASI',
+                        'school_hours' => '07:30 - 15:30',
+                        'room' => 'Lab. 1',
+                    ]);
+                }
 
                 AttendanceRecord::updateOrCreate(
                     ['session_id' => $session->id, 'student_id' => $leave->student_id],

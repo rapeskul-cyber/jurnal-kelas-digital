@@ -13,7 +13,7 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $filter = $request->input('filter'); // Semua, UNREAD, JURNAL, SURAT_IZIN
+        $filter = $request->input('filter'); // ALL, UNREAD, JURNAL, SURAT_IZIN
 
         $query = Notification::where('user_id', $user->id)->latest();
 
