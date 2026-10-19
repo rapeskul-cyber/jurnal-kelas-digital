@@ -24,7 +24,7 @@
       </template>
     </AppHeader>
 
-    <main class="px-4 pb-6 space-y-5">
+    <main class="px-6 md:px-8 pb-10 space-y-6">
 
     <!-- Filter & Selectors -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-4 md:p-5 flex flex-wrap items-center justify-between gap-4">
@@ -44,9 +44,12 @@
           <select
             v-model="filterClass"
             @change="fetchData"
-            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white"
+            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
           >
             <option value="1">XI RPL 1 (Rekayasa Perangkat Lunak 1)</option>
+            <option value="2">XI RPL 2 (Rekayasa Perangkat Lunak 2)</option>
+            <option value="3">XII RPL 1 (Rekayasa Perangkat Lunak 1)</option>
+            <option value="4">XII RPL 2 (Rekayasa Perangkat Lunak 2)</option>
           </select>
         </div>
       </div>
@@ -86,9 +89,11 @@
         </div>
         <div class="mt-2 flex items-baseline gap-2">
           <span class="text-3xl font-extrabold text-green-600">{{ avgAttendance }}</span>
-          <span class="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full font-semibold">Sangat Baik</span>
+          <span class="text-xs px-2 py-0.5 rounded-full font-semibold" :class="predicateBadgeClass">
+            {{ predicate }}
+          </span>
         </div>
-        <p class="text-[11px] text-gray-400 mt-1">Target sekolah di atas 90% tercapai</p>
+        <p class="text-[11px] text-gray-400 mt-1">{{ targetNote }}</p>
       </div>
 
       <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-card">
@@ -186,8 +191,11 @@ const filterClass = ref('1')
 const searchQuery = ref('')
 const loading = ref(false)
 
-const effectiveDays = ref(108)
-const avgAttendance = ref('94.8%')
+const effectiveDays = ref(0)
+const avgAttendance = ref('0%')
+const predicate = ref('Sangat Baik')
+const targetNote = ref('Target sekolah di atas 90% tercapai')
+const predicateBadgeClass = ref('text-green-700 bg-green-50')
 const students = ref<any[]>([])
 
 const filteredStudents = computed(() => {
@@ -207,6 +215,9 @@ const fetchData = async () => {
     })
     effectiveDays.value = res.effective_days
     avgAttendance.value = res.average_attendance
+    if (res.predicate) predicate.value = res.predicate
+    if (res.target_note) targetNote.value = res.target_note
+    if (res.predicate_badge_class) predicateBadgeClass.value = res.predicate_badge_class
     students.value = res.students || []
   } catch (err: any) {
     console.error('Error fetching semester recap:', err)
@@ -216,7 +227,32 @@ const fetchData = async () => {
 }
 
 const exportExcel = () => {
-  alert('Mengunduh File Excel Rekapitulasi Presensi Semester 2025/2026... Berhasil!')
+  if (!filteredStudents.value || filteredStudents.value.length === 0) {
+    alert('Tidak ada data siswa untuk diekspor.')
+    return
+  }
+
+  const headers = ['No', 'Nama Siswa', 'NIS / NISN', 'Hadir', 'Sakit', 'Izin', 'Alpha', 'Persentase', 'Predikat']
+  const rows = filteredStudents.value.map((s, idx) => [
+    idx + 1,
+    `"${s.name}"`,
+    `"${s.nis}"`,
+    s.hadir,
+    s.sakit,
+    s.izin,
+    s.alpha,
+    `"${s.percentage}"`,
+    `"${parseFloat(s.percentage) >= 90 ? 'Sangat Baik' : 'Cukup'}"`
+  ])
+
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `rekap_presensi_semester_kelas_${filterClass.value}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 const printPdf = () => {

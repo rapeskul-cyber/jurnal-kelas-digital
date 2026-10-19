@@ -13,8 +13,9 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $filter = $request->input('filter'); // Semua, UNREAD, JURNAL, SURAT_IZIN
+        $filter = $request->input('filter', 'ALL');
 
+        // Allow both PRESENSI and other notification types
         $query = Notification::where('user_id', $user->id)->latest();
 
         if ($filter === 'UNREAD') {
@@ -23,16 +24,21 @@ class NotificationController extends Controller
             $query->where('type', 'JURNAL');
         } elseif ($filter === 'SURAT_IZIN') {
             $query->where('type', 'SURAT_IZIN');
+        } elseif ($filter === 'PRESENSI') {
+            $query->where('type', 'PRESENSI');
         }
 
         $notifications = $query->get()->map(function ($n) {
+            $isRead = !is_null($n->read_at);
             return [
                 'id' => $n->id,
-                'type' => $n->type,
                 'title' => $n->title,
                 'body' => $n->body,
-                'time_ago' => Carbon::parse($n->created_at)->diffForHumans(),
-                'is_read' => $n->read_at !== null,
+                'type' => $n->type,
+                'created_at' => $n->created_at ? $n->created_at->toISOString() : null,
+                'time' => $n->created_at ? $n->created_at->diffForHumans() : 'Baru saja',
+                'read' => $isRead,
+                'is_read' => $isRead,
             ];
         });
 
@@ -60,13 +66,11 @@ class NotificationController extends Controller
     public function auditLogs(Request $request)
     {
         $user = $request->user();
-        $query = AuditLog::with('user')->latest();
-
-        // If not GURU_PEMBIMBING, only see own logs
         if ($user->role !== 'GURU_PEMBIMBING') {
-            $query->where('user_id', $user->id);
+            return response()->json(['message' => 'Hanya Guru Pembimbing yang berhak mengakses log audit sistem.'], 403);
         }
 
+        $query = AuditLog::with('user')->latest();
         $logs = $query->take(50)->get()->map(function ($log) {
             return [
                 'id' => $log->id,
@@ -78,5 +82,23 @@ class NotificationController extends Controller
         });
 
         return response()->json($logs);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $user = $request->user();
+        $notification = Notification::where('user_id', $user->id)->where('id', $id)->first();
+        if (!$notification) {
+            return response()->json(['message' => 'Notifikasi tidak ditemukan'], 404);
+        }
+        $notification->delete();
+        return response()->json(['message' => 'Notifikasi berhasil dihapus']);
+    }
+
+    public function clearAll(Request $request)
+    {
+        $user = $request->user();
+        Notification::where('user_id', $user->id)->delete();
+        return response()->json(['message' => 'Semua riwayat notifikasi berhasil dibersihkan']);
     }
 }

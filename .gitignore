@@ -61,3 +61,6 @@ backend/bootstrap/cache/*
 *.docx
 *.doc
 PROMPT_ANTIGRAVITY_JURNAL_KELAS.md
+database.sqlite
+*.sqlite
+*.db

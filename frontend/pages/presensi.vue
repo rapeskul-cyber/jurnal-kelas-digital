@@ -5,10 +5,10 @@
       :subtitle="dateFormatted + ' • ' + (authStore.user?.school_class?.name || 'XI RPL 1')"
     />
 
-    <main class="px-4 pb-6 space-y-5">
+    <main class="px-4 sm:px-8 pb-8 space-y-6">
       <!-- 5 Summary Metric Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-2xs">
+        <div class="col-span-2 sm:col-span-1 bg-white border border-gray-150 rounded-2xl p-4 shadow-2xs">
           <p class="text-[11px] font-semibold text-gray-400 uppercase">Total Siswa</p>
           <p class="text-2xl font-bold text-gray-900 mt-1">{{ summary.total }}</p>
         </div>
@@ -53,11 +53,14 @@
       </div>
 
       <!-- Main Layout: Table + Verification Panel -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 min-w-0">
         <!-- Student Table (3 cols) -->
-        <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs flex flex-col justify-between">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+        <div class="lg:col-span-3 min-w-0 bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs flex flex-col justify-between overflow-hidden">
+          <div class="block sm:hidden mb-2 text-[10px] text-gray-400 font-medium">
+            ↔ Geser ke samping untuk memilih status kehadiran lengkap
+          </div>
+          <div class="overflow-x-auto pb-2 -mx-2 px-2">
+            <table class="w-full text-left text-xs min-w-[560px]">
               <thead>
                 <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100">
                   <th class="pb-3 font-semibold w-10">No</th>
@@ -153,55 +156,83 @@
           <div class="space-y-3 text-xs">
             <div class="flex items-center justify-between">
               <span class="text-gray-600">Sekretaris Kelas</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Selesai
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                :class="sessionStatus === 'LOCKED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600'"
+              >
+                {{ sessionStatus === 'LOCKED' ? 'Selesai Dikunci' : 'Draf Belum Dikunci' }}
               </span>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-gray-600">Guru Pengajar</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                Menunggu...
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                :class="verificationStatus === 'TERVERIFIKASI' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'"
+              >
+                {{ verificationStatus === 'TERVERIFIKASI' ? 'Terverifikasi' : 'Menunggu Pengesahan' }}
               </span>
             </div>
           </div>
 
-          <!-- PIN / Password Lock Input -->
-          <div class="space-y-2 pt-2 border-t border-gray-100">
-            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              PIN / Password Sekretaris
-            </label>
-            <input
-              v-model="pin"
-              type="password"
-              placeholder="••••••••••••"
-              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            />
-            <p class="text-[10px] text-gray-400">
-              Masukkan password akun Anda untuk mengunci presensi harian.
-            </p>
+          <!-- Aksi untuk Guru Pengajar / Pembimbing: Konfirmasi Langsung -->
+          <div v-if="authStore.user?.role === 'GURU_PENGAJAR' || authStore.user?.role === 'GURU_PEMBIMBING'" class="space-y-3 pt-2 border-t border-gray-100">
+            <div v-if="verificationStatus !== 'TERVERIFIKASI'">
+              <p class="text-[11px] text-gray-500 mb-2">Sebagai Guru Pengajar/Pembimbing, Anda dapat mengesahkan presensi harian kelas ini secara langsung:</p>
+              <button
+                type="button"
+                @click="handleConfirmTeacher"
+                :disabled="isSubmitting"
+                class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Check class="w-4 h-4" />
+                <span>Sahkan & Verifikasi Presensi</span>
+              </button>
+            </div>
+            <div v-else class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+              <Check class="w-4 h-4 text-emerald-600" />
+              <span>Presensi harian ini telah Anda verifikasi resmi.</span>
+            </div>
           </div>
 
-          <!-- Buttons -->
-          <div class="space-y-2 pt-2">
-            <button
-              type="button"
-              @click="handleLock"
-              :disabled="isSubmitting"
-              class="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Lock class="w-3.5 h-3.5" />
-              <span>Simpan & Kunci Presensi</span>
-            </button>
+          <!-- PIN / Password Lock Input (Hanya untuk Sekretaris) -->
+          <template v-else>
+            <div class="space-y-2 pt-2 border-t border-gray-100">
+              <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                PIN / Password Sekretaris
+              </label>
+              <input
+                v-model="pin"
+                type="password"
+                placeholder="••••••••••••"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+              <p class="text-[10px] text-gray-400">
+                Masukkan password akun Anda untuk mengunci presensi harian.
+              </p>
+            </div>
 
-            <button
-              type="button"
-              @click="handleDraft"
-              :disabled="isSubmitting"
-              class="w-full py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-            >
-              Simpan Draft
-            </button>
-          </div>
+            <!-- Buttons -->
+            <div class="space-y-2 pt-2">
+              <button
+                type="button"
+                @click="handleLock"
+                :disabled="isSubmitting || sessionStatus === 'LOCKED'"
+                class="w-full py-3 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Lock class="w-3.5 h-3.5" />
+                <span>{{ sessionStatus === 'LOCKED' ? 'Presensi Telah Dikunci' : 'Simpan & Kunci Presensi' }}</span>
+              </button>
+
+              <button
+                type="button"
+                @click="handleDraft"
+                :disabled="isSubmitting || sessionStatus === 'LOCKED'"
+                class="w-full py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Simpan Draft
+              </button>
+            </div>
+          </template>
 
           <!-- Feedback Toast -->
           <div v-if="toastMessage" class="p-3 rounded-xl text-xs" :class="toastError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
@@ -218,9 +249,20 @@ import { Check, Search, Lock } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
 const authStore = useAuthStore()
-const dateFormatted = ref('Rabu, 28 Agustus 2026')
+
+const now = new Date()
+const todayFormatted = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric'
+}).format(now)
+
+const dateFormatted = ref(todayFormatted)
 const searchQuery = ref('')
 const pin = ref('')
+const sessionStatus = ref('DRAFT')
+const verificationStatus = ref('BELUM_KONFIRMASI')
 const isSubmitting = ref(false)
 const toastMessage = ref('')
 const toastError = ref(false)
@@ -258,6 +300,19 @@ async function loadAttendance() {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
     students.value = res.students || []
+    if (res.session) {
+      sessionStatus.value = res.session.status || 'DRAFT'
+      verificationStatus.value = res.session.verification_status || 'BELUM_KONFIRMASI'
+      if (res.session.date) {
+        const d = new Date(res.session.date)
+        dateFormatted.value = new Intl.DateTimeFormat('id-ID', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }).format(d)
+      }
+    }
   } catch (e) {
     console.error(e)
   }
@@ -307,10 +362,35 @@ async function handleLock() {
       }
     })
     toastMessage.value = 'Presensi berhasil dikunci & terverifikasi tingkat sekretaris!'
+    sessionStatus.value = 'LOCKED'
+    verificationStatus.value = 'PENDING'
     pin.value = ''
   } catch (e: any) {
     toastError.value = true
     toastMessage.value = e?.data?.message || 'Gagal mengunci presensi. Periksa PIN/password Anda.'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+async function handleConfirmTeacher() {
+  isSubmitting.value = true
+  toastMessage.value = ''
+  toastError.value = false
+  try {
+    const res: any = await $fetch(`${authStore.apiBase}/attendance/confirm`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      body: {
+        class_id: authStore.user?.class_id || 1,
+        date: new Date().toISOString().split('T')[0],
+      }
+    })
+    toastMessage.value = res.message || 'Presensi harian berhasil disahkan!'
+    verificationStatus.value = 'TERVERIFIKASI'
+  } catch (e: any) {
+    toastError.value = true
+    toastMessage.value = e?.data?.message || 'Gagal mengesahkan presensi.'
   } finally {
     isSubmitting.value = false
   }

@@ -609,10 +609,26 @@ const selectedFile = ref<File | null>(null)
 const pendingCount = ref(3)
 const filledCount = ref(2)
 
-const publishedModules = ref([
-  { id: 1, title: 'Modul 04: Optimasi Query Relasional & Normalisasi 3NF', class: 'XI RPL 2 - Basis Data', filename: 'modul-basis-data-3nf.pdf' },
-  { id: 2, title: 'Jobsheet 06: Vue 3 Composition API & State Management', class: 'XI RPL 1 - Pemrograman Web', filename: 'jobsheet-vue3.pdf' }
-])
+const publishedModules = ref<any[]>([])
+
+const fetchPublishedModules = async () => {
+  try {
+    const res = await $fetch<any>(`${config.public.apiBase}/journals/material`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    if (list && list.length > 0) {
+      publishedModules.value = list.map((m: any) => ({
+        id: m.id,
+        title: m.topic || 'Modul Pembelajaran',
+        class: `${m.subject || 'Mata Pelajaran'} • ${m.date_time || 'Hari ini'}`,
+        filename: m.attachment_name || 'modul-belajar.pdf'
+      }))
+    }
+  } catch (err: any) {
+    console.warn('Fetch published modules note:', err)
+  }
+}
 
 const openAddScheduleModal = ref(false)
 const savingSchedule = ref(false)
@@ -723,13 +739,7 @@ const submitMaterial = async () => {
       body: formData
     })
 
-    const newMod = {
-      id: Date.now(),
-      title: materialForm.value.topic || 'Modul Pembelajaran Baru',
-      class: materialForm.value.schedule_id === '2' ? 'XI RPL 1 - Pemrograman Web' : 'XI RPL 2 - Basis Data',
-      filename: selectedFile.value?.name || 'materi-belajar.pdf'
-    }
-    publishedModules.value.unshift(newMod)
+    fetchPublishedModules()
     successMsg.value = 'Rencana pembelajaran dan berkas materi berhasil disimpan & dikirimkan ke siswa!'
     materialForm.value.topic = ''
     materialForm.value.assignment = ''
@@ -862,4 +872,7 @@ const submitFillJournal = async () => {
     savingFillJournal.value = false
   }
 }
+onMounted(() => {
+  fetchPublishedModules()
+})
 </script>

@@ -14,6 +14,11 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $currentUser = $request->user();
+        if ($currentUser->role !== 'GURU_PEMBIMBING') {
+            return response()->json(['message' => 'Hanya Guru Pembimbing yang berhak mengelola data pengguna.'], 403);
+        }
+
         $search = $request->input('search');
         $role = $request->input('role');
 
@@ -143,5 +148,66 @@ class UserController extends Controller
     public function getClasses()
     {
         return response()->json(SchoolClass::all());
+    }
+
+    public function update(Request $request, $id)
+    {
+        $currentUser = $request->user();
+        if ($currentUser->role !== 'GURU_PEMBIMBING') {
+            return response()->json(['message' => 'Hanya Guru Pembimbing yang berhak mengedit data pengguna.'], 403);
+        }
+
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string',
+            'nip_nis' => 'nullable|string',
+            'class_id' => 'nullable|exists:classes,id',
+            'role' => 'sometimes|required|in:SISWA,SEKRETARIS,GURU_PENGAJAR,GURU_PEMBIMBING',
+        ]);
+
+        $user->update($request->only(['name', 'email', 'phone', 'nip_nis', 'class_id', 'role']));
+
+        AuditLog::create([
+            'user_id' => $currentUser->id,
+            'action' => 'Memperbarui data pengguna: ' . $user->name . ' (' . $user->role . ')',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Data pengguna berhasil diperbarui',
+            'user' => $user,
+        ]);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $currentUser = $request->user();
+        if ($currentUser->role !== 'GURU_PEMBIMBING') {
+            return response()->json(['message' => 'Hanya Guru Pembimbing yang berhak menghapus pengguna.'], 403);
+        }
+
+        if ($currentUser->id == $id) {
+            return response()->json(['message' => 'Tidak dapat menghapus akun Anda sendiri.'], 422);
+        }
+
+        $user = User::findOrFail($id);
+        $userName = $user->name;
+        $userRole = $user->role;
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        AuditLog::create([
+            'user_id' => $currentUser->id,
+            'action' => 'Menghapus pengguna: ' . $userName . ' (' . $userRole . ')',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Pengguna berhasil dihapus',
+        ]);
     }
 }

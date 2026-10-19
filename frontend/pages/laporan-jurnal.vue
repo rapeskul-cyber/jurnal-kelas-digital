@@ -16,7 +16,7 @@
       </template>
     </AppHeader>
 
-    <main class="px-4 pb-6 space-y-5">
+    <main class="px-6 md:px-8 pb-10 space-y-6">
 
     <!-- Filter Card -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-4 md:p-5 flex flex-wrap items-center justify-between gap-4">
@@ -193,7 +193,10 @@ const pageSubtitle = computed(() => {
 
 const loading = ref(false)
 const journals = ref<any[]>([])
-const selectedMonth = ref('2026-10')
+
+const now = new Date()
+const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+const selectedMonth = ref(currentYearMonth)
 const statusFilter = ref('ALL')
 const searchQuery = ref('')
 const selectedJournal = ref<any | null>(null)
@@ -225,7 +228,29 @@ const fetchJournals = async () => {
 }
 
 const exportReport = () => {
-  alert('Mengunduh Laporan Lengkap Jurnal Kelas Digital (.CSV)... Selesai!')
+  if (!filteredJournals.value || filteredJournals.value.length === 0) {
+    alert('Tidak ada data jurnal kelas untuk diekspor pada filter ini.')
+    return
+  }
+
+  const headers = ['Tanggal & Waktu', 'Mata Pelajaran', 'Guru Pengajar', 'Rangkuman Aktivitas', 'Catatan', 'Status']
+  const rows = filteredJournals.value.map(j => [
+    `"${j.date_time || ''}"`,
+    `"${j.subject || ''}"`,
+    `"${j.teacher || ''}"`,
+    `"${(j.activity || '').replace(/"/g, '""')}"`,
+    `"${(j.notes || '').replace(/"/g, '""')}"`,
+    `"${j.status || ''}"`
+  ])
+
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `laporan_jurnal_kelas_${selectedMonth.value}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 onMounted(() => {

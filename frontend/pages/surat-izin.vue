@@ -130,6 +130,39 @@
             ></textarea>
           </div>
 
+          <!-- Unggah Berkas Bukti Fisik / Surat Dokter (Opsional) -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+              Unggah Berkas Bukti Fisik (Opsional)
+            </label>
+            <div class="flex items-center gap-2">
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg"
+                @change="handleFileChange"
+                class="hidden"
+              />
+              <button
+                type="button"
+                @click="fileInputRef?.click()"
+                class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition"
+              >
+                <UploadCloudIcon class="w-4 h-4 text-brand-red" />
+                <span>{{ selectedFile ? selectedFile.name : 'Pilih Berkas (PDF, JPG, PNG)' }}</span>
+              </button>
+              <button
+                v-if="selectedFile"
+                type="button"
+                @click="selectedFile = null"
+                class="text-xs text-red-600 hover:underline font-semibold"
+              >
+                Batal
+              </button>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-1">Maksimal 5 MB. Bukti surat keterangan dokter atau surat dinas/kegiatan.</p>
+          </div>
+
           <!-- Tanda Tangan Canvas -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
@@ -235,11 +268,22 @@ import {
   Mail as MailIcon,
   CheckCircle2 as CheckCircle2Icon,
   Send as SendIcon,
-  RefreshCw as RefreshCwIcon
+  RefreshCw as RefreshCwIcon,
+  UploadCloud as UploadCloudIcon
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const selectedFile = ref<File | null>(null)
+
+const handleFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    selectedFile.value = target.files[0]
+  }
+}
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let isDrawing = false
@@ -374,14 +418,33 @@ const handleSubmit = async () => {
   submitting.value = true
   successMsg.value = ''
   try {
-    await $fetch(`${config.public.apiBase}/leave-requests`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${authStore.token}` },
-      body: form.value
-    })
+    if (selectedFile.value) {
+      const formData = new FormData()
+      formData.append('student_id', form.value.student_id)
+      formData.append('type', form.value.type)
+      formData.append('start_date', form.value.start_date)
+      formData.append('end_date', form.value.end_date)
+      formData.append('reason', form.value.reason)
+      if (form.value.signature) formData.append('signature', form.value.signature)
+      formData.append('file', selectedFile.value)
+
+      await $fetch(`${config.public.apiBase}/leave-requests`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authStore.token}` },
+        body: formData
+      })
+    } else {
+      await $fetch(`${config.public.apiBase}/leave-requests`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authStore.token}` },
+        body: form.value
+      })
+    }
     successMsg.value = 'Permohonan surat izin berhasil dikirimkan ke Guru Pembimbing!'
     form.value.student_id = ''
     form.value.reason = ''
+    selectedFile.value = null
+    if (fileInputRef.value) fileInputRef.value.value = ''
     clearCanvas()
     await fetchLeaves()
   } catch (err: any) {

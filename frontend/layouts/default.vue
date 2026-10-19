@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen bg-[#FAFAFA] flex flex-col antialiased">
-    <!-- Main Content Area (mobile-first: header in page, bottom nav fixed) -->
-    <div class="flex-1 flex flex-col pb-20">
+    <!-- Mobile Top Bar & Bottom Navigation -->
+    <MobileNav />
+
+    <!-- Main Content Area: Padding top 16 (4rem) untuk top bar mobile, padding bottom 24 (6rem) agar konten tidak tertutup bottom navbar -->
+    <div class="flex-1 flex flex-col pt-16 pb-24">
       <slot />
     </div>
-
-    <!-- Bottom Navigation -->
-    <MobileNav />
   </div>
 </template>
 

@@ -79,7 +79,97 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = $request->user()->load('schoolClass');
+        // Update session if user updates profile
+        if ($request->has('name')) $user->name = $request->name;
+        if ($request->has('phone')) $user->phone = $request->phone;
+        $user->save();
+
         return response()->json($user);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'phone' => 'nullable|string|max:20',
+            'old_password' => 'nullable|string',
+            'new_password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        if ($request->filled('old_password')) {
+            if (!Hash::check($request->old_password, $user->password)) {
+                return response()->json(['message' => 'Kata sandi lama Anda tidak sesuai.'], 422);
+            }
+            if ($request->filled('new_password')) {
+                $user->password = Hash::make($request->new_password);
+            }
+        }
+
+        $user->name = $request->name;
+        if ($request->has('phone')) {
+            $user->phone = $request->phone;
+        }
+        $user->save();
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'Memperbarui profil akun & kontak',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui',
+            'user' => $user->fresh()->load('schoolClass'),
+        ]);
+    }
+
+    public function waStatus(Request $request)
+    {
+        if ($request->user()->role !== 'GURU_PEMBIMBING') {
+            return response()->json(['message' => 'Unauthorized: Hanya Guru Pembimbing yang berhak mengakses WhatsApp Gateway.'], 403);
+        }
+        try {
+            $resp = \Illuminate\Support\Facades\Http::timeout(3)
+                ->withHeaders(['x-admin-token' => 'rapiuw-admin-secret-2026'])
+                ->get('http://127.0.0.1:3000/api/device/status');
+            return response()->json($resp->json() ?? ['status' => false]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function waPairingCode(Request $request)
+    {
+        if ($request->user()->role !== 'GURU_PEMBIMBING') {
+            return response()->json(['message' => 'Unauthorized: Hanya Guru Pembimbing yang berhak mengelola WhatsApp Gateway.'], 403);
+        }
+        $request->validate(['phone' => 'required|string']);
+        try {
+            $resp = \Illuminate\Support\Facades\Http::timeout(50)
+                ->withHeaders(['x-admin-token' => 'rapiuw-admin-secret-2026'])
+                ->post('http://127.0.0.1:3000/api/device/pairing-code', [
+                    'phone' => $request->phone
+                ]);
+            return response()->json($resp->json(), $resp->status());
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function waLogout(Request $request)
+    {
+        if ($request->user()->role !== 'GURU_PEMBIMBING') {
+            return response()->json(['message' => 'Unauthorized: Hanya Guru Pembimbing yang berhak memutuskan WhatsApp Gateway.'], 403);
+        }
+        try {
+            $resp = \Illuminate\Support\Facades\Http::timeout(5)
+                ->withHeaders(['x-admin-token' => 'rapiuw-admin-secret-2026'])
+                ->post('http://127.0.0.1:3000/api/device/logout');
+            return response()->json($resp->json() ?? ['status' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     public function logout(Request $request)
@@ -126,17 +216,51 @@ class AuthController extends Controller
             'attempts' => 0,
         ]);
 
-        // ConsoleOtpSender (as required by prompt)
+        // ConsoleOtpSender & Self-Hosted Fonte / Fonnte WhatsApp Gateway
         Log::info("=== [CONSOLE OTP SENDER] ===");
         Log::info("Tujuan: {$user->phone} ({$user->name})");
         Log::info("Kode OTP: {$otp}");
         Log::info("============================");
+
+        $waGatewayUrl = env('WA_GATEWAY_URL', 'http://127.0.0.1:3000/api/send');
+        $waGatewayToken = env('WA_GATEWAY_TOKEN', env('FONNTE_TOKEN', 'rapiuw-82cfac01ed88f6676d8f4c49de902697'));
+        $waSent = false;
+        $waError = null;
+
+        // Cegah pengiriman WA ke nomor dummy contoh/seeder (cth: 0812345678xx / 0858000000xx)
+        $isDummyPhone = preg_match('/^(62812345678|62858000000|0812345678|0858000000)/', (string) $user->phone);
+
+        if ($isDummyPhone) {
+            Log::info("Sandbox Testing: Nomor {$user->phone} adalah dummy testing. Pengiriman WA ril dibatalkan.");
+            $waSent = true;
+            $waError = 'Mode Uji: Nomor dummy tidak dikirim ke WhatsApp publik';
+        } elseif ($waGatewayUrl && $user->phone) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout(5)
+                    ->withHeaders([
+                        'Authorization' => "Bearer {$waGatewayToken}",
+                    ])->post($waGatewayUrl, [
+                        'target' => $user->phone,
+                        'message' => "🔒 *KODE OTP JURNAL KELAS*\n\nKode verifikasi Anda adalah: *{$otp}*\n\nKode ini berlaku selama 5 menit. JANGAN bagikan kode ini kepada siapa pun.",
+                    ]);
+                $waSent = $response->successful() && ($response->json('status') === true);
+                if (!$waSent) {
+                    $waError = $response->json('message') ?? 'Respon gateway tidak berhasil';
+                }
+            } catch (\Exception $e) {
+                Log::warning("Self-hosted WA Gateway gagal: " . $e->getMessage());
+                $waError = $e->getMessage();
+            }
+        }
 
         return response()->json([
             'masked_email' => $this->maskEmail($user->email),
             'masked_phone' => $this->maskPhone($user->phone ?? '6285812343414'),
             'cooldown' => 60,
             'expires_in_minutes' => 5,
+            'otp_preview' => config('app.debug') ? $otp : null,
+            'wa_gateway_active' => $waSent,
+            'wa_gateway_note' => $waSent ? 'Terkirim via Fonte Gateway mandiri' : ($waError ? "Gateway lokal belum terhubung ke nomor WA: {$waError}" : 'Gateway siap'),
         ]);
     }
 

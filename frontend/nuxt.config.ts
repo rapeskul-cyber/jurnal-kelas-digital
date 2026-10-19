@@ -33,7 +33,14 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api'
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api'
+    }
+  },
+  nitro: {
+    routeRules: {
+      '/api/**': { proxy: 'http://127.0.0.1:8020/api/**' },
+      '/storage/**': { proxy: 'http://127.0.0.1:8020/storage/**' },
+      '/wa-gateway/**': { proxy: 'http://127.0.0.1:3000/**' }
     }
   }
 })

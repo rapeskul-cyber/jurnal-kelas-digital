@@ -44,7 +44,8 @@ class LeaveRequestController extends Controller
                 'recipient' => $lv->recipient,
                 'reason' => $lv->reason,
                 'status' => $lv->status,
-                'attachment' => $lv->attachment_path ? 'surat_dokter.pdf' : null,
+                'attachment' => $lv->attachment_path ? basename($lv->attachment_path) : null,
+                'attachment_url' => $lv->attachment_path ? url('storage/' . $lv->attachment_path) : null,
                 'review_note' => $lv->review_note,
                 'reviewer_name' => $lv->reviewer->name ?? null,
             ];
@@ -65,6 +66,11 @@ class LeaveRequestController extends Controller
             'signature' => 'nullable|string',
         ]);
 
+        $path = null;
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('leave_attachments', 'public');
+        }
+
         $leave = LeaveRequest::create([
             'student_id' => $request->student_id,
             'submitted_by_id' => $user->id,
@@ -73,6 +79,7 @@ class LeaveRequestController extends Controller
             'end_date' => $request->end_date,
             'recipient' => $request->recipient ?: 'Guru Pembimbing Sekolah / Wali Kelas',
             'reason' => $request->reason,
+            'attachment_path' => $path,
             'signature' => $request->signature,
             'status' => 'PENDING',
         ]);
@@ -104,6 +111,9 @@ class LeaveRequestController extends Controller
     public function review(Request $request, $id)
     {
         $user = $request->user();
+        if ($user->role !== 'GURU_PEMBIMBING') {
+            return response()->json(['message' => 'Hanya Guru Pembimbing yang berhak memverifikasi surat izin.'], 403);
+        }
         $request->validate([
             'status' => 'required|in:APPROVED,REJECTED',
             'review_note' => 'nullable|string',
@@ -128,10 +138,22 @@ class LeaveRequestController extends Controller
             for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
                 if ($date->isWeekend()) continue;
 
-                $session = AttendanceSession::firstOrCreate(
-                    ['class_id' => $leave->student->class_id ?? 1, 'date' => $date->toDateString()],
-                    ['status' => 'DRAFT', 'verification_status' => 'BELUM_KONFIRMASI']
-                );
+                $classId = $leave->student->class_id ?? 1;
+                $dateStr = $date->toDateString();
+                $session = AttendanceSession::where('class_id', $classId)
+                    ->whereDate('date', $dateStr)
+                    ->first();
+
+                if (!$session) {
+                    $session = AttendanceSession::create([
+                        'class_id' => $classId,
+                        'date' => $dateStr,
+                        'status' => 'DRAFT',
+                        'verification_status' => 'BELUM_KONFIRMASI',
+                        'school_hours' => '07:30 - 15:30',
+                        'room' => 'Lab. 1',
+                    ]);
+                }
 
                 AttendanceRecord::updateOrCreate(
                     ['session_id' => $session->id, 'student_id' => $leave->student_id],
@@ -162,5 +184,34 @@ class LeaveRequestController extends Controller
         ]);
 
         return response()->json(['message' => 'Status surat izin berhasil diperbarui']);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $user = $request->user();
+        $leave = LeaveRequest::findOrFail($id);
+
+        // Siswa only their own, Sekretaris or Guru Pembimbing
+        if ($user->role === 'SISWA' && $leave->student_id !== $user->id) {
+            return response()->json(['message' => 'Anda tidak memiliki hak untuk membatalkan izin ini.'], 403);
+        }
+
+        if ($user->role !== 'GURU_PEMBIMBING' && $leave->status !== 'PENDING') {
+            return response()->json(['message' => 'Surat izin yang telah diproses tidak dapat dibatalkan.'], 422);
+        }
+
+        if ($leave->attachment_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($leave->attachment_path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($leave->attachment_path);
+        }
+
+        $leave->delete();
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'Membatalkan permohonan surat izin ID #' . $id,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json(['message' => 'Permohonan surat izin berhasil dibatalkan']);
     }
 }

@@ -6,20 +6,6 @@
   body {
     @apply bg-[#FAFAFA] text-gray-800 antialiased font-sans;
     -webkit-tap-highlight-color: transparent;
-    overscroll-behavior-y: none;
-  }
-
-  /* Mobile: prevent iOS auto-zoom when focusing inputs (font-size < 16px) */
-  input,
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
-
-  /* Mobile: comfortable tap feedback on tables/cards */
-  a,
-  button {
-    touch-action: manipulation;
   }
 }
 
@@ -37,4 +23,20 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Print Optimization for Academic Reports */
+@media print {
+  aside, header, nav, .no-print, button, input[type="button"], a[href="/notifikasi"] {
+    display: none !important;
+  }
+  body, main {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .shadow-card, .shadow-2xs, .shadow-xs, .border {
+    box-shadow: none !important;
+    border-color: #e5e7eb !important;
+  }
 }
