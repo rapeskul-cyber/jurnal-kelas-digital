@@ -17,14 +17,14 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-3 flex-shrink-0">
+    <div class="flex items-center gap-2">
       <slot name="actions" />
 
-      <!-- Notification Bell -->
+      <!-- Notification Bell (Hanya tampil di Desktop, di Mobile sudah ada di Top Bar MobileNav) -->
       <NuxtLink
         v-if="!hideNotifications"
         to="/notifikasi"
-        class="relative w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:border-gray-300 transition shadow-2xs"
+        class="hidden md:flex relative w-10 h-10 rounded-xl bg-white border border-gray-200 items-center justify-center text-gray-600 hover:text-gray-900 hover:border-gray-300 transition shadow-2xs"
         title="Pemberitahuan"
       >
         <Bell class="w-5 h-5" />
@@ -36,12 +36,12 @@
         </span>
       </NuxtLink>
 
-      <!-- Logout Button -->
+      <!-- Logout Button (Hanya tampil di Desktop, di Mobile sudah ada di Top Bar MobileNav) -->
       <button
         v-if="!hideLogout"
         @click="handleLogout"
         type="button"
-        class="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 hover:border-red-200 hover:text-primary rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
+        class="hidden md:flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 hover:border-red-200 hover:text-primary rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
       >
         <LogOut class="w-4 h-4" />
         <span class="hidden sm:inline">Keluar</span>
