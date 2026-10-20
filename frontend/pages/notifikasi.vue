@@ -324,7 +324,12 @@ const handleNotificationClick = async (item: any) => {
     } else if (role === 'GURU_PENGAJAR') {
       navigateTo('/jurnal-materi')
     } else if (role === 'SEKRETARIS') {
-      navigateTo('/jurnal-kelas')
+      // Jika notifikasi tentang materi baru pembelajaran, arahkan ke jurnal-pelajaran seperti siswa
+      if (title.includes('materi') || body.includes('materi') || title.includes('tugas') || body.includes('tugas')) {
+        navigateTo('/jurnal-pelajaran')
+      } else {
+        navigateTo('/jurnal-kelas')
+      }
     } else {
       navigateTo('/laporan-jurnal')
     }

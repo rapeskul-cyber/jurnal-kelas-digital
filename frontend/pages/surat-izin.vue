@@ -34,7 +34,8 @@
               Pilih Siswa
             </label>
             <select
-              v-model="form.student_id"
+              :value="form.student_id"
+              @change="(e: any) => form.student_id = Number(e.target.value) || e.target.value"
               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white"
               required
             >
@@ -411,16 +412,17 @@ const fetchLeaves = async () => {
 }
 
 const handleSubmit = async () => {
-  if (!form.value.student_id) {
+  if (!form.value.student_id || form.value.student_id === '') {
     alert('Pilih siswa terlebih dahulu')
     return
   }
   submitting.value = true
   successMsg.value = ''
   try {
+    const studentIdNum = Number(form.value.student_id)
     if (selectedFile.value) {
       const formData = new FormData()
-      formData.append('student_id', form.value.student_id)
+      formData.append('student_id', String(studentIdNum))
       formData.append('type', form.value.type)
       formData.append('start_date', form.value.start_date)
       formData.append('end_date', form.value.end_date)
@@ -437,7 +439,10 @@ const handleSubmit = async () => {
       await $fetch(`${config.public.apiBase}/leave-requests`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${authStore.token}` },
-        body: form.value
+        body: {
+          ...form.value,
+          student_id: studentIdNum
+        }
       })
     }
     successMsg.value = 'Permohonan surat izin berhasil dikirimkan ke Guru Pembimbing!'
