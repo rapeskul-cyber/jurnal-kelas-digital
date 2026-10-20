@@ -1,7 +1,7 @@
 <template>
-  <div class="md:hidden">
+  <div>
     <!-- Top Mobile Bar -->
-    <div class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 px-4 flex items-center justify-between z-30">
+    <div class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 px-4 flex items-center justify-between z-40 shadow-xs">
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
           <Book class="w-4 h-4" />
@@ -25,8 +25,8 @@
       </div>
     </div>
 
-    <!-- Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 flex items-center justify-around z-30 shadow-lg pb-safe">
+    <!-- Bottom Navigation Bar: Menggunakan z-40 agar selalu di atas tabel/konten halaman -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 flex items-center justify-around z-40 shadow-lg pb-safe">
       <NuxtLink
         v-for="item in primaryMenus"
         :key="item.to"
@@ -49,8 +49,8 @@
       </button>
     </nav>
 
-    <!-- More Sheet Modal -->
-    <div v-if="showMore" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs flex items-end">
+    <!-- More Sheet Modal: z-50 agar di atas bottom nav -->
+    <div v-if="showMore" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end">
       <div class="w-full bg-white rounded-t-3xl p-6 shadow-2xl space-y-3 max-h-[70vh] overflow-y-auto">
         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
           <h3 class="font-bold text-gray-900 text-sm">Menu Lainnya</h3>
