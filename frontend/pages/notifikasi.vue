@@ -148,6 +148,9 @@
                 <span v-if="!item.is_read" class="text-[10px] font-semibold text-brand-red bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
                   Belum Dibaca
                 </span>
+                <span v-else class="text-[10px] font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-200">
+                  Sudah Dibaca
+                </span>
               </div>
             </div>
           </div>

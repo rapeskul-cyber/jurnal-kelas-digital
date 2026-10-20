@@ -872,7 +872,29 @@ const submitFillJournal = async () => {
     savingFillJournal.value = false
   }
 }
+const fetchLiveJournals = async () => {
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/journals/class`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    const list = res.data || res || []
+    if (list && list.length > 0) {
+      scheduleItems.value = list.map((j: any) => ({
+        id: j.id,
+        time: j.date_time || '07:30 - 09:00',
+        subject: j.subject || 'Mata Pelajaran',
+        status: j.status === 'TERVERIFIKASI' ? 'Terverifikasi' : 'Menunggu',
+        topic: j.topic || j.activity || 'Materi KBM',
+        notes: j.notes || 'Catatan pembelajaran'
+      }))
+    }
+  } catch (err: any) {
+    console.warn('Error fetching live journals:', err)
+  }
+}
+
 onMounted(() => {
   fetchPublishedModules()
+  fetchLiveJournals()
 })
 </script>

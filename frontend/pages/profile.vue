@@ -96,7 +96,15 @@
           </div>
 
           <div class="pt-4 border-t border-gray-100">
-            <h4 class="text-xs font-bold text-gray-900 mb-3">Ubah Kata Sandi (Opsional)</h4>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-xs font-bold text-gray-900">Ubah Kata Sandi (Opsional)</h4>
+              <NuxtLink
+                to="/forgot-password"
+                class="text-[11px] font-semibold text-primary hover:underline"
+              >
+                Lupa sandi saat ini? Coba via OTP WhatsApp / SMS
+              </NuxtLink>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label class="block text-xs text-gray-600 mb-1">Kata Sandi Saat Ini</label>

@@ -15,12 +15,12 @@
           <span>Isi Jurnal KBM</span>
         </button>
         <button
-          @click="exportPdf"
+          @click="showAddJournalModal = true"
           type="button"
-          class="px-3.5 py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-xs font-semibold flex items-center gap-2 shadow-2xs cursor-pointer"
+          class="px-3.5 py-2 rounded-xl bg-brand-red text-white hover:bg-brand-red-dark transition-colors text-xs font-semibold flex items-center gap-2 shadow-2xs cursor-pointer"
         >
-          <FileTextIcon class="w-3.5 h-3.5" />
-          <span>Export PDF</span>
+          <PlusIcon class="w-3.5 h-3.5" />
+          <span>Isi Jurnal KBM</span>
         </button>
       </template>
     </AppHeader>
@@ -34,7 +34,7 @@
         </div>
         <button @click="successMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer">✕</button>
       </div>
-      <!-- Filter Controls: Tanggal, Kelas, Export PDF -->
+      <!-- Filter Controls: Tanggal, Kelas, Export PDF & Excel -->
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
           <!-- Filter Tanggal -->
@@ -70,14 +70,24 @@
           </div>
         </div>
 
-        <button
-          @click="exportPdf"
-          type="button"
-          class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-xs font-semibold shadow-2xs cursor-pointer"
-        >
-          <DownloadIcon class="w-3.5 h-3.5" />
-          <span>Export PDF</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportPdf"
+            type="button"
+            class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-xs font-semibold shadow-2xs cursor-pointer"
+          >
+            <DownloadIcon class="w-3.5 h-3.5" />
+            <span>Export PDF</span>
+          </button>
+          <button
+            @click="exportExcel"
+            type="button"
+            class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors text-xs font-semibold shadow-2xs cursor-pointer"
+          >
+            <FileSpreadsheetIcon class="w-3.5 h-3.5" />
+            <span>Export Excel</span>
+          </button>
+        </div>
       </div>
 
       <!-- 4 Stat Summary Cards (Hadir, Sakit, Izin, Alfa) -->
@@ -491,6 +501,25 @@ const fetchRecap = async () => {
 
 const exportPdf = () => {
   window.print()
+}
+
+const exportExcel = () => {
+  const header = ['No', 'Nama Siswa', 'NIS', 'Status', 'Catatan']
+  const rows = records.value.map((r: any, idx: number) => [
+    idx + 1,
+    `"${r.student?.name || r.name || '-'}"`,
+    `"${r.student?.nis || r.nis || '-'}"`,
+    `"${r.status || '-'}"`,
+    `"${r.notes || '-'}"`
+  ])
+  const csvContent = 'data:text/csv;charset=utf-8,' + [header.join(','), ...rows.map((e: any) => e.join(','))].join('\n')
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `rekap_jurnal_kelas_${filterDate.value}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 onMounted(() => {

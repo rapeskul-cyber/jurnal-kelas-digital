@@ -164,38 +164,6 @@
             <p class="text-[11px] text-gray-400 mt-1">Maksimal 5 MB. Bukti surat keterangan dokter atau surat dinas/kegiatan.</p>
           </div>
 
-          <!-- Tanda Tangan Canvas -->
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Tanda Tangan Pemohon
-              </label>
-              <button
-                type="button"
-                @click="clearCanvas"
-                class="text-[11px] text-brand-red hover:underline font-semibold"
-              >
-                Hapus Tanda Tangan
-              </button>
-            </div>
-            <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50/50">
-              <canvas
-                ref="canvasRef"
-                width="400"
-                height="120"
-                class="w-full h-28 touch-none cursor-crosshair bg-white"
-                @mousedown="startDrawing"
-                @mousemove="draw"
-                @mouseup="stopDrawing"
-                @mouseleave="stopDrawing"
-                @touchstart="startDrawingTouch"
-                @touchmove="drawTouch"
-                @touchend="stopDrawing"
-              ></canvas>
-            </div>
-            <p class="text-[11px] text-gray-400 mt-1">Goreskan tanda tangan digital langsung pada kotak di atas.</p>
-          </div>
-
           <button
             type="submit"
             :disabled="submitting"

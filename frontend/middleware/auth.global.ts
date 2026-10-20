@@ -3,10 +3,9 @@ import { useAuthStore } from '~/stores/auth'
 const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
   SISWA: [
     '/dashboard',
-    '/profile',
     '/jurnal-pelajaran',
     '/riwayat-kehadiran',
-    '/surat-izin',
+    '/profile',
     '/notifikasi',
   ],
   SEKRETARIS: [

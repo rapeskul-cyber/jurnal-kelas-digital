@@ -9,7 +9,6 @@ export const ROLE_MENUS: Record<string, MenuItem[]> = {
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
     { name: 'Jurnal Pelajaran', to: '/jurnal-pelajaran', icon: 'BookOpen' },
     { name: 'Riwayat Kehadiran', to: '/riwayat-kehadiran', icon: 'CalendarCheck' },
-    { name: 'Surat Izin', to: '/surat-izin', icon: 'FileSpreadsheet' },
   ],
   SEKRETARIS: [
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
