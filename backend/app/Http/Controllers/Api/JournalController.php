@@ -138,12 +138,12 @@ class JournalController extends Controller
 
         // Notify teacher of the schedule
         $schedule = Schedule::find($request->schedule_id);
-        if ($schedule && $schedule->teacher_id) {
+        if ($schedule && $schedule->teacher_id && $schedule->teacher_id != $user->id) {
             Notification::create([
                 'user_id' => $schedule->teacher_id,
                 'type' => 'JURNAL',
                 'title' => 'Jurnal Kelas Baru Menunggu Konfirmasi',
-                'body' => 'Sekretaris telah mengisi jurnal kelas untuk ' . ($schedule->subject->name ?? 'mapel Anda') . '.',
+                'body' => ($user->role === 'SEKRETARIS' ? 'Sekretaris' : 'Guru') . ' telah mengisi jurnal kelas untuk ' . ($schedule->subject->name ?? 'mapel Anda') . '.',
             ]);
         }
 

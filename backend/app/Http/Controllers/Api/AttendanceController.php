@@ -41,6 +41,43 @@ class AttendanceController extends Controller
                     'attachment_path' => $r->attachment_path,
                 ];
             }
+        } else {
+            // Jika belum ada sesi yang disimpan pada tanggal tersebut, jangan isi otomatis data
+            // Cek apakah tanggal di masa depan
+            $isFuture = \Carbon\Carbon::parse($date)->isFuture();
+            if ($isFuture) {
+                // Hari depan belum dilalui -> status kosong / tanda strip
+                $list = $students->map(function ($std, $idx) {
+                    return [
+                        'no' => $idx + 1,
+                        'student_id' => $std->id,
+                        'name' => $std->name,
+                        'nis' => $std->nip_nis ?? '-',
+                        'status' => '-',
+                        'note' => 'Belum dilaksanakan',
+                        'attachment' => null,
+                    ];
+                });
+
+                return response()->json([
+                    'session' => [
+                        'id' => null,
+                        'date' => $date,
+                        'status' => 'UNOPENED',
+                        'verification_status' => 'BELUM_DIBUKA',
+                        'school_hours' => '07:30 - 15:30',
+                        'room' => 'Lab. 1',
+                    ],
+                    'summary' => [
+                        'total' => $list->count(),
+                        'hadir' => 0,
+                        'sakit' => 0,
+                        'izin' => 0,
+                        'alpha' => 0,
+                    ],
+                    'students' => $list,
+                ]);
+            }
         }
 
         $list = $students->map(function ($std, $idx) use ($recordsMap) {

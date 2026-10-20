@@ -119,21 +119,28 @@
             </div>
           </div>
 
-          <!-- Lampiran / Tanda Tangan -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/50">
-              <span class="text-[11px] font-semibold text-gray-500 block mb-1">Lampiran Dokumen</span>
-              <div class="flex items-center gap-2 text-xs font-semibold text-blue-600 bg-white p-2.5 rounded-lg border border-gray-200">
-                <FileTextIcon class="w-4 h-4 text-blue-500" />
-                <span>{{ selectedItem.attachment || 'surat_keterangan.pdf' }}</span>
+          <!-- Lampiran Dokumen -->
+          <div class="pt-1">
+            <div class="p-3.5 rounded-xl border border-gray-150 bg-gray-50/50">
+              <span class="text-[11px] font-semibold text-gray-500 block mb-1.5">Lampiran Dokumen Bukti Izin/Sakit</span>
+              <div v-if="selectedItem.file_url || selectedItem.attachment" class="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-200 shadow-2xs">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <FileTextIcon class="w-5 h-5 text-brand-red shrink-0" />
+                  <span class="text-xs font-bold text-gray-800 truncate">
+                    {{ selectedItem.attachment || 'berkas_bukti_izin.pdf' }}
+                  </span>
+                </div>
+                <a
+                  :href="selectedItem.file_url || `/storage/${selectedItem.attachment}`"
+                  target="_blank"
+                  download
+                  class="px-3 py-1.5 bg-brand-red hover:bg-brand-red-dark text-white text-[11px] font-semibold rounded-lg shadow-2xs transition shrink-0 flex items-center gap-1"
+                >
+                  <span>Buka / Unduh</span>
+                </a>
               </div>
-            </div>
-
-            <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/50">
-              <span class="text-[11px] font-semibold text-gray-500 block mb-1">Tanda Tangan Pemohon</span>
-              <div class="h-14 bg-white rounded-lg border border-gray-200 flex items-center justify-center p-1">
-                <img v-if="selectedItem.signature" :src="selectedItem.signature" class="max-h-12 object-contain" alt="Tanda Tangan Digital" />
-                <span v-else class="text-xs italic text-gray-400">Tanda tangan digital terverifikasi</span>
+              <div v-else class="text-xs text-gray-400 italic py-2">
+                Tidak ada file berkas fisik yang dilampirkan.
               </div>
             </div>
           </div>

@@ -126,15 +126,30 @@ class DashboardController extends Controller
                 ];
             }
         } else {
+            // Ambil surat izin yang disetujui hari ini untuk siswa di kelas ini
+            $approvedLeaves = \App\Models\LeaveRequest::where('status', 'APPROVED')
+                ->whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today)
+                ->pluck('type', 'student_id')
+                ->toArray();
+
             foreach ($students as $idx => $std) {
-                $hadir++;
+                $status = 'HADIR';
+                if (isset($approvedLeaves[$std->id])) {
+                    $status = strtoupper($approvedLeaves[$std->id]) === 'SAKIT' ? 'SAKIT' : 'IZIN';
+                }
+
+                if ($status === 'HADIR') $hadir++;
+                elseif ($status === 'SAKIT') $sakit++;
+                elseif ($status === 'IZIN') $izin++;
+
                 $attendanceList[] = [
                     'no' => $idx + 1,
                     'student_id' => $std->id,
                     'name' => $std->name,
                     'nis' => $std->nip_nis ?? '-',
-                    'status' => 'HADIR',
-                    'note' => null,
+                    'status' => $status,
+                    'note' => isset($approvedLeaves[$std->id]) ? 'Surat izin disetujui' : null,
                     'verified' => false,
                 ];
             }

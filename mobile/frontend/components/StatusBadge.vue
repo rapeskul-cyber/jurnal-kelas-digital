@@ -77,9 +77,10 @@ const labelText = computed(() => {
   const s = props.status || ''
   if (s === 'APPROVED') return 'Disetujui'
   if (s === 'REJECTED') return 'Ditolak'
-  if (s === 'PENDING') return 'Pending'
+  if (s === 'PENDING') return 'Menunggu Konfirmasi Guru Pengajar'
   if (s === 'TERVERIFIKASI') return 'Terverifikasi'
-  if (s === 'BELUM_KONFIRMASI') return 'Belum Konfirmasi'
+  if (s === 'BELUM_KONFIRMASI') return 'Menunggu Konfirmasi Guru'
+  if (s === 'MENUNGGU' || s === 'MENUNGGU KONFIRMASI') return 'Menunggu Konfirmasi Guru Pengajar'
   return s
 })
 </script>

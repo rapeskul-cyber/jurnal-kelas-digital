@@ -376,19 +376,18 @@ const filteredUsers = computed(() => {
 const fetchUsers = async () => {
   loadingUsers.value = true
   try {
-    const res: any = await $fetch(`${config.public.apiBase}/users`, {
+    const res: any = await $fetch(`${config.public.apiBase}/users?per_page=100`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
-    if (res.data && res.data.length > 0) {
-      users.value = res.data.map((u: any) => ({
+    const userList = res.data || res || []
+    if (userList.length > 0) {
+      users.value = userList.map((u: any) => ({
         ...u,
-        class_name: u.school_class?.name || '-'
+        class_name: u.school_class?.name || (u.class_id ? 'XI RPL 1' : '-')
       }))
-    } else {
-      users.value = defaultMockUsers
     }
   } catch (err: any) {
-    users.value = defaultMockUsers
+    console.error('Failed to fetch users:', err)
   } finally {
     loadingUsers.value = false
   }
