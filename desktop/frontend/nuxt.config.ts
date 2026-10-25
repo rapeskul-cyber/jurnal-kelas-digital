@@ -1,5 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  ssr: false,
+  devServer: {
+    port: 3001
+  },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
   srcDir: '.',
@@ -31,6 +35,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api'
+    }
+  },
+  nitro: {
+    routeRules: {
+      '/api/**': { proxy: (process.env.BACKEND_PROXY_URL || 'http://127.0.0.1:8000') + '/api/**' },
+      '/storage/**': { proxy: (process.env.BACKEND_PROXY_URL || 'http://127.0.0.1:8000') + '/storage/**' }
     }
   }
 })

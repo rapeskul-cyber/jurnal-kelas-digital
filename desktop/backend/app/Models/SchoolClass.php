@@ -13,6 +13,7 @@ class SchoolClass extends Model
 
     protected $fillable = [
         'name',
+        'major',
         'advisor_id',
         'secretary_id',
     ];

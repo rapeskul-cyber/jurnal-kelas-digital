@@ -13,16 +13,21 @@
         </div>
       </div>
 
-      <!-- User Card -->
-      <div class="bg-gray-50 border border-gray-100 rounded-2xl p-3 flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 rounded-full bg-red-100 text-primary font-bold flex items-center justify-center text-sm flex-shrink-0">
+      <!-- User Card (Clickable to /profile) -->
+      <NuxtLink
+        to="/profile"
+        class="bg-gray-50 hover:bg-red-50/60 border border-gray-100 hover:border-red-100 rounded-2xl p-3 flex items-center gap-2.5 mb-6 transition group cursor-pointer"
+        title="Buka Pengaturan Profil"
+      >
+        <div class="w-9 h-9 rounded-full bg-red-100 text-primary font-bold flex items-center justify-center text-xs flex-shrink-0 group-hover:ring-2 group-hover:ring-primary/20 transition">
           {{ userInitial }}
         </div>
         <div class="min-w-0 flex-1">
-          <p class="text-sm font-semibold text-gray-900 truncate">{{ authStore.user?.name || 'Pengguna' }}</p>
-          <p class="text-xs text-gray-500 truncate">{{ userSubtitle }}</p>
+          <p class="text-xs font-bold text-gray-900 group-hover:text-primary transition truncate" :title="authStore.user?.name">{{ authStore.user?.name || 'Pengguna' }}</p>
+          <p class="text-[11px] text-gray-500 truncate" :title="userSubtitle">{{ userSubtitle }}</p>
         </div>
-      </div>
+        <User class="w-3.5 h-3.5 text-gray-400 group-hover:text-primary transition flex-shrink-0" />
+      </NuxtLink>
 
       <!-- Navigation Menu -->
       <nav class="space-y-1">
@@ -46,7 +51,7 @@
     <!-- Bottom Academic Year Footer -->
     <div class="p-6 border-t border-gray-100">
       <p class="text-[11px] text-gray-400 font-medium">Tahun Ajaran</p>
-      <p class="text-xs font-bold text-gray-800 mt-0.5">2025/2026 - Ganjil</p>
+      <p class="text-xs font-bold text-gray-800 mt-0.5">2026/2027 - Ganjil</p>
     </div>
   </aside>
 </template>
@@ -67,6 +72,13 @@ import {
   MailCheck,
   FileSpreadsheet,
   Users,
+  User,
+  Layers,
+  ShieldAlert,
+  Radio,
+  Settings,
+  GraduationCap,
+  MessageSquare,
 } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 import { ROLE_MENUS, ROLE_LABELS } from '~/config/access'
@@ -84,6 +96,9 @@ const userInitial = computed(() => {
 })
 
 const userSubtitle = computed(() => {
+  if (authStore.user?.role === 'SUPERADMIN') {
+    return 'Super Administrator'
+  }
   if (authStore.user?.role === 'SISWA') {
     return authStore.user.school_class?.name ? `Siswa ${authStore.user.school_class.name}` : 'Siswa'
   }
@@ -115,6 +130,12 @@ function resolveIcon(iconName: string) {
     MailCheck,
     FileSpreadsheet,
     Users,
+    Layers,
+    ShieldAlert,
+    Radio,
+    Settings,
+    GraduationCap,
+    MessageSquare,
   }
   return map[iconName] || Home
 }

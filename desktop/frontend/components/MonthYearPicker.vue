@@ -96,7 +96,10 @@ const props = withDefaults(
     modelValue?: string // Format 'YYYY-MM', e.g. '2026-10'
   }>(),
   {
-    modelValue: '2026-10'
+    modelValue: () => {
+      const d = new Date()
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    }
   }
 )
 
@@ -127,9 +130,10 @@ const months = [
 const parseValue = (val?: string) => {
   if (val && val.includes('-')) {
     const [y, m] = val.split('-').map(Number)
-    return { year: y || 2026, month: (m ? m - 1 : 9) }
+    return { year: y || new Date().getFullYear(), month: (m ? m - 1 : new Date().getMonth()) }
   }
-  return { year: 2026, month: 9 } // Default Oktober 2026
+  const now = new Date()
+  return { year: now.getFullYear(), month: now.getMonth() }
 }
 
 const initial = parseValue(props.modelValue)
@@ -176,8 +180,8 @@ const selectMonth = (monthIdx: number) => {
 
 const resetToCurrent = () => {
   const now = new Date()
-  currentYear.value = 2026 // or now.getFullYear()
-  selectMonth(9) // Oktober 2026
+  currentYear.value = now.getFullYear()
+  selectMonth(now.getMonth())
 }
 
 const handleClickOutside = (event: MouseEvent) => {

@@ -12,7 +12,14 @@ class Subject extends Model
     protected $fillable = [
         'name',
         'code',
+        'major',
+        'teacher_id',
     ];
+
+    public function teacher()
+    {
+        return $this->belongsTo(User::class, 'teacher_id');
+    }
 
     public function schedules()
     {

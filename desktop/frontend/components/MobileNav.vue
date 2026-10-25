@@ -10,6 +10,9 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <NuxtLink to="/profile" class="p-2 text-gray-600 hover:text-primary" title="Profil Akun">
+          <User class="w-5 h-5" />
+        </NuxtLink>
         <NuxtLink to="/notifikasi" class="relative p-2 text-gray-600">
           <Bell class="w-5 h-5" />
           <span v-if="unreadCount > 0" class="absolute top-1 right-1 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -28,21 +31,21 @@
         v-for="item in primaryMenus"
         :key="item.to"
         :to="item.to"
-        class="flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-medium transition-colors"
+        class="flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors"
         :class="isActive(item.to) ? 'text-primary font-bold' : 'text-gray-500'"
       >
-        <component :is="resolveIcon(item.icon)" class="w-5 h-5" />
-        <span>{{ item.name }}</span>
+        <component :is="resolveIcon(item.icon)" class="w-5 h-5 shrink-0" />
+        <span class="truncate max-w-[62px] text-center leading-tight">{{ item.name }}</span>
       </NuxtLink>
 
       <!-- More Menu Button if menus > 4 -->
       <button
         v-if="hasMore"
         @click="showMore = !showMore"
-        class="flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-medium text-gray-500"
+        class="flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-medium text-gray-500 hover:text-gray-700"
       >
-        <MoreHorizontal class="w-5 h-5" />
-        <span>Lainnya</span>
+        <MoreHorizontal class="w-5 h-5 shrink-0" />
+        <span class="truncate max-w-[62px] text-center leading-tight">Lainnya</span>
       </button>
     </nav>
 
@@ -93,6 +96,7 @@ import {
   Users,
   MoreHorizontal,
   X,
+  User,
 } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 import { ROLE_MENUS } from '~/config/access'

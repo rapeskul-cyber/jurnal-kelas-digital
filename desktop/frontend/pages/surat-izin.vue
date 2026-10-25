@@ -34,11 +34,11 @@
               Pilih Siswa
             </label>
             <select
-              v-model="form.student_id"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white"
+              v-model.number="form.student_id"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
               required
             >
-              <option value="" disabled>-- Pilih Siswa yang Berhalangan --</option>
+              <option :value="''" disabled>-- Pilih Siswa yang Berhalangan --</option>
               <option v-for="std in students" :key="std.id" :value="std.id">
                 {{ std.name }} (NIS: {{ std.nip_nis }})
               </option>
@@ -130,36 +130,37 @@
             ></textarea>
           </div>
 
-          <!-- Tanda Tangan Canvas -->
+          <!-- Unggah Berkas Bukti Fisik / Surat Dokter (Opsional) -->
           <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Tanda Tangan Pemohon
-              </label>
+            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+              Unggah Berkas Bukti Fisik (Opsional)
+            </label>
+            <div class="flex items-center gap-2">
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg"
+                @change="handleFileChange"
+                class="hidden"
+              />
               <button
                 type="button"
-                @click="clearCanvas"
-                class="text-[11px] text-brand-red hover:underline font-semibold"
+                @click="fileInputRef?.click()"
+                class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition"
               >
-                Hapus Tanda Tangan
+                <UploadCloudIcon class="w-4 h-4 text-brand-red" />
+                <span>{{ selectedFile ? selectedFile.name : 'Pilih Berkas (PDF, JPG, PNG)' }}</span>
+              </button>
+              <button
+                v-if="selectedFile"
+                type="button"
+                @click="selectedFile = null"
+                class="text-xs text-red-600 hover:underline font-semibold"
+              >
+                Batal
               </button>
             </div>
-            <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50/50">
-              <canvas
-                ref="canvasRef"
-                width="400"
-                height="120"
-                class="w-full h-28 touch-none cursor-crosshair bg-white"
-                @mousedown="startDrawing"
-                @mousemove="draw"
-                @mouseup="stopDrawing"
-                @mouseleave="stopDrawing"
-                @touchstart="startDrawingTouch"
-                @touchmove="drawTouch"
-                @touchend="stopDrawing"
-              ></canvas>
-            </div>
-            <p class="text-[11px] text-gray-400 mt-1">Goreskan tanda tangan digital langsung pada kotak di atas.</p>
+            <p class="text-[11px] text-gray-400 mt-1">Maksimal 5 MB. Bukti surat keterangan dokter atau surat dinas/kegiatan.</p>
           </div>
 
           <button
@@ -212,12 +213,25 @@
                   Tipe: <span class="font-semibold text-gray-700">{{ lv.type }}</span> • {{ lv.start_date }} s/d {{ lv.end_date }}
                 </div>
               </div>
-              <StatusBadge :status="lv.status" />
+              <StatusBadge :status="lv.status" context="pembimbing" />
             </div>
 
             <p class="text-xs text-gray-600 bg-white p-2.5 rounded-lg border border-gray-100">
               <span class="font-semibold text-gray-700">Alasan:</span> {{ lv.reason }}
             </p>
+
+            <div v-if="lv.attachment || lv.attachment_url" class="pt-1">
+              <a
+                :href="lv.attachment_url || `/api/leave-requests/file/${lv.attachment}`"
+                target="_blank"
+                download
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 transition"
+              >
+                <FileTextIcon class="w-3.5 h-3.5 text-blue-600" />
+                <span class="truncate max-w-[200px]">{{ lv.attachment || 'Unduh Berkas Lampiran' }}</span>
+                <DownloadIcon class="w-3.5 h-3.5 text-blue-500" />
+              </a>
+            </div>
 
             <div v-if="lv.review_note" class="text-[11px] text-gray-600 italic">
               Catatan Pembimbing: "{{ lv.review_note }}"
@@ -235,15 +249,24 @@ import {
   Mail as MailIcon,
   CheckCircle2 as CheckCircle2Icon,
   Send as SendIcon,
-  RefreshCw as RefreshCwIcon
+  RefreshCw as RefreshCwIcon,
+  UploadCloud as UploadCloudIcon,
+  FileText as FileTextIcon,
+  Download as DownloadIcon
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
 
-const canvasRef = ref<HTMLCanvasElement | null>(null)
-let isDrawing = false
-let hasSignature = false
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const selectedFile = ref<File | null>(null)
+
+const handleFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    selectedFile.value = target.files[0]
+  }
+}
 
 const students = ref<any[]>([])
 const leaveList = ref<any[]>([])
@@ -256,86 +279,8 @@ const form = ref({
   type: 'SAKIT',
   start_date: new Date().toISOString().slice(0, 10),
   end_date: new Date().toISOString().slice(0, 10),
-  reason: '',
-  signature: ''
+  reason: ''
 })
-
-const initCanvas = () => {
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.strokeStyle = '#1F2937'
-  ctx.lineWidth = 2
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
-}
-
-const startDrawing = (e: MouseEvent) => {
-  isDrawing = true
-  hasSignature = true
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const rect = canvas.getBoundingClientRect()
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.beginPath()
-  ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top)
-}
-
-const draw = (e: MouseEvent) => {
-  if (!isDrawing) return
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const rect = canvas.getBoundingClientRect()
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top)
-  ctx.stroke()
-}
-
-const stopDrawing = () => {
-  isDrawing = false
-  if (canvasRef.value) {
-    form.value.signature = canvasRef.value.toDataURL()
-  }
-}
-
-const startDrawingTouch = (e: TouchEvent) => {
-  if (e.touches.length === 0) return
-  const touch = e.touches[0]
-  isDrawing = true
-  hasSignature = true
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const rect = canvas.getBoundingClientRect()
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.beginPath()
-  ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top)
-}
-
-const drawTouch = (e: TouchEvent) => {
-  if (!isDrawing || e.touches.length === 0) return
-  const touch = e.touches[0]
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const rect = canvas.getBoundingClientRect()
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top)
-  ctx.stroke()
-}
-
-const clearCanvas = () => {
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  form.value.signature = ''
-  hasSignature = false
-}
 
 const fetchStudents = async () => {
   try {
@@ -343,9 +288,9 @@ const fetchStudents = async () => {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
     students.value = (res.students || []).map((s: any) => ({
-      id: s.id,
+      id: s.student_id || s.id,
       name: s.name,
-      nip_nis: s.nis || '10293'
+      nip_nis: s.nis || s.nip_nis || '-'
     }))
   } catch (err: any) {
     console.error('Error fetching students:', err)
@@ -367,22 +312,43 @@ const fetchLeaves = async () => {
 }
 
 const handleSubmit = async () => {
-  if (!form.value.student_id) {
+  if (!form.value.student_id || form.value.student_id === '') {
     alert('Pilih siswa terlebih dahulu')
     return
   }
   submitting.value = true
   successMsg.value = ''
   try {
-    await $fetch(`${config.public.apiBase}/leave-requests`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${authStore.token}` },
-      body: form.value
-    })
+    const studentIdNum = Number(form.value.student_id)
+    if (selectedFile.value) {
+      const formData = new FormData()
+      formData.append('student_id', String(studentIdNum))
+      formData.append('type', form.value.type)
+      formData.append('start_date', form.value.start_date)
+      formData.append('end_date', form.value.end_date)
+      formData.append('reason', form.value.reason)
+      formData.append('file', selectedFile.value)
+
+      await $fetch(`${config.public.apiBase}/leave-requests`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authStore.token}` },
+        body: formData
+      })
+    } else {
+      await $fetch(`${config.public.apiBase}/leave-requests`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authStore.token}` },
+        body: {
+          ...form.value,
+          student_id: studentIdNum
+        }
+      })
+    }
     successMsg.value = 'Permohonan surat izin berhasil dikirimkan ke Guru Pembimbing!'
     form.value.student_id = ''
     form.value.reason = ''
-    clearCanvas()
+    selectedFile.value = null
+    if (fileInputRef.value) fileInputRef.value.value = ''
     await fetchLeaves()
   } catch (err: any) {
     alert(err?.data?.message || 'Gagal mengajukan surat izin')
@@ -392,7 +358,6 @@ const handleSubmit = async () => {
 }
 
 onMounted(() => {
-  initCanvas()
   fetchStudents()
   fetchLeaves()
 })

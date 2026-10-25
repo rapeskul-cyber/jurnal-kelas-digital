@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // e.g. XI RPL 1, XI RPL 2
+            $table->string('major', 50)->default('RPL'); // RPL, DKV, Animasi
             $table->unsignedBigInteger('advisor_id')->nullable(); // Guru Pembimbing
             $table->unsignedBigInteger('secretary_id')->nullable(); // Siswa Sekretaris
             $table->timestamps();
@@ -24,8 +25,9 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('phone', 20)->nullable()->after('email'); // e.g. 6285...
             $table->string('nip_nis', 30)->nullable()->after('phone'); // NIP atau NISN
-            $table->enum('role', ['SISWA', 'SEKRETARIS', 'GURU_PENGAJAR', 'GURU_PEMBIMBING'])->default('SISWA')->after('nip_nis');
-            $table->boolean('is_active')->default(true)->after('role');
+            $table->enum('role', ['SISWA', 'SEKRETARIS', 'GURU_PENGAJAR', 'GURU_PEMBIMBING', 'SUPERADMIN'])->default('SISWA')->after('nip_nis');
+            $table->string('specialization', 100)->nullable()->after('role'); // e.g. Pemrograman Web, Animasi 3D, Desain Grafis
+            $table->boolean('is_active')->default(true)->after('specialization');
             $table->foreignId('class_id')->nullable()->constrained('classes')->nullOnDelete()->after('is_active');
         });
 
@@ -43,6 +45,8 @@ return new class extends Migration
             $table->id();
             $table->string('name'); // Pemrograman Web, Basis Data, dll.
             $table->string('code')->nullable();
+            $table->string('major', 50)->nullable(); // RPL, DKV, Animasi, UMUM
+            $table->foreignId('teacher_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
 

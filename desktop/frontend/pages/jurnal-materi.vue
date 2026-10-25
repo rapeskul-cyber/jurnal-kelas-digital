@@ -77,78 +77,109 @@
             </div>
           </div>
 
-          <div class="space-y-3">
+          <div class="space-y-3.5">
             <div
               v-for="item in scheduleItems"
               :key="item.id"
-              class="p-4 rounded-2xl border border-gray-150/90 bg-white hover:border-gray-300 hover:shadow-xs transition duration-150 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
+              class="p-4 sm:p-5 rounded-2xl border border-gray-150/90 bg-white hover:border-gray-300 hover:shadow-xs transition duration-150 space-y-3"
             >
-              <!-- Left Side: Time & Subject Info -->
-              <div class="space-y-1 min-w-0">
-                <div class="flex items-center gap-2 text-xs">
-                  <span class="text-gray-400 font-medium text-[11px]">Waktu</span>
-                  <span class="font-bold text-gray-800">{{ item.time }}</span>
+              <!-- Baris Atas: Info Jadwal (Waktu, Mapel & Kelas) dan Status Badge -->
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-gray-100">
+                <div class="space-y-1.5 min-w-0 flex-1">
+                  <!-- Waktu -->
+                  <div class="flex items-center gap-2 text-xs">
+                    <span class="text-gray-400 font-medium text-[11px] w-24 shrink-0">Waktu</span>
+                    <span class="text-gray-300">•</span>
+                    <span class="inline-flex items-center gap-1.5 font-bold text-gray-800 tracking-tight">
+                      <ClockIcon class="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      {{ item.time }}
+                    </span>
+                  </div>
+
+                  <!-- Mata Pelajaran & Kelas -->
+                  <div class="flex items-center gap-2 text-xs">
+                    <span class="text-gray-400 font-medium text-[11px] w-24 shrink-0">Mata Pelajaran</span>
+                    <span class="text-gray-300">•</span>
+                    <span class="font-bold text-gray-900 text-xs sm:text-sm truncate">
+                      {{ item.subject }}
+                    </span>
+                  </div>
                 </div>
-                <div class="flex items-baseline gap-2">
-                  <span class="text-gray-400 font-medium text-[11px] shrink-0">Mata Pelajaran</span>
-                  <span class="font-bold text-gray-900 text-xs sm:text-sm truncate">{{ item.subject }}</span>
+
+                <!-- Status Badge (Pojok kanan atas, bersih tanpa tertiban) -->
+                <div class="shrink-0 self-start sm:self-center">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide select-none shadow-2xs"
+                    :class="{
+                      'bg-emerald-50 text-emerald-700 border border-emerald-200/80': item.status === 'Terverifikasi',
+                      'bg-amber-50 text-amber-700 border border-amber-200/80': item.status.includes('Menunggu'),
+                      'bg-rose-50 text-rose-700 border border-rose-200/80': item.status === 'Belum Diisi',
+                    }"
+                  >
+                    <LockIcon v-if="item.status === 'Terverifikasi'" class="w-3.5 h-3.5 text-emerald-600" />
+                    <ClockIcon v-else-if="item.status.includes('Menunggu')" class="w-3.5 h-3.5 text-amber-600" />
+                    <AlertCircleIcon v-else class="w-3.5 h-3.5 text-rose-600" />
+                    <span>{{ item.status }}</span>
+                  </span>
                 </div>
               </div>
 
-              <!-- Right Side: Status Badge & Action Buttons -->
-              <div class="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-center">
-                <!-- Status Badge -->
-                <span
-                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide"
-                  :class="{
-                    'bg-emerald-50 text-emerald-700 border border-emerald-200/80': item.status === 'Terverifikasi',
-                    'bg-amber-50 text-amber-700 border border-amber-200/80': item.status === 'Menunggu',
-                    'bg-rose-50 text-rose-700 border border-rose-200/80': item.status === 'Belum Diisi',
-                  }"
-                >
-                  <LockIcon v-if="item.status === 'Terverifikasi'" class="w-3 h-3 text-emerald-600" />
-                  <span>{{ item.status }}</span>
-                </span>
+              <!-- Baris Bawah: Info Topik Ringkas & Tombol Aksi -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-0.5">
+                <div class="text-xs text-gray-500 min-w-0 flex-1">
+                  <p v-if="item.topic" class="truncate text-[11px]">
+                    <span class="font-semibold text-gray-700">Topik Materi:</span> {{ item.topic }}
+                  </p>
+                  <p v-else class="text-[11px] text-gray-400 italic">
+                    Belum ada topik materi yang diinput hari ini.
+                  </p>
+                </div>
 
-                <!-- Action: Detail Jurnal (Always available) -->
-                <button
-                  type="button"
-                  @click="openJournalDetail(item)"
-                  class="px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold transition cursor-pointer shadow-2xs"
-                >
-                  Detail Jurnal
-                </button>
+                <!-- Tombol Aksi -->
+                <div class="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-center">
+                  <!-- Action: Detail Jurnal (Selalu ada) -->
+                  <button
+                    type="button"
+                    @click="openJournalDetail(item)"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold transition cursor-pointer shadow-2xs"
+                  >
+                    <EyeIcon class="w-3.5 h-3.5 text-gray-500" />
+                    <span>Detail Jurnal</span>
+                  </button>
 
-                <!-- Action: Edit Jurnal (Hanya jika belum diverifikasi) -->
-                <button
-                  v-if="item.status === 'Menunggu'"
-                  type="button"
-                  @click="openFillJournal(item)"
-                  class="px-2.5 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 text-xs font-semibold transition cursor-pointer shadow-2xs flex items-center gap-1"
-                >
-                  <Edit2Icon class="w-3 h-3 text-amber-700" />
-                  <span>Edit</span>
-                </button>
+                  <!-- Action: Edit Jurnal (Hanya jika belum diverifikasi / Menunggu) -->
+                  <button
+                    v-if="item.status.includes('Menunggu')"
+                    type="button"
+                    @click="openFillJournal(item)"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 text-xs font-semibold transition cursor-pointer shadow-2xs"
+                  >
+                    <Edit2Icon class="w-3.5 h-3.5 text-amber-700" />
+                    <span>Edit</span>
+                  </button>
 
-                <!-- Action: Konfirmasi Button (if Menunggu) -->
-                <button
-                  v-if="item.status === 'Menunggu'"
-                  type="button"
-                  @click="openConfirmModal(item)"
-                  class="px-3 py-1.5 rounded-xl border border-brand-red bg-red-50 text-brand-red hover:bg-brand-red hover:text-white text-xs font-semibold transition cursor-pointer shadow-2xs"
-                >
-                  Konfirmasi
-                </button>
+                  <!-- Action: Konfirmasi Button (if Menunggu) -->
+                  <button
+                    v-if="item.status.includes('Menunggu')"
+                    type="button"
+                    @click="openConfirmModal(item)"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-brand-red bg-red-50 text-brand-red hover:bg-brand-red hover:text-white text-xs font-semibold transition cursor-pointer shadow-2xs"
+                  >
+                    <CheckIcon class="w-3.5 h-3.5" />
+                    <span>Konfirmasi</span>
+                  </button>
 
-                <!-- Action: Isi Jurnal Button (if Belum Diisi) -->
-                <button
-                  v-if="item.status === 'Belum Diisi'"
-                  type="button"
-                  @click="openFillJournal(item)"
-                  class="px-3 py-1.5 rounded-xl border border-brand-red bg-brand-red text-white hover:bg-brand-red-dark text-xs font-semibold transition cursor-pointer shadow-2xs"
-                >
-                  Isi Jurnal
-                </button>
+                  <!-- Action: Isi Jurnal Button (if Belum Diisi) -->
+                  <button
+                    v-if="item.status === 'Belum Diisi'"
+                    type="button"
+                    @click="openFillJournal(item)"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-brand-red bg-brand-red text-white hover:bg-brand-red-dark text-xs font-semibold transition cursor-pointer shadow-2xs"
+                  >
+                    <PlusIcon class="w-3.5 h-3.5 text-white" />
+                    <span>Isi Jurnal</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -343,9 +374,9 @@
           >
             <AlertCircleIcon class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <p class="font-bold text-amber-900">Status: Belum Terverifikasi</p>
+              <p class="font-bold text-amber-900">Status: Menunggu Konfirmasi Guru Pengajar</p>
               <p class="text-[11px] text-amber-700 mt-0.5">
-                Data jurnal masih dalam status draf/menunggu konfirmasi. Anda masih dapat menyunting materi dan catatan sebelum disahkan & dikunci permanen.
+                Data jurnal ini telah diisi dan menunggu konfirmasi pengesahan Anda sebagai guru pengajar. Anda dapat menyunting atau langsung mengesahkannya.
               </p>
             </div>
           </div>
@@ -358,12 +389,12 @@
           <div>
             <span class="font-bold text-gray-400 uppercase text-[10px] block mb-1">Materi / Kegiatan Realisasi</span>
             <p class="bg-gray-50 p-3 rounded-xl border border-gray-150 text-gray-700">
-              {{ activeModalItem.topic || 'Pengenalan konsep dan latihan praktikum terbimbing di laboratorium.' }}
+              {{ activeModalItem.topic || activeModalItem.activity || 'Pengenalan konsep dan latihan praktikum terbimbing di laboratorium.' }}
             </p>
           </div>
 
           <div>
-            <span class="font-bold text-gray-400 uppercase text-[10px] block mb-1">Catatan dari Sekretaris / Kelas</span>
+            <span class="font-bold text-gray-400 uppercase text-[10px] block mb-1">Catatan dari Sekretaris / Pengisi</span>
             <p class="bg-gray-50 p-3 rounded-xl border border-gray-150 text-gray-600">
               {{ activeModalItem.notes || 'Seluruh siswa hadir mengikuti materi dengan tertib, kendala nihil.' }}
             </p>
@@ -381,7 +412,7 @@
 
           <!-- Edit button if Menunggu (Belum diverifikasi) -->
           <button
-            v-if="activeModalItem.status === 'Menunggu'"
+            v-if="activeModalItem.status.includes('Menunggu')"
             type="button"
             @click="editFromDetailModal"
             class="px-4 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
@@ -391,14 +422,14 @@
           </button>
 
           <button
-            v-if="activeModalItem.status === 'Menunggu'"
+            v-if="activeModalItem.status.includes('Menunggu')"
             type="button"
             @click="confirmModalJournal"
             :disabled="confirming"
             class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
           >
             <CheckCircle2Icon class="w-4 h-4" />
-            <span>{{ confirming ? 'Menyimpan...' : 'Setujui & Kunci Permanen' }}</span>
+            <span>{{ confirming ? 'Menyimpan...' : 'Setujui & Konfirmasi Jurnal' }}</span>
           </button>
         </div>
       </div>
@@ -593,7 +624,10 @@ import {
   Plus as PlusIcon,
   Lock as LockIcon,
   AlertCircle as AlertCircleIcon,
-  Edit2 as Edit2Icon
+  Edit2 as Edit2Icon,
+  Clock as ClockIcon,
+  Eye as EyeIcon,
+  Check as CheckIcon
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
@@ -609,10 +643,26 @@ const selectedFile = ref<File | null>(null)
 const pendingCount = ref(3)
 const filledCount = ref(2)
 
-const publishedModules = ref([
-  { id: 1, title: 'Modul 04: Optimasi Query Relasional & Normalisasi 3NF', class: 'XI RPL 2 - Basis Data', filename: 'modul-basis-data-3nf.pdf' },
-  { id: 2, title: 'Jobsheet 06: Vue 3 Composition API & State Management', class: 'XI RPL 1 - Pemrograman Web', filename: 'jobsheet-vue3.pdf' }
-])
+const publishedModules = ref<any[]>([])
+
+const fetchPublishedModules = async () => {
+  try {
+    const res = await $fetch<any>(`${config.public.apiBase}/journals/material`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    if (list && list.length > 0) {
+      publishedModules.value = list.map((m: any) => ({
+        id: m.id,
+        title: m.topic || 'Modul Pembelajaran',
+        class: `${m.subject || 'Mata Pelajaran'} • ${m.date_time || 'Hari ini'}`,
+        filename: m.attachment_name || 'modul-belajar.pdf'
+      }))
+    }
+  } catch (err: any) {
+    console.warn('Fetch published modules note:', err)
+  }
+}
 
 const openAddScheduleModal = ref(false)
 const savingSchedule = ref(false)
@@ -633,32 +683,78 @@ const fillJournalForm = ref({
   notes: ''
 })
 
-const scheduleItems = ref([
-  {
-    id: 1,
-    time: '07:30 - 09:00',
-    subject: 'Pemrograman Web & Perangkat B...',
-    status: 'Terverifikasi',
-    topic: 'Optimasi query dan routing Vue/Nuxt',
-    notes: 'Praktikum berjalan lancar di Lab 1'
-  },
-  {
-    id: 2,
-    time: '09:15 - 11:45',
-    subject: 'Basis Data & Desain Sistem',
-    status: 'Menunggu',
-    topic: 'Normalisasi Database 3NF dan perbaikan skema relasi',
-    notes: 'Siswa memerlukan pengesahan dari guru pengajar'
-  },
-  {
-    id: 3,
-    time: '13:00 - 15:30',
-    subject: 'Proyek Perangkat Lunak Mandiri',
-    status: 'Belum Diisi',
-    topic: 'Pengerjaan sprint backlog proyek akhir',
-    notes: 'Belum ada draf jurnal dari sekretaris'
+const scheduleItems = ref<any[]>([])
+
+const fetchTeacherSchedulesAndJournals = async () => {
+  try {
+    const [schedulesRes, journalsRes] = await Promise.all([
+      $fetch<any>(`${config.public.apiBase}/schedules`, {
+        headers: { Authorization: `Bearer ${authStore.token}` }
+      }),
+      $fetch<any>(`${config.public.apiBase}/journals/class`, {
+        headers: { Authorization: `Bearer ${authStore.token}` }
+      })
+    ])
+
+    const scheduleList = Array.isArray(schedulesRes) ? schedulesRes : []
+    const journalList = journalsRes?.data || (Array.isArray(journalsRes) ? journalsRes : [])
+    const todayStr = new Date().toISOString().slice(0, 10)
+
+    if (scheduleList.length > 0) {
+      scheduleItems.value = scheduleList.map((sch: any) => {
+        // Find matching journal for today by schedule_id or class/subject
+        const match = journalList.find((j: any) =>
+          (j.schedule_id === sch.id || (j.class === sch.school_class?.name && j.subject === sch.subject?.name)) &&
+          (!j.date || j.date === todayStr)
+        ) || journalList.find((j: any) => j.schedule_id === sch.id)
+
+        let status = 'Belum Diisi'
+        if (match) {
+          status = match.status === 'TERVERIFIKASI' ? 'Terverifikasi' : 'Menunggu Konfirmasi Guru Pengajar'
+        }
+
+        return {
+          id: sch.id,
+          journal_id: match ? match.id : null,
+          time: `${sch.start_time?.slice(0, 5) || '07:30'} - ${sch.end_time?.slice(0, 5) || '09:00'}`,
+          subject: `${sch.subject?.name || 'Mata Pelajaran'} (${sch.school_class?.name || 'XI RPL 1'})`,
+          status,
+          topic: match ? match.topic : '',
+          activity: match ? match.activity : '',
+          notes: match ? match.notes : '',
+          created_by: match ? match.created_by : 'Sekretaris'
+        }
+      })
+    } else {
+      scheduleItems.value = [
+        {
+          id: 1,
+          journal_id: null,
+          time: '07:30 - 09:00',
+          subject: 'Pemrograman Web (XI RPL 1)',
+          status: 'Terverifikasi',
+          topic: 'Optimasi query dan routing Vue/Nuxt',
+          notes: 'Praktikum berjalan lancar di Lab 1'
+        },
+        {
+          id: 2,
+          journal_id: null,
+          time: '09:15 - 11:45',
+          subject: 'Basis Data (XI RPL 1)',
+          status: 'Menunggu Konfirmasi Guru Pengajar',
+          topic: 'Normalisasi Database 3NF dan perbaikan skema relasi',
+          notes: 'Menunggu pengesahan dari guru pengajar'
+        }
+      ]
+    }
+
+    // Update stat cards
+    filledCount.value = scheduleItems.value.filter(s => s.status !== 'Belum Diisi').length
+    pendingCount.value = scheduleItems.value.filter(s => s.status.includes('Menunggu')).length
+  } catch (e) {
+    console.error('Error fetching schedules/journals:', e)
   }
-])
+}
 
 const materialForm = ref({
   schedule_id: '1',
@@ -723,13 +819,7 @@ const submitMaterial = async () => {
       body: formData
     })
 
-    const newMod = {
-      id: Date.now(),
-      title: materialForm.value.topic || 'Modul Pembelajaran Baru',
-      class: materialForm.value.schedule_id === '2' ? 'XI RPL 1 - Pemrograman Web' : 'XI RPL 2 - Basis Data',
-      filename: selectedFile.value?.name || 'materi-belajar.pdf'
-    }
-    publishedModules.value.unshift(newMod)
+    fetchPublishedModules()
     successMsg.value = 'Rencana pembelajaran dan berkas materi berhasil disimpan & dikirimkan ke siswa!'
     materialForm.value.topic = ''
     materialForm.value.assignment = ''
@@ -765,16 +855,22 @@ const confirmModalJournal = async () => {
   if (!activeModalItem.value) return
   confirming.value = true
   try {
-    await $fetch(`${config.public.apiBase}/journals/class/${activeModalItem.value.id}/confirm`, {
+    const journalId = activeModalItem.value.journal_id || activeModalItem.value.id
+    await $fetch(`${config.public.apiBase}/journals/class/${journalId}/confirm`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${authStore.token}`
       }
     })
     activeModalItem.value.status = 'Terverifikasi'
+    const target = scheduleItems.value.find(s => s.id === activeModalItem.value.id || s.journal_id === journalId)
+    if (target) {
+      target.status = 'Terverifikasi'
+    }
     pendingCount.value = Math.max(0, pendingCount.value - 1)
     successMsg.value = `Jurnal pelajaran ${activeModalItem.value.subject} berhasil disetujui & diverifikasi!`
     activeModalItem.value = null
+    fetchTeacherSchedulesAndJournals()
   } catch (err: any) {
     activeModalItem.value.status = 'Terverifikasi'
     pendingCount.value = Math.max(0, pendingCount.value - 1)
@@ -852,14 +948,18 @@ const submitFillJournal = async () => {
   } catch (err) {
     console.error(err)
   } finally {
-    fillModalItem.value.status = 'Menunggu'
+    fillModalItem.value.status = 'Terverifikasi'
     fillModalItem.value.topic = fillJournalForm.value.topic
     fillModalItem.value.notes = fillJournalForm.value.notes || fillJournalForm.value.activity
-    pendingCount.value += 1
     filledCount.value += 1
-    successMsg.value = `Jurnal pelajaran ${fillModalItem.value.subject} berhasil diisi dan menunggu konfirmasi!`
+    successMsg.value = `Jurnal pelajaran ${fillModalItem.value.subject} berhasil disimpan & diverifikasi resmi!`
     fillModalItem.value = null
     savingFillJournal.value = false
+    fetchTeacherSchedulesAndJournals()
   }
 }
+onMounted(() => {
+  fetchTeacherSchedulesAndJournals()
+  fetchPublishedModules()
+})
 </script>

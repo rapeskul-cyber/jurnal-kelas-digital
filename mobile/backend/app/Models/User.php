@@ -18,6 +18,7 @@ class User extends Authenticatable
         'phone',
         'nip_nis',
         'role',
+        'specialization',
         'is_active',
         'class_id',
     ];
@@ -39,6 +40,16 @@ class User extends Authenticatable
     public function schoolClass()
     {
         return $this->belongsTo(SchoolClass::class, 'class_id');
+    }
+
+    public function guidedClass()
+    {
+        return $this->hasOne(SchoolClass::class, 'advisor_id');
+    }
+
+    public function taughtSubjects()
+    {
+        return $this->hasMany(Subject::class, 'teacher_id');
     }
 
     public function taughtClasses()

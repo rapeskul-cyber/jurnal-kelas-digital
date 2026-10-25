@@ -22,7 +22,7 @@
         <StatCard title="Hadir Bulan Ini" :value="(summary?.hadir ?? 0) + ' Hari'" :subtext="(summary?.hadir_percent ?? 0) + '% Kehadiran'" color="green" />
         <StatCard title="Total Sakit" :value="(summary?.sakit ?? 0) + ' Hari'" subtext="Dilengkapi Surat Dokter" color="orange" />
         <StatCard title="Total Izin Disetujui" :value="(summary?.izin ?? 0) + ' Hari'" subtext="Sesuai Permohonan Online" color="blue" />
-        <StatCard title="Alpha / Tanpa Kabar" :value="(summary?.alpha ?? 0) + ' Hari'" subtext="Catatan Kehadiran Riil" color="red" />
+        <StatCard title="ALFA / Tanpa Kabar" :value="(summary?.alpha ?? 0) + ' Hari'" subtext="Catatan Kehadiran Riil" color="red" />
       </div>
 
       <!-- Diagram Kehadiran Card -->
@@ -30,7 +30,7 @@
         <div>
           <h3 class="text-sm font-bold text-gray-900">Diagram Kehadiran</h3>
           <p class="text-xs text-gray-400 mt-0.5">
-            Ringkasan kehadiran periode terpilih: {{ summary?.total ?? 0 }} hari total, {{ summary?.hadir ?? 0 }} hadir, {{ summary?.sakit ?? 0 }} sakit, {{ summary?.izin ?? 0 }} izin disetujui, {{ summary?.alpha ?? 0 }} alpha.
+            Ringkasan kehadiran periode terpilih: {{ summary?.total ?? 0 }} hari total, {{ summary?.hadir ?? 0 }} hadir, {{ summary?.sakit ?? 0 }} sakit, {{ summary?.izin ?? 0 }} izin disetujui, {{ summary?.alpha ?? 0 }} ALFA.
           </p>
         </div>
 
@@ -90,7 +90,7 @@
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-sm bg-red-500"></span>
-                  <span class="text-gray-600">Alpha</span>
+                  <span class="text-gray-600">ALFA</span>
                 </div>
                 <span class="font-bold text-gray-900">{{ summary?.alpha ?? 0 }}</span>
               </div>
@@ -128,7 +128,7 @@
               <option value="HADIR">Hadir</option>
               <option value="SAKIT">Sakit</option>
               <option value="IZIN">Izin</option>
-              <option value="ALPHA">Alpha</option>
+              <option value="ALPHA">ALFA</option>
             </select>
           </div>
         </div>
@@ -178,7 +178,10 @@ import { useAuthStore } from '~/stores/auth'
 const authStore = useAuthStore()
 const summary = ref<any>(null)
 const details = ref<any[]>([])
-const selectedMonth = ref('2026-10')
+
+const now = new Date()
+const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+const selectedMonth = ref(currentYearMonth)
 const statusFilter = ref('ALL')
 
 const monthNames = [

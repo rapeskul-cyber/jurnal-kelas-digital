@@ -9,7 +9,6 @@ export const ROLE_MENUS: Record<string, MenuItem[]> = {
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
     { name: 'Jurnal Pelajaran', to: '/jurnal-pelajaran', icon: 'BookOpen' },
     { name: 'Riwayat Kehadiran', to: '/riwayat-kehadiran', icon: 'CalendarCheck' },
-    { name: 'Surat Izin', to: '/surat-izin', icon: 'FileSpreadsheet' },
   ],
   SEKRETARIS: [
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
@@ -21,18 +20,26 @@ export const ROLE_MENUS: Record<string, MenuItem[]> = {
   ],
   GURU_PENGAJAR: [
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
-    { name: 'Jurnal Kelas', to: '/jurnal-kelas', icon: 'FileText' },
     { name: 'Jurnal Materi', to: '/jurnal-materi', icon: 'Edit3' },
-    { name: 'Laporan Jurnal', to: '/laporan-jurnal', icon: 'FolderOpen' },
     { name: 'Rekap Otomatis', to: '/rekap-semester', icon: 'BarChart2' },
+    { name: 'Jurnal Kelas', to: '/jurnal-kelas', icon: 'FileText' },
+    { name: 'Laporan Jurnal', to: '/laporan-jurnal', icon: 'FolderOpen' },
   ],
   GURU_PEMBIMBING: [
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
     { name: 'Persetujuan Surat Izin', to: '/persetujuan-izin', icon: 'MailCheck' },
     { name: 'Laporan Surat Izin', to: '/laporan-izin', icon: 'FileSpreadsheet' },
-    { name: 'Manajemen User', to: '/manajemen-user', icon: 'Users' },
+    { name: 'Manajemen Murid Kelas', to: '/manajemen-murid', icon: 'GraduationCap' },
     { name: 'Laporan Jurnal', to: '/laporan-jurnal', icon: 'FolderOpen' },
     { name: 'Rekap Otomatis', to: '/rekap-semester', icon: 'BarChart2' },
+  ],
+  SUPERADMIN: [
+    { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
+    { name: 'Master Data & Jadwal', to: '/master-data', icon: 'Layers' },
+    { name: 'Manajemen Guru & Staf', to: '/manajemen-guru', icon: 'Users' },
+    { name: 'Buka Kunci Presensi', to: '/presensi-override', icon: 'ShieldAlert' },
+    { name: 'WhatsApp Gateway', to: '/wa-gateway', icon: 'MessageSquare' },
+    { name: 'Pengaturan Sistem', to: '/pengaturan-sistem', icon: 'Settings' },
   ],
 }
 
@@ -41,4 +48,5 @@ export const ROLE_LABELS: Record<string, string> = {
   SEKRETARIS: 'Sekretaris Kelas',
   GURU_PENGAJAR: 'Guru Pengajar',
   GURU_PEMBIMBING: 'Guru Pembimbing Sekolah',
+  SUPERADMIN: 'Super Administrator',
 }

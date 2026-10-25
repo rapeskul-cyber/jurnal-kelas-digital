@@ -6,7 +6,7 @@ export interface User {
   email: string
   phone: string
   nip_nis: string
-  role: 'SISWA' | 'SEKRETARIS' | 'GURU_PENGAJAR' | 'GURU_PEMBIMBING'
+  role: 'SISWA' | 'SEKRETARIS' | 'GURU_PENGAJAR' | 'GURU_PEMBIMBING' | 'SUPERADMIN'
   is_active: boolean
   class_id?: number
   school_class?: {
