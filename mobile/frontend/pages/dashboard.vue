@@ -20,7 +20,7 @@
           <StatCard title="Hadir Bulan Ini" :value="data?.stats?.hadir_hari ?? '0 Hari'" :subtext="data?.stats?.hadir_percent ?? '0% Kehadiran'" color="green" />
           <StatCard title="Total Sakit" :value="data?.stats?.sakit_hari ?? '0 Hari'" subtext="Dilengkapi Surat Dokter" color="orange" />
           <StatCard title="Total Izin Disetujui" :value="data?.stats?.izin_hari ?? '0 Hari'" subtext="Sesuai Permohonan Online" color="blue" />
-          <StatCard title="Alpha / Tanpa Kabar" :value="data?.stats?.alpha_hari ?? '0 Hari'" subtext="Catatan Presensi Riil" color="red" />
+          <StatCard title="ALFA / Tanpa Kabar" :value="data?.stats?.alpha_hari ?? '0 Hari'" subtext="Catatan Presensi Riil" color="red" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -99,7 +99,7 @@
           <StatCard title="Hadir Hari Ini" :value="data?.stats?.hadir_count ?? '0 Siswa'" :subtext="data?.stats?.hadir_percent ?? '0% Tingkat Kehadiran'" color="green" />
           <StatCard title="Izin Keperluan" :value="data?.stats?.izin_count ?? '0 Siswa'" subtext="Wajib Verifikasi Surat" color="blue" />
           <StatCard title="Sakit (Disertai Surat)" :value="data?.stats?.sakit_count ?? '0 Siswa'" subtext="Dalam Konfirmasi Wali Kelas" color="orange" />
-          <StatCard title="Alpha (Tanpa Keterangan)" :value="data?.stats?.alpha_count ?? '0 Siswa'" subtext="Tindakan Lebih Lanjut" color="red" />
+          <StatCard title="ALFA (Tanpa Keterangan)" :value="data?.stats?.alpha_count ?? '0 Siswa'" subtext="Tindakan Lebih Lanjut" color="red" />
         </div>
 
         <!-- Presensi Kelas Hari Ini Table -->
@@ -170,13 +170,29 @@
       <!-- ROLE: GURU PENGAJAR (Mockup 22)                 -->
       <!-- ============================================== -->
       <template v-else-if="authStore.user?.role === 'GURU_PENGAJAR'">
-        <!-- 4 Stat Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Kelas Diampu" :value="data?.stats?.kelas_diampu ?? '0 Kelas'" subtext="Kompetensi Terdaftar" color="blue" />
-          <StatCard title="Jam Mengajar Hari Ini" :value="data?.stats?.jam_mengajar ?? '0 Jam'" subtext="Pertemuan Terjadwal" color="blue" />
-          <StatCard title="Jurnal Terisi" :value="data?.stats?.jurnal_terisi ?? '0 Pertemuan'" subtext="Jurnal KBM Dilengkapi" color="orange" />
-          <StatCard title="Jurnal Belum Diisi" :value="data?.stats?.jurnal_belum_diisi ?? '0 Pertemuan'" subtext="Perlu Verifikasi/Pengisian" color="red" />
+      <!-- Main Content Cards with Safe Minimum Width -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs">
+          <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Kelas Diampu</span>
+          <div class="text-xl sm:text-2xl font-bold text-gray-900 mt-1">4 Kelas</div>
+          <p class="text-[10px] text-gray-400 mt-0.5 truncate">X dan XI - Kompetensi RPL</p>
         </div>
+        <div class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs">
+          <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Jam Mengajar</span>
+          <div class="text-xl sm:text-2xl font-bold text-gray-900 mt-1">5 Jam</div>
+          <p class="text-[10px] text-gray-400 mt-0.5 truncate">Hari ini terjadwal</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs">
+          <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Jurnal Terisi</span>
+          <div class="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{{ data?.stats?.jurnal_terisi ?? '0/3' }}</div>
+          <p class="text-[10px] text-gray-400 mt-0.5 truncate">Pertemuan KBM</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs">
+          <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Belum Diisi</span>
+          <div class="text-xl sm:text-2xl font-bold text-rose-600 mt-1">{{ data?.stats?.jurnal_belum ?? '3' }}</div>
+          <p class="text-[10px] text-gray-400 mt-0.5 truncate">Pertemuan Menunggu</p>
+        </div>
+      </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Jadwal Mengajar Hari Ini (2 cols) -->
@@ -191,8 +207,8 @@
               </NuxtLink>
             </div>
 
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+            <div class="overflow-x-auto -mx-6 px-6">
+              <table class="w-full text-left text-xs whitespace-nowrap min-w-[500px]">
                 <thead>
                   <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100">
                     <th class="pb-3 font-semibold">Jam</th>
@@ -354,20 +370,242 @@
           </div>
         </div>
       </template>
+
+      <!-- ============================================== -->
+      <!-- ROLE: SUPERADMIN (Pusat Pengawasan Akademik)    -->
+      <!-- ============================================== -->
+      <template v-else-if="authStore.user?.role === 'SUPERADMIN'">
+        <!-- 6 Academic Stat Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          <StatCard title="Guru Pembimbing" :value="data?.stats?.total_guru_pembimbing ?? '0 Walas'" subtext="Wali Kelas Aktif" color="green" />
+          <StatCard title="Guru Pengajar" :value="data?.stats?.total_guru_pengajar ?? '0 Guru'" subtext="Mata Pelajaran" color="blue" />
+          <StatCard title="Total Siswa" :value="data?.stats?.total_siswa ?? '0 Siswa'" subtext="Terdata di Rombel" color="cyan" />
+          <StatCard title="Rombel / Kelas" :value="data?.stats?.total_kelas ?? '0 Rombel'" :subtext="`RPL: ${data?.stats?.majors?.rpl || 0} • DKV: ${data?.stats?.majors?.dkv || 0} • ANI: ${data?.stats?.majors?.animasi || 0}`" color="orange" />
+          <StatCard title="Rata-rata Presensi" :value="data?.stats?.kehadiran_rata_rata ?? '0%'" subtext="Kehadiran Hari Ini" color="emerald" />
+          <StatCard title="Jurnal KBM Terisi" :value="data?.stats?.jurnal_terisi_today ?? '0 Sesi'" subtext="Pertemuan Hari Ini" color="purple" />
+        </div>
+
+        <!-- 2 Column Master Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Left: Pemantauan Seluruh Rombongan Belajar (2 Cols) -->
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-bold text-gray-900">Pemantauan Presensi & Jurnal Kelas Hari Ini</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Pantau status pengisian presensi dan jurnal per rombongan belajar</p>
+              </div>
+
+              <!-- Filter Jurusan -->
+              <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs select-none flex-shrink-0">
+                <button
+                  type="button"
+                  @click="selectedMajorFilter = 'ALL'"
+                  class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                  :class="selectedMajorFilter === 'ALL' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-500 hover:text-gray-900'"
+                >
+                  Semua
+                </button>
+                <button
+                  type="button"
+                  @click="selectedMajorFilter = 'RPL'"
+                  class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                  :class="selectedMajorFilter === 'RPL' ? 'bg-blue-600 text-white shadow-2xs' : 'text-gray-500 hover:text-blue-600'"
+                >
+                  RPL
+                </button>
+                <button
+                  type="button"
+                  @click="selectedMajorFilter = 'DKV'"
+                  class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                  :class="selectedMajorFilter === 'DKV' ? 'bg-purple-600 text-white shadow-2xs' : 'text-gray-500 hover:text-purple-600'"
+                >
+                  DKV
+                </button>
+                <button
+                  type="button"
+                  @click="selectedMajorFilter = 'Animasi'"
+                  class="w-18 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                  :class="selectedMajorFilter === 'Animasi' ? 'bg-amber-600 text-white shadow-2xs' : 'text-gray-500 hover:text-amber-600'"
+                >
+                  Animasi
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100 font-bold bg-gray-50/50">
+                    <th class="py-2.5 px-3">Rombel</th>
+                    <th class="py-2.5 px-3">Jurusan</th>
+                    <th class="py-2.5 px-3">Wali / Pembimbing</th>
+                    <th class="py-2.5 px-3">Sekretaris</th>
+                    <th class="py-2.5 px-3 text-center">Status Sesi</th>
+                    <th class="py-2.5 px-3 text-right">Kehadiran</th>
+                    <th class="py-2.5 px-3">Jurnal KBM</th>
+                    <th class="py-2.5 px-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  <tr v-for="cls in filteredClassesMonitoring" :key="cls.id" class="hover:bg-gray-50/70 transition">
+                    <td class="py-3 px-3 font-bold text-gray-900">{{ cls.class_name }}</td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                        :class="[
+                          cls.major === 'RPL' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          cls.major === 'DKV' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                          'bg-amber-50 text-amber-700 border border-amber-200'
+                        ]"
+                      >
+                        {{ cls.major }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-3 text-gray-600 truncate max-w-[130px]" :title="cls.advisor_name">{{ cls.advisor_name }}</td>
+                    <td class="py-3 px-3 text-gray-600 truncate max-w-[110px]" :title="cls.secretary_name">{{ cls.secretary_name }}</td>
+                    <td class="py-3 px-3 text-center">
+                      <span
+                        v-if="cls.session_status === 'LOCKED'"
+                        class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200"
+                      >
+                        🔒 Terkunci
+                      </span>
+                      <span
+                        v-else-if="cls.session_status === 'DRAFT'"
+                        class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"
+                      >
+                        📝 Draft
+                      </span>
+                      <span
+                        v-else
+                        class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-200"
+                      >
+                        ○ Belum Buka
+                      </span>
+                    </td>
+                    <td class="py-3 px-3 text-right font-bold text-gray-800">
+                      {{ cls.attendance_percent }}%
+                      <span class="block text-[10px] font-normal text-gray-400">{{ cls.present_ratio }}</span>
+                    </td>
+                    <td class="py-3 px-3">
+                      <StatusBadge :status="cls.journal_status" />
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                      <button
+                        v-if="cls.session_status === 'LOCKED'"
+                        @click="handleForceUnlock(cls.id)"
+                        class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                        title="Buka kunci sesi presensi agar dapat diperbaiki"
+                      >
+                        Buka Kunci
+                      </button>
+                      <span v-else class="text-gray-300 text-xs">—</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right: Navigasi Cepat & Live Global Audit Trail (1 Col) -->
+          <div class="space-y-6">
+            <!-- Navigasi Akses Cepat -->
+            <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-3">
+              <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-3">Pusat Kendali Cepat</h3>
+              <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+                <NuxtLink
+                  to="/manajemen-guru"
+                  class="p-3 bg-gray-50 hover:bg-red-50 hover:text-primary rounded-xl border border-gray-100 transition flex flex-col items-center justify-center text-center gap-1.5"
+                >
+                  <Users class="w-5 h-5 text-gray-500" />
+                  <span>Kelola Guru</span>
+                </NuxtLink>
+                <NuxtLink
+                  to="/master-data"
+                  class="p-3 bg-gray-50 hover:bg-red-50 hover:text-primary rounded-xl border border-gray-100 transition flex flex-col items-center justify-center text-center gap-1.5"
+                >
+                  <Layers class="w-5 h-5 text-gray-500" />
+                  <span>Jadwal & Jurusan</span>
+                </NuxtLink>
+                <NuxtLink
+                  to="/wa-gateway"
+                  class="p-3 bg-gray-50 hover:bg-red-50 hover:text-primary rounded-xl border border-gray-100 transition flex flex-col items-center justify-center text-center gap-1.5"
+                >
+                  <MessageSquare class="w-5 h-5 text-emerald-600" />
+                  <span>WA Gateway</span>
+                </NuxtLink>
+                <NuxtLink
+                  to="/presensi-override"
+                  class="p-3 bg-gray-50 hover:bg-red-50 hover:text-primary rounded-xl border border-gray-100 transition flex flex-col items-center justify-center text-center gap-1.5"
+                >
+                  <ShieldAlert class="w-5 h-5 text-amber-600" />
+                  <span>Buka Kunci</span>
+                </NuxtLink>
+              </div>
+            </div>
+
+            <!-- Live Audit Log Feed -->
+            <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-3">
+              <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 class="text-sm font-bold text-gray-900">Aktivitas Terkini Sistem</h3>
+                <NuxtLink to="/pengaturan-sistem" class="text-[11px] text-primary font-bold hover:underline">
+                  Semua Log
+                </NuxtLink>
+              </div>
+
+              <div class="space-y-3">
+                <div
+                  v-for="log in data?.recent_audit_logs || []"
+                  :key="log.id"
+                  class="text-xs border-l-2 border-primary pl-3 py-1 space-y-0.5"
+                >
+                  <div class="flex items-center justify-between text-[10px] text-gray-400">
+                    <span class="font-bold text-gray-800">{{ log.user }}</span>
+                    <span>{{ log.time }}</span>
+                  </div>
+                  <p class="text-gray-600 text-[11px] leading-tight">{{ log.action }}</p>
+                  <p class="text-[10px] text-gray-400 font-mono">IP: {{ log.ip_address }}</p>
+                </div>
+
+                <div v-if="!data?.recent_audit_logs?.length" class="text-center py-6 text-gray-400 text-xs">
+                  Belum ada log aktivitas tercatat.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ClipboardCheck, CheckCircle2, Mail, FileText } from 'lucide-vue-next'
+import {
+  ClipboardCheck,
+  CheckCircle2,
+  Mail,
+  FileText,
+  ShieldAlert,
+  Users,
+  Layers,
+  MessageSquare,
+} from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
 const authStore = useAuthStore()
 const data = ref<any>(null)
 const isLoading = ref(true)
+const selectedMajorFilter = ref('ALL')
+
+const filteredClassesMonitoring = computed(() => {
+  if (!data.value?.classes_monitoring) return []
+  if (selectedMajorFilter.value === 'ALL') return data.value.classes_monitoring
+  return data.value.classes_monitoring.filter((c: any) => c.major === selectedMajorFilter.value)
+})
 
 const dashboardTitle = computed(() => {
   const role = authStore.user?.role
+  if (role === 'SUPERADMIN') return 'Dashboard Super Administrator'
   if (role === 'SISWA') return 'Dashboard Presensi Mandiri Siswa'
   if (role === 'SEKRETARIS') return 'Dashboard Presensi ' + (data.value?.class_name || 'Kelas XI RPL 1')
   if (role === 'GURU_PENGAJAR') return 'Dashboard Pengajar'
@@ -377,6 +615,7 @@ const dashboardTitle = computed(() => {
 
 const dashboardSubtitle = computed(() => {
   const role = authStore.user?.role
+  if (role === 'SUPERADMIN') return 'Pengawasan operasional akademik, guru pembimbing, guru pengajar, dan presensi seluruh rombel'
   if (role === 'SISWA') return 'Ringkasan presensi mandiri dan pembelajaran siswa'
   if (role === 'SEKRETARIS') return 'Ringkasan presensi harian dan aktivitas kelas'
   if (role === 'GURU_PEMBIMBING') return 'Pengawasan presensi kelas binaan, jurnal, dan perizinan siswa'
@@ -396,6 +635,22 @@ async function loadDashboard() {
     console.error(e)
   } finally {
     isLoading.value = false
+  }
+}
+
+async function handleForceUnlock(classId: number) {
+  if (!confirm('Buka kunci sesi presensi rombel ini kembali ke status DRAFT?')) return
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    await $fetch(`${authStore.apiBase}/attendance/force-unlock`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      body: { class_id: classId, date: today }
+    })
+    alert('Sesi presensi berhasil dibuka kembali.')
+    loadDashboard()
+  } catch (e: any) {
+    alert(e?.data?.message || 'Gagal membuka kunci sesi presensi.')
   }
 }
 
