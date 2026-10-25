@@ -67,6 +67,7 @@
                 class="px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white shadow-2xs cursor-pointer"
               >
                 <option value="Semua Peran">Semua Peran</option>
+                <option value="SUPERADMIN">Super Administrator</option>
                 <option value="GURU_PENGAJAR">Guru Pengajar</option>
                 <option value="GURU_PEMBIMBING">Guru Pembimbing</option>
                 <option value="SEKRETARIS">Sekretaris Kelas</option>
@@ -75,15 +76,28 @@
             </div>
           </div>
 
-          <!-- Tambah Pengguna Baru Button -->
-          <button
-            type="button"
-            @click="showAddDrawer = true"
-            class="px-4 py-2.5 rounded-xl bg-brand-red hover:bg-brand-red-dark text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm hover:shadow cursor-pointer"
-          >
-            <PlusIcon class="w-4 h-4" />
-            <span>Tambah Pengguna Baru</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <!-- Impor Pengguna Button (Superadmin Only) -->
+            <button
+              v-if="authStore.user?.role === 'SUPERADMIN'"
+              type="button"
+              @click="showImportModal = true"
+              class="px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <UploadCloud class="w-4 h-4 text-gray-500" />
+              <span>Impor Data Massal</span>
+            </button>
+
+            <!-- Tambah Pengguna Baru Button -->
+            <button
+              type="button"
+              @click="showAddDrawer = true"
+              class="px-4 py-2.5 rounded-xl bg-brand-red hover:bg-brand-red-dark text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm hover:shadow cursor-pointer"
+            >
+              <PlusIcon class="w-4 h-4" />
+              <span>Tambah Pengguna Baru</span>
+            </button>
+          </div>
         </div>
 
         <!-- Table Section (Full Width, Matching Mockup) -->
@@ -101,6 +115,7 @@
                   <th class="py-3 px-4">NIP / NIS</th>
                   <th class="py-3 px-4">Peran</th>
                   <th class="py-3 px-4">Kelas</th>
+                  <th class="py-3 px-4 text-center">Aksi Cepat</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
@@ -112,8 +127,9 @@
                   <td class="py-3.5 px-4 text-center font-medium text-gray-400">
                     {{ idx + 1 }}
                   </td>
-                  <td class="py-3.5 px-4 font-bold text-gray-900">
-                    {{ u.name }}
+                  <td class="py-3.5 px-4">
+                    <p class="font-bold text-gray-900">{{ u.name }}</p>
+                    <p class="text-[10px] text-gray-400 font-mono">{{ u.email }}</p>
                   </td>
                   <td class="py-3.5 px-4 font-mono text-gray-600">
                     {{ u.nip_nis || '-' }}
@@ -122,10 +138,11 @@
                     <span
                       class="px-2.5 py-0.5 rounded-md text-[10px] font-bold"
                       :class="{
+                        'bg-purple-50 text-purple-700 border border-purple-200': u.role === 'SUPERADMIN',
                         'bg-red-50 text-brand-red border border-red-200': u.role === 'GURU_PEMBIMBING',
                         'bg-red-50 text-red-600 border border-red-100': u.role === 'GURU_PENGAJAR',
                         'bg-amber-50 text-amber-700 border border-amber-200': u.role === 'SEKRETARIS',
-                        'bg-red-50 text-red-500 border border-red-100': u.role === 'SISWA',
+                        'bg-blue-50 text-blue-600 border border-blue-100': u.role === 'SISWA',
                       }"
                     >
                       {{ formatRoleLabel(u.role) }}
@@ -133,6 +150,39 @@
                   </td>
                   <td class="py-3.5 px-4 text-gray-600 font-medium">
                     {{ u.class_name || (u.school_class?.name || '-') }}
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <div class="inline-flex items-center gap-1.5">
+                      <!-- Login As (Impersonate) for Superadmin -->
+                      <button
+                        v-if="authStore.user?.role === 'SUPERADMIN' && u.id !== authStore.user?.id"
+                        @click="handleImpersonate(u)"
+                        class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                        title="Masuk sebagai pengguna ini (Impersonate)"
+                      >
+                        <LogIn class="w-3 h-3" />
+                        <span>Masuk As</span>
+                      </button>
+
+                      <!-- Reset Password Button -->
+                      <button
+                        @click="handleResetPassword(u)"
+                        class="p-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-medium transition cursor-pointer"
+                        title="Reset Kata Sandi ke default (password123)"
+                      >
+                        <KeyRound class="w-3.5 h-3.5 text-gray-500" />
+                      </button>
+
+                      <!-- Toggle Active Status -->
+                      <button
+                        @click="handleToggleActive(u)"
+                        class="p-1.5 rounded-lg border text-[10px] transition cursor-pointer"
+                        :class="u.is_active !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'"
+                        :title="u.is_active !== false ? 'Akun Aktif (Klik untuk nonaktifkan)' : 'Akun Nonaktif (Klik untuk aktifkan)'"
+                      >
+                        <Power class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -185,6 +235,7 @@
                   class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
                   required
                 >
+                  <option v-if="authStore.user?.role === 'SUPERADMIN'" value="SUPERADMIN">Super Administrator (Akses Penuh)</option>
                   <option value="GURU_PEMBIMBING">Guru Pembimbing Sekolah</option>
                   <option value="GURU_PENGAJAR">Guru Pengajar</option>
                   <option value="SEKRETARIS">Sekretaris Kelas</option>
@@ -269,6 +320,78 @@
             </form>
           </div>
         </div>
+
+        <!-- Modal Impor Massal Pengguna (Superadmin) -->
+        <div
+          v-if="showImportModal"
+          class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+        >
+          <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-red-50 text-brand-red flex items-center justify-center">
+                  <UploadCloud class="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-gray-900">Impor Pengguna Massal</h3>
+                  <p class="text-[11px] text-gray-400">Tambahkan banyak akun siswa/guru sekaligus (JSON/CSV Payload)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                @click="showImportModal = false"
+                class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+              >
+                <XCircleIcon class="w-5 h-5" />
+              </button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <div class="p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl space-y-1">
+                <p class="font-bold">Format Data (JSON Array):</p>
+                <p class="text-[11px] font-mono leading-relaxed">
+                  [{"name": "Nama Siswa", "email": "siswa1@sekolah.sch.id", "role": "SISWA", "nip_nis": "102405", "phone": "08123456789", "class_id": 1}]
+                </p>
+                <button
+                  type="button"
+                  @click="fillImportTemplate"
+                  class="mt-1 text-[11px] text-primary hover:underline font-bold cursor-pointer"
+                >
+                  Gunakan Template Contoh (3 Siswa)
+                </button>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-gray-700 mb-1">JSON Payload Siswa/Guru</label>
+                <textarea
+                  v-model="importJsonText"
+                  rows="7"
+                  placeholder='Masukkan array JSON pengguna di sini...'
+                  class="w-full p-3 font-mono text-[11px] rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+                ></textarea>
+              </div>
+
+              <div class="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  @click="showImportModal = false"
+                  class="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  :disabled="importing || !importJsonText.trim()"
+                  @click="submitBulkImport"
+                  class="px-5 py-2 bg-brand-red hover:bg-brand-red-dark text-white rounded-xl font-bold transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                >
+                  <span v-if="importing">Memproses...</span>
+                  <span v-else>Mulai Impor Akun</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- TAB 2: KONFIGURASI HAK AKSES -->
@@ -281,12 +404,13 @@
         <div class="overflow-x-auto border border-gray-100 rounded-xl">
           <table class="w-full text-left text-xs border-collapse">
             <thead>
-              <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 font-bold uppercase tracking-wider">
+              <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 font-bold uppercase tracking-wider text-[11px]">
                 <th class="py-3.5 px-4">Fitur / Menu Sistem</th>
                 <th class="py-3.5 px-4 text-center">Siswa</th>
                 <th class="py-3.5 px-4 text-center">Sekretaris</th>
                 <th class="py-3.5 px-4 text-center">Guru Pengajar</th>
                 <th class="py-3.5 px-4 text-center">Guru Pembimbing</th>
+                <th class="py-3.5 px-4 text-center text-purple-700 bg-purple-50/50">Super Administrator</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -304,6 +428,9 @@
                 <td class="py-3 px-4 text-center font-bold" :class="rule.pembimbing ? 'text-green-600' : 'text-gray-300'">
                   {{ rule.pembimbing ? '✓' : '—' }}
                 </td>
+                <td class="py-3 px-4 text-center font-bold text-purple-700 bg-purple-50/20">
+                  {{ rule.superadmin ? '✓' : '—' }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -318,11 +445,19 @@ import {
   Search as SearchIcon,
   Plus as PlusIcon,
   XCircle as XCircleIcon,
-  CheckCircle2 as CheckCircle2Icon
+  CheckCircle2 as CheckCircle2Icon,
+  UploadCloud,
+  KeyRound,
+  LogIn,
+  Power,
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
+
+const showImportModal = ref(false)
+const importJsonText = ref('')
+const importing = ref(false)
 
 const activeTab = ref<'users' | 'roles'>('users')
 const loadingUsers = ref(false)
@@ -333,15 +468,21 @@ const successMsg = ref('')
 const searchQuery = ref('')
 const roleFilter = ref('Semua Peran')
 
-const defaultMockUsers = [
-  { id: 1, name: 'Budi, S.Pd', nip_nis: '19840212001', role: 'GURU_PENGAJAR', class_name: '-' },
-  { id: 2, name: 'Siti Rahma, S.Kom', nip_nis: '19910314002', role: 'GURU_PEMBIMBING', class_name: '-' },
-  { id: 3, name: 'Rina Safitri', nip_nis: '102401', role: 'SEKRETARIS', class_name: 'XI RPL 1' },
-  { id: 4, name: 'Ahmad Fadillah', nip_nis: '102402', role: 'SISWA', class_name: 'XI RPL 1' },
-  { id: 5, name: 'Hendra Wijaya', nip_nis: '102403', role: 'SISWA', class_name: 'XI RPL 2' }
-]
+const defaultMockUsers = computed(() => [
+  {
+    id: authStore.user?.id || 1,
+    name: authStore.user?.name || 'Siti Aminah, M.Pd',
+    nip_nis: authStore.user?.nip_nis || '19890314002',
+    role: authStore.user?.role || 'GURU_PEMBIMBING',
+    class_name: '-'
+  },
+  { id: 101, name: 'Budi Santoso, S.Pd', nip_nis: '19840212001', role: 'GURU_PENGAJAR', class_name: '-' },
+  { id: 102, name: 'Rina Safitri', nip_nis: '102401', role: 'SEKRETARIS', class_name: 'XI RPL 1' },
+  { id: 103, name: 'Ahmad Fadillah', nip_nis: '102402', role: 'SISWA', class_name: 'XI RPL 1' },
+  { id: 104, name: 'Hendra Wijaya', nip_nis: '102403', role: 'SISWA', class_name: 'XI RPL 2' }
+])
 
-const users = ref<any[]>(defaultMockUsers)
+const users = ref<any[]>([])
 
 const newUser = ref({
   name: '',
@@ -376,19 +517,33 @@ const filteredUsers = computed(() => {
 const fetchUsers = async () => {
   loadingUsers.value = true
   try {
-    const res: any = await $fetch(`${config.public.apiBase}/users`, {
+    const res: any = await $fetch(`${config.public.apiBase}/users?per_page=100`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
-    if (res.data && res.data.length > 0) {
-      users.value = res.data.map((u: any) => ({
+    const rawData = res.data?.data || res.data || []
+    if (Array.isArray(rawData) && rawData.length > 0) {
+      let mapped = rawData.map((u: any) => ({
         ...u,
-        class_name: u.school_class?.name || '-'
+        class_name: u.school_class?.name || (u.class_id ? `Kelas ${u.class_id}` : '-')
       }))
+
+      // Pastikan akun Guru Pembimbing yang sedang login selalu tampil di daftar
+      if (authStore.user && !mapped.some((u: any) => u.id === authStore.user?.id || u.email === authStore.user?.email)) {
+        mapped.unshift({
+          id: authStore.user.id,
+          name: authStore.user.name,
+          nip_nis: authStore.user.nip_nis || '-',
+          role: authStore.user.role,
+          class_name: authStore.user.school_class?.name || '-'
+        })
+      }
+
+      users.value = mapped
     } else {
-      users.value = defaultMockUsers
+      users.value = [...defaultMockUsers.value]
     }
   } catch (err: any) {
-    users.value = defaultMockUsers
+    users.value = [...defaultMockUsers.value]
   } finally {
     loadingUsers.value = false
   }
@@ -454,20 +609,112 @@ const submitCreateUser = async () => {
 }
 
 const rbacMatrix = [
-  { feature: 'Dashboard Statistik & Jadwal', siswa: true, sekretaris: true, pengajar: true, pembimbing: true },
-  { feature: 'Input Presensi Siswa Harian (PIN)', siswa: false, sekretaris: true, pengajar: false, pembimbing: false },
-  { feature: 'Rekap Kehadiran Kelas (Jurnal Kelas)', siswa: false, sekretaris: true, pengajar: true, pembimbing: true },
-  { feature: 'Input & Unggah Materi/Rencana Belajar', siswa: false, sekretaris: false, pengajar: true, pembimbing: false },
-  { feature: 'Melihat & Mengunduh Materi Ajar', siswa: true, sekretaris: true, pengajar: true, pembimbing: true },
-  { feature: 'Verifikasi & Konfirmasi Jurnal Siswa', siswa: false, sekretaris: false, pengajar: true, pembimbing: false },
-  { feature: 'Pengajuan Surat Izin Belajar', siswa: true, sekretaris: true, pengajar: false, pembimbing: false },
-  { feature: 'Persetujuan / Approval Surat Izin', siswa: false, sekretaris: false, pengajar: false, pembimbing: true },
-  { feature: 'Rekapitulasi Presensi Semester', siswa: false, sekretaris: false, pengajar: true, pembimbing: true },
-  { feature: 'Manajemen Pengguna & Tambah Akun Baru', siswa: false, sekretaris: false, pengajar: false, pembimbing: true },
-  { feature: 'Notifikasi & Log Audit Aktivitas', siswa: true, sekretaris: true, pengajar: true, pembimbing: true },
+  { feature: 'Dashboard Statistik & Jadwal', siswa: true, sekretaris: true, pengajar: true, pembimbing: true, superadmin: true },
+  { feature: 'Input Presensi Siswa Harian (PIN)', siswa: false, sekretaris: true, pengajar: false, pembimbing: false, superadmin: true },
+  { feature: 'Force Unlock Presensi Terkunci', siswa: false, sekretaris: false, pengajar: false, pembimbing: false, superadmin: true },
+  { feature: 'Rekap Kehadiran Kelas (Jurnal Kelas)', siswa: false, sekretaris: true, pengajar: true, pembimbing: true, superadmin: true },
+  { feature: 'Input & Unggah Materi/Rencana Belajar', siswa: false, sekretaris: false, pengajar: true, pembimbing: false, superadmin: true },
+  { feature: 'Melihat & Mengunduh Materi Ajar', siswa: true, sekretaris: true, pengajar: true, pembimbing: true, superadmin: true },
+  { feature: 'Verifikasi & Konfirmasi Jurnal KBM', siswa: false, sekretaris: false, pengajar: true, pembimbing: false, superadmin: true },
+  { feature: 'Pengajuan Surat Izin Belajar', siswa: true, sekretaris: true, pengajar: false, pembimbing: false, superadmin: true },
+  { feature: 'Persetujuan / Approval Surat Izin', siswa: false, sekretaris: false, pengajar: false, pembimbing: true, superadmin: true },
+  { feature: 'Rekapitulasi Presensi Semester', siswa: false, sekretaris: false, pengajar: true, pembimbing: true, superadmin: true },
+  { feature: 'Manajemen Pengguna & Tambah Akun Baru', siswa: false, sekretaris: false, pengajar: false, pembimbing: true, superadmin: true },
+  { feature: 'Impor Pengguna Massal (Excel/JSON)', siswa: false, sekretaris: false, pengajar: false, pembimbing: false, superadmin: true },
+  { feature: 'Login As / Impersonate Pengguna', siswa: false, sekretaris: false, pengajar: false, pembimbing: false, superadmin: true },
+  { feature: 'Master Data Akademik (Kelas, Mapel, Jadwal)', siswa: false, sekretaris: false, pengajar: false, pembimbing: false, superadmin: true },
+  { feature: 'Pusat Broadcast WhatsApp & In-App', siswa: false, sekretaris: false, pengajar: false, pembimbing: false, superadmin: true },
+  { feature: 'Audit Log Explorer & Backup Data', siswa: false, sekretaris: false, pengajar: false, pembimbing: false, superadmin: true },
 ]
 
+function fillImportTemplate() {
+  const sample = [
+    { name: "Dewi Lestari", email: "dewi.lestari@gmail.com", role: "SISWA", nip_nis: "102420", phone: "081298881111", class_id: 1 },
+    { name: "Fajar Nugraha", email: "fajar.nugraha@gmail.com", role: "SISWA", nip_nis: "102421", phone: "081298882222", class_id: 1 },
+    { name: "Siti Rahayu, S.Kom", email: "siti.rahayu@sekolah.sch.id", role: "GURU_PENGAJAR", nip_nis: "198810102015032001", phone: "081298883333", class_id: null }
+  ]
+  importJsonText.value = JSON.stringify(sample, null, 2)
+}
+
+async function submitBulkImport() {
+  try {
+    const parsed = JSON.parse(importJsonText.value)
+    if (!Array.isArray(parsed)) {
+      alert('Data harus berupa JSON array.')
+      return
+    }
+    importing.value = true
+    const res: any = await $fetch(`${config.public.apiBase}/users/import`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      body: { users: parsed }
+    })
+    successMsg.value = res.message || 'Impor pengguna berhasil diselesaikan!'
+    showImportModal.value = false
+    importJsonText.value = ''
+    fetchUsers()
+  } catch (e: any) {
+    alert(e?.data?.message || 'Format JSON tidak valid atau terjadi kesalahan pada server.')
+  } finally {
+    importing.value = false
+  }
+}
+
+async function handleImpersonate(user: any) {
+  if (!confirm(`Apakah Anda yakin ingin masuk sebagai ${user.name} (${user.role})?`)) return
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/users/${user.id}/impersonate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    if (res.token && res.user) {
+      authStore.token = res.token
+      authStore.user = res.user
+      localStorage.setItem('token', res.token)
+      localStorage.setItem('user', JSON.stringify(res.user))
+      alert(`Berhasil masuk sebagai ${user.name}! Mengalihkan ke dashboard...`)
+      navigateTo('/dashboard')
+    }
+  } catch (e: any) {
+    alert(e?.data?.message || 'Gagal melakukan impersonasi.')
+  }
+}
+
+async function handleResetPassword(user: any) {
+  if (!confirm(`Reset kata sandi pengguna ${user.name} ke default (password123)?`)) return
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/users/${user.id}/reset-password`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    alert(res.message || 'Kata sandi berhasil direset.')
+  } catch (e: any) {
+    alert(e?.data?.message || 'Gagal mereset kata sandi.')
+  }
+}
+
+async function handleToggleActive(user: any) {
+  const action = user.is_active !== false ? 'menonaktifkan' : 'mengaktifkan'
+  if (!confirm(`Apakah Anda yakin ingin ${action} akun ${user.name}?`)) return
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/users/${user.id}/toggle-active`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    user.is_active = res.is_active
+    successMsg.value = res.message || `Status akun ${user.name} berhasil diperbarui.`
+  } catch (e: any) {
+    alert(e?.data?.message || 'Gagal mengubah status akun.')
+  }
+}
+
 onMounted(() => {
+  if (authStore.user?.role === 'GURU_PEMBIMBING') {
+    return navigateTo('/manajemen-murid')
+  }
+  if (authStore.user?.role === 'SUPERADMIN') {
+    return navigateTo('/manajemen-guru')
+  }
   fetchUsers()
 })
 </script>

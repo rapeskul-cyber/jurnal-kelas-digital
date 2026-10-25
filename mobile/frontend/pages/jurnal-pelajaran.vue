@@ -5,7 +5,7 @@
       subtitle="Materi terbaru dan bahan ajar yang dipublikasikan oleh guru"
     />
 
-    <main class="px-4 pb-6 space-y-5">
+    <main class="px-8 pb-8 space-y-6">
       <!-- Filter Bar & Schedule Pop-up Button -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <!-- Left: Month picker & search -->
@@ -37,8 +37,8 @@
         </button>
       </div>
 
-      <!-- Main Material Table -->
-      <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs">
+      <!-- Main Material Section (Responsive Table on Desktop, Cards on Mobile) -->
+      <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-gray-900">Daftar Materi & Modul Pembelajaran</h3>
@@ -52,8 +52,52 @@
             Reset Pencarian
           </button>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
+
+        <!-- Mobile Card List View (Visible on < sm) -->
+        <div class="block sm:hidden space-y-3">
+          <div
+            v-for="item in filteredMaterials"
+            :key="item.id"
+            class="p-4 rounded-xl border border-gray-150 bg-gray-50/50 hover:bg-white hover:border-gray-200 transition space-y-2.5"
+          >
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-gray-900">{{ item.date_time }}</span>
+              <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {{ item.attachments_count }} file
+              </span>
+            </div>
+
+            <div>
+              <span class="text-[10px] font-bold uppercase text-brand-red tracking-wider block">{{ item.subject }}</span>
+              <h4 class="text-sm font-bold text-gray-900 mt-0.5">{{ item.topic }}</h4>
+              <p class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                <User class="w-3 h-3 text-gray-400" />
+                <span>{{ item.teacher }}</span>
+              </p>
+            </div>
+
+            <div class="pt-2 border-t border-gray-150 flex items-center justify-between gap-2">
+              <span class="text-[10px] text-gray-400 italic truncate max-w-[170px]">
+                {{ item.attachment_name }}
+              </span>
+              <button
+                type="button"
+                @click="selectedMaterial = item"
+                class="px-3 py-1.5 rounded-lg border border-amber-500/70 text-amber-700 bg-amber-50/50 hover:bg-amber-100 text-xs font-semibold transition shrink-0 cursor-pointer"
+              >
+                Baca Materi
+              </button>
+            </div>
+          </div>
+
+          <div v-if="filteredMaterials.length === 0" class="py-8 text-center text-xs text-gray-400">
+            Tidak ada materi pelajaran untuk periode ini.
+          </div>
+        </div>
+
+        <!-- Desktop Table View (Visible on >= sm) -->
+        <div class="hidden sm:block overflow-x-auto">
+          <table class="w-full text-left text-xs min-w-[650px]">
             <thead>
               <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100">
                 <th class="pb-3 font-semibold">Tanggal / Jam</th>
@@ -226,7 +270,9 @@ import { useAuthStore } from '~/stores/auth'
 
 const authStore = useAuthStore()
 const search = ref('')
-const selectedMonth = ref('2026-02')
+const now = new Date()
+const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+const selectedMonth = ref(currentYearMonth)
 const materials = ref<any[]>([])
 const selectedMaterial = ref<any>(null)
 const showScheduleModal = ref(false)
@@ -240,85 +286,8 @@ const todayFormatted = computed(() => {
   }).format(new Date())
 })
 
-const defaultSchedules = [
-  {
-    id: 1,
-    time: '07:30 - 09:00',
-    subject: 'Pemrograman Web & Perangkat Bergerak',
-    teacher: 'Budi Santoso, S.Pd',
-    room: 'Lab. Komputer 1',
-    day: 'Senin'
-  },
-  {
-    id: 2,
-    time: '09:15 - 11:45',
-    subject: 'Basis Data & Desain Sistem',
-    teacher: 'Budi Santoso, S.Pd',
-    room: 'Lab. Komputer 2',
-    day: 'Senin'
-  },
-  {
-    id: 3,
-    time: '13:00 - 15:30',
-    subject: 'Proyek Perangkat Lunak Mandiri',
-    teacher: 'Amiruddin, S.T',
-    room: 'Lab. RPL',
-    day: 'Senin'
-  }
-]
-
-const todaySchedules = ref<any[]>(defaultSchedules)
-
-const defaultMaterials = [
-  {
-    id: 1,
-    date_time: '27 Feb, 07:30',
-    teacher: 'Budi Santoso, S.Pd',
-    subject: 'Pemrograman Web',
-    topic: 'Optimasi Query relasional dan teknik routing SPA.',
-    plan: 'Pembuatan komponen reactive dan pengelolaan router guard di Nuxt 3.',
-    assignment: 'Selesaikan latihan routing bertingkat pada repositori kelas.',
-    attachments_count: 2,
-    attachment_name: 'Modul_Web_SPA.pdf',
-    attachment_url: '#'
-  },
-  {
-    id: 2,
-    date_time: '27 Feb, 09:15',
-    teacher: 'Budi Santoso, S.Pd',
-    subject: 'Basis Data',
-    topic: 'Rancangan ERD lanjutan dan perbaikan Schema.',
-    plan: 'Normalisasi database 3NF dan pembuatan foreign key constraints.',
-    assignment: 'Kirimkan skema ERD format PDF ke google drive kelas.',
-    attachments_count: 1,
-    attachment_name: 'Panduan_ERD_Lanjutan.pdf',
-    attachment_url: '#'
-  },
-  {
-    id: 3,
-    date_time: '26 Feb, 10:30',
-    teacher: 'Amiruddin, S.T',
-    subject: 'Praktek Kerja Lapangan',
-    topic: 'Briefing persiapan pendelegasian magang di industri.',
-    plan: 'Tata tertib pelaksanaan PKL dan logbook harian industri.',
-    assignment: 'Lengkapi berkas surat pernyataan orang tua dan CV.',
-    attachments_count: 1,
-    attachment_name: 'Panduan_PKL_Industri.pdf',
-    attachment_url: '#'
-  },
-  {
-    id: 4,
-    date_time: '26 Feb, 13:00',
-    teacher: 'Siti Aminah, M.Pd',
-    subject: 'Kewirausahaan',
-    topic: 'Penyusunan laporan laba-rugi mockup bisnis.',
-    plan: 'Analisis BEP (Break Even Point) dan penetapan harga jual produk digital.',
-    assignment: 'Kerjakan lembar kerja kalkulasi biaya operasional kelompok.',
-    attachments_count: 1,
-    attachment_name: 'Template_Laba_Rugi.xlsx',
-    attachment_url: '#'
-  }
-]
+const todaySchedules = ref<any[]>([])
+const defaultMaterials: any[] = []
 
 const filteredMaterials = computed(() => {
   if (!search.value) return materials.value
@@ -368,11 +337,11 @@ const fetchMaterials = async () => {
     if (res && res.length > 0) {
       materials.value = res
     } else {
-      materials.value = defaultMaterials
+      materials.value = []
     }
   } catch (e) {
     console.warn('API materials note:', e)
-    materials.value = defaultMaterials
+    materials.value = []
   }
 }
 

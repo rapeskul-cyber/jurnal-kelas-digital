@@ -24,7 +24,7 @@
       </template>
     </AppHeader>
 
-    <main class="px-4 pb-6 space-y-5">
+    <main class="px-6 md:px-8 pb-10 space-y-6">
 
     <!-- Filter Card -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-4 md:p-5 flex flex-wrap items-center justify-between gap-4">
@@ -102,7 +102,7 @@
 
       <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-card flex items-center justify-between">
         <div>
-          <p class="text-xs text-gray-500 font-medium">Alpha</p>
+          <p class="text-xs text-gray-500 font-medium">ALFA</p>
           <h3 class="text-2xl font-bold text-red-600 mt-1">{{ summary.alpha }}</h3>
           <p class="text-[11px] text-gray-400 mt-0.5">Tanpa keterangan</p>
         </div>
@@ -221,7 +221,28 @@ const fetchRecap = async () => {
 }
 
 const exportExcel = () => {
-  alert('Mengunduh Berkas Rekapitulasi Presensi Harian (XLSX)... Berhasil diekspor!')
+  if (!students.value || students.value.length === 0) {
+    alert('Tidak ada data presensi harian untuk diekspor.')
+    return
+  }
+
+  const headers = ['No', 'Nama Siswa', 'NIS / NIP', 'Status Kehadiran', 'Keterangan']
+  const rows = students.value.map((s, idx) => [
+    idx + 1,
+    `"${s.name}"`,
+    `"${s.nis}"`,
+    `"${s.status}"`,
+    `"${s.note || '-'}"`
+  ])
+
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `rekap_presensi_harian_kelas_${selectedClass.value}_${filterDate.value}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 const printReport = () => {

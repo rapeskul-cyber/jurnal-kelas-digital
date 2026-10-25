@@ -14,14 +14,6 @@
           <PlusIcon class="w-3.5 h-3.5" />
           <span>Isi Jurnal KBM</span>
         </button>
-        <button
-          @click="exportPdf"
-          type="button"
-          class="px-3.5 py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-xs font-semibold flex items-center gap-2 shadow-2xs cursor-pointer"
-        >
-          <FileTextIcon class="w-3.5 h-3.5" />
-          <span>Export PDF</span>
-        </button>
       </template>
     </AppHeader>
 
@@ -70,14 +62,24 @@
           </div>
         </div>
 
-        <button
-          @click="exportPdf"
-          type="button"
-          class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-xs font-semibold shadow-2xs cursor-pointer"
-        >
-          <DownloadIcon class="w-3.5 h-3.5" />
-          <span>Export PDF</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportExcel"
+            type="button"
+            class="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors text-xs font-semibold shadow-2xs cursor-pointer"
+          >
+            <FileSpreadsheetIcon class="w-3.5 h-3.5" />
+            <span>Export Excel</span>
+          </button>
+          <button
+            @click="exportPdf"
+            type="button"
+            class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-xs font-semibold shadow-2xs cursor-pointer"
+          >
+            <DownloadIcon class="w-3.5 h-3.5" />
+            <span>Export PDF</span>
+          </button>
+        </div>
       </div>
 
       <!-- 4 Stat Summary Cards (Hadir, Sakit, Izin, Alfa) -->
@@ -126,11 +128,11 @@
 
         <!-- Alfa -->
         <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-card flex items-center gap-3.5">
-          <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+          <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
             <AlertCircleIcon class="w-5 h-5" />
           </div>
           <div>
-            <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Alfa</span>
+            <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">ALFA</span>
             <div class="text-base font-bold text-gray-900 flex items-baseline gap-1 mt-0.5">
               <span>{{ summary.alpha }}</span>
               <span class="text-[11px] font-normal text-gray-400">siswa</span>
@@ -163,6 +165,12 @@
           Memuat rekap data kehadiran kelas...
         </div>
 
+        <div v-else-if="filteredRecords.length === 0" class="py-16 text-center space-y-2">
+          <CalendarIcon class="w-10 h-10 text-gray-300 mx-auto" />
+          <p class="text-sm font-semibold text-gray-700">Belum Ada Presensi Diisi</p>
+          <p class="text-xs text-gray-400">Tidak ada data kehadiran siswa yang tercatat pada tanggal ini.</p>
+        </div>
+
         <div v-else class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
@@ -191,26 +199,7 @@
                   {{ row.nis }}
                 </td>
                 <td class="py-3.5 px-4 text-center">
-                  <span
-                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border"
-                    :class="{
-                      'bg-emerald-50 text-emerald-700 border-emerald-200': row.status === 'HADIR',
-                      'bg-blue-50 text-blue-700 border-blue-200': row.status === 'SAKIT',
-                      'bg-amber-50 text-amber-700 border-amber-200': row.status === 'IZIN',
-                      'bg-rose-50 text-rose-700 border-rose-200': row.status === 'ALFA',
-                    }"
-                  >
-                    <span
-                      class="w-1.5 h-1.5 rounded-full"
-                      :class="{
-                        'bg-emerald-500': row.status === 'HADIR',
-                        'bg-blue-500': row.status === 'SAKIT',
-                        'bg-amber-500': row.status === 'IZIN',
-                        'bg-rose-500': row.status === 'ALFA',
-                      }"
-                    ></span>
-                    {{ formatStatusLabel(row.status) }}
-                  </span>
+                  <StatusBadge :status="row.status" :has-dot="true" />
                 </td>
                 <td class="py-3.5 px-4 text-gray-600">
                   {{ row.time_note }}
@@ -242,7 +231,7 @@
           <span>Hadir: <strong class="text-emerald-600">{{ summary.hadir }}</strong></span>
           <span>Izin: <strong class="text-amber-600">{{ summary.izin }}</strong></span>
           <span>Sakit: <strong class="text-blue-600">{{ summary.sakit }}</strong></span>
-          <span>Alfa: <strong class="text-rose-600">{{ summary.alpha }}</strong></span>
+          <span>ALFA: <strong class="text-red-600">{{ summary.alpha }}</strong></span>
         </div>
       </div>
 
@@ -375,7 +364,8 @@ import {
   BookOpen as BookOpenIcon,
   Plus as PlusIcon,
   CheckCircle2 as CheckCircle2Icon,
-  X as XIcon
+  X as XIcon,
+  FileSpreadsheet as FileSpreadsheetIcon
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
@@ -408,11 +398,12 @@ const summary = ref({
 const records = ref<any[]>([])
 
 const formatStatusLabel = (st: string) => {
-  switch (st) {
+  switch (st?.toUpperCase()) {
     case 'HADIR': return 'Hadir'
     case 'SAKIT': return 'Sakit'
     case 'IZIN': return 'Izin'
-    case 'ALFA': return 'Alfa'
+    case 'ALFA':
+    case 'ALPHA': return 'ALFA'
     default: return st
   }
 }
@@ -491,6 +482,31 @@ const fetchRecap = async () => {
 
 const exportPdf = () => {
   window.print()
+}
+
+const exportExcel = () => {
+  if (records.value.length === 0) {
+    alert('Tidak ada data presensi pada tanggal ini untuk diekspor.')
+    return
+  }
+  const headers = ['No', 'Nama Siswa', 'NIS', 'Status Kehadiran', 'Waktu & Catatan', 'Status Verifikasi']
+  const rows = filteredRecords.value.map((r, idx) => [
+    idx + 1,
+    `"${r.name}"`,
+    `"${r.nis}"`,
+    formatStatusLabel(r.status),
+    `"${r.time_note || '-'}"`,
+    'Terverifikasi'
+  ])
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF'
+    + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `Rekap_Presensi_Kelas_${filterDate.value}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 onMounted(() => {

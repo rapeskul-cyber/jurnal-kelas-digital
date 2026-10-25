@@ -64,7 +64,7 @@
                   <h3 class="text-xs font-bold text-gray-900">{{ item.student_name }}</h3>
                   <p class="text-[11px] text-gray-400 mt-0.5">{{ item.class }} • NIS: {{ item.nis }}</p>
                 </div>
-                <StatusBadge :status="item.status" />
+                <StatusBadge :status="item.status" context="pembimbing" />
               </div>
 
               <div class="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-100/60">
@@ -88,7 +88,7 @@
               <h2 class="text-lg font-bold text-gray-900 mt-1">{{ selectedItem.student_name }}</h2>
               <p class="text-xs text-gray-400">{{ selectedItem.class }} — NIS: {{ selectedItem.nis }}</p>
             </div>
-            <StatusBadge :status="selectedItem.status" />
+            <StatusBadge :status="selectedItem.status" context="pembimbing" />
           </div>
 
           <!-- Rincian Data -->
@@ -103,11 +103,13 @@
             </div>
             <div>
               <span class="text-gray-400 font-medium">Tujuan / Ditujukan Kepada:</span>
-              <p class="font-semibold text-gray-700 mt-0.5">{{ selectedItem.recipient || 'Wali Kelas / Pembimbing' }}</p>
+              <p class="font-semibold text-gray-700 mt-0.5">{{ selectedItem.recipient || 'Wali Kelas / Guru Pembimbing' }}</p>
             </div>
             <div>
               <span class="text-gray-400 font-medium">Status Verifikasi:</span>
-              <p class="font-semibold text-gray-700 mt-0.5">{{ selectedItem.status }}</p>
+              <p class="font-semibold text-gray-700 mt-0.5">
+                {{ selectedItem.status === 'PENDING' ? 'Menunggu Konfirmasi Guru Pembimbing' : (selectedItem.status === 'APPROVED' ? 'Disetujui' : (selectedItem.status === 'REJECTED' ? 'Ditolak' : selectedItem.status)) }}
+              </p>
             </div>
           </div>
 
@@ -119,21 +121,30 @@
             </div>
           </div>
 
-          <!-- Lampiran / Tanda Tangan -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/50">
-              <span class="text-[11px] font-semibold text-gray-500 block mb-1">Lampiran Dokumen</span>
-              <div class="flex items-center gap-2 text-xs font-semibold text-blue-600 bg-white p-2.5 rounded-lg border border-gray-200">
-                <FileTextIcon class="w-4 h-4 text-blue-500" />
-                <span>{{ selectedItem.attachment || 'surat_keterangan.pdf' }}</span>
+          <!-- Lampiran Dokumen Bukti Fisik / Surat Dokter -->
+          <div class="pt-1">
+            <div class="p-3.5 rounded-xl border border-gray-150 bg-gray-50/50 space-y-2">
+              <span class="text-xs font-bold text-gray-700 block">Lampiran Dokumen Surat Keterangan / Bukti Fisik:</span>
+              <div v-if="selectedItem.attachment || selectedItem.attachment_url">
+                <a
+                  :href="selectedItem.attachment_url || `/api/leave-requests/file/${selectedItem.attachment}`"
+                  target="_blank"
+                  download
+                  class="flex items-center justify-between gap-3 text-xs font-semibold text-blue-700 bg-white hover:bg-blue-50/80 p-3 rounded-xl border border-blue-200 transition shadow-2xs group cursor-pointer"
+                  title="Klik untuk membuka & mengunduh berkas"
+                >
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <FileTextIcon class="w-4 h-4 text-blue-600 shrink-0" />
+                    <span class="truncate font-medium">{{ selectedItem.attachment || 'surat_keterangan.pdf' }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-xs text-blue-600 font-bold shrink-0">
+                    <DownloadIcon class="w-3.5 h-3.5" />
+                    <span>Buka / Unduh Dokumen</span>
+                  </div>
+                </a>
               </div>
-            </div>
-
-            <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/50">
-              <span class="text-[11px] font-semibold text-gray-500 block mb-1">Tanda Tangan Pemohon</span>
-              <div class="h-14 bg-white rounded-lg border border-gray-200 flex items-center justify-center p-1">
-                <img v-if="selectedItem.signature" :src="selectedItem.signature" class="max-h-12 object-contain" alt="Tanda Tangan Digital" />
-                <span v-else class="text-xs italic text-gray-400">Tanda tangan digital terverifikasi</span>
+              <div v-else class="text-xs text-gray-400 italic bg-white p-2.5 rounded-lg border border-gray-100">
+                Tidak ada berkas fisik yang dilampirkan pemohon.
               </div>
             </div>
           </div>
@@ -193,6 +204,7 @@ import {
   RefreshCw as RefreshCwIcon,
   CheckCircle2 as CheckCircle2Icon,
   FileText as FileTextIcon,
+  Download as DownloadIcon,
   Check as CheckIcon,
   X as XIcon
 } from 'lucide-vue-next'
