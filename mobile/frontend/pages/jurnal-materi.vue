@@ -715,6 +715,8 @@ const fetchTeacherSchedulesAndJournals = async () => {
 
         return {
           id: sch.id,
+          class_id: sch.class_id,
+          subject_id: sch.subject_id,
           journal_id: match ? match.id : null,
           time: `${sch.start_time?.slice(0, 5) || '07:30'} - ${sch.end_time?.slice(0, 5) || '09:00'}`,
           subject: `${sch.subject?.name || 'Mata Pelajaran'} (${sch.school_class?.name || 'XI RPL 1'})`,
@@ -799,10 +801,11 @@ const submitMaterial = async () => {
   submitting.value = true
   successMsg.value = ''
   try {
+    const chosenSchedule = scheduleItems.value.find((s: any) => String(s.id) === String(materialForm.value.schedule_id))
     const formData = new FormData()
     formData.append('schedule_id', materialForm.value.schedule_id || '1')
-    formData.append('class_id', '1')
-    formData.append('subject_id', '1')
+    formData.append('class_id', chosenSchedule?.class_id ? String(chosenSchedule.class_id) : '1')
+    formData.append('subject_id', chosenSchedule?.subject_id ? String(chosenSchedule.subject_id) : '1')
     formData.append('date', new Date().toISOString().slice(0, 10))
     formData.append('topic', materialForm.value.topic)
     formData.append('plan', materialForm.value.topic)

@@ -128,12 +128,22 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
-        if ($request->role === 'GURU_PEMBIMBING' && $request->class_id) {
+        if ($request->role === 'GURU_PEMBIMBING' && $request->filled('class_id')) {
+            User::where('class_id', $request->class_id)
+                ->where('role', 'GURU_PEMBIMBING')
+                ->where('id', '!=', $user->id)
+                ->update(['class_id' => null]);
             SchoolClass::where('id', $request->class_id)->update(['advisor_id' => $user->id]);
         }
 
-        if ($request->role === 'GURU_PENGAJAR' && $request->subject_id) {
-            Subject::where('id', $request->subject_id)->update(['teacher_id' => $user->id]);
+        if ($request->role === 'GURU_PENGAJAR' && $request->filled('subject_id')) {
+            $sub = Subject::find($request->subject_id);
+            if ($sub) {
+                $sub->update(['teacher_id' => $user->id]);
+                if (!$user->specialization) {
+                    $user->update(['specialization' => $sub->name]);
+                }
+            }
         }
 
         Notification::create([
@@ -220,6 +230,12 @@ class UserController extends Controller
         ]);
     }
 
+    public function show($id)
+    {
+        $user = User::with(['schoolClass', 'guidedClass', 'taughtSubjects'])->findOrFail($id);
+        return response()->json($user);
+    }
+
     public function getClasses()
     {
         return response()->json(SchoolClass::all());
@@ -284,14 +300,48 @@ class UserController extends Controller
             'role' => 'sometimes|required|in:SISWA,SEKRETARIS,GURU_PENGAJAR,GURU_PEMBIMBING,SUPERADMIN',
         ]);
 
-        $user->update($request->only(['name', 'email', 'phone', 'nip_nis', 'class_id', 'specialization', 'role']));
-
-        if ($user->role === 'GURU_PEMBIMBING' && $request->filled('class_id')) {
-            SchoolClass::where('id', $request->class_id)->update(['advisor_id' => $user->id]);
+        $updateData = $request->only(['name', 'email', 'phone', 'nip_nis', 'specialization', 'role']);
+        if ($request->has('class_id')) {
+            $updateData['class_id'] = $request->class_id ?: null;
         }
 
-        if ($user->role === 'GURU_PENGAJAR' && $request->filled('subject_id')) {
-            Subject::where('id', $request->subject_id)->update(['teacher_id' => $user->id]);
+        $user->update($updateData);
+
+        // Khusus Guru Pembimbing: Atur relasi 1:1 ke rombel binaan secara bersih
+        if ($user->role === 'GURU_PEMBIMBING') {
+            // 1. Lepas status wali kelas dari rombel-rombel yang sebelumnya dibina guru ini
+            SchoolClass::where('advisor_id', $user->id)->update(['advisor_id' => null]);
+
+            // 2. Jika ada class_id baru yang dipilih:
+            if ($request->filled('class_id')) {
+                // Lepas pembimbing lain yang sebelumnya membina kelas ini (1 kelas = 1 wali)
+                User::where('class_id', $request->class_id)
+                    ->where('role', 'GURU_PEMBIMBING')
+                    ->where('id', '!=', $user->id)
+                    ->update(['class_id' => null]);
+
+                SchoolClass::where('id', $request->class_id)->update(['advisor_id' => $user->id]);
+                $user->update(['class_id' => $request->class_id]);
+            } else {
+                $user->update(['class_id' => null]);
+            }
+        }
+
+        // Khusus Guru Pengajar: Hubungkan ke mata pelajaran
+        if ($user->role === 'GURU_PENGAJAR') {
+            if ($request->filled('subject_id')) {
+                // Lepas mapel lama milik guru ini
+                Subject::where('teacher_id', $user->id)->where('id', '!=', $request->subject_id)->update(['teacher_id' => null]);
+                $sub = Subject::find($request->subject_id);
+                if ($sub) {
+                    $sub->update(['teacher_id' => $user->id]);
+                    if (!$request->filled('specialization')) {
+                        $user->update(['specialization' => $sub->name]);
+                    }
+                }
+            } elseif ($request->has('subject_id') && !$request->subject_id) {
+                Subject::where('teacher_id', $user->id)->update(['teacher_id' => null]);
+            }
         }
 
         AuditLog::create([

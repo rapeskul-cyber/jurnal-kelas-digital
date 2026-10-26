@@ -89,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // User Management (Pembimbing & Superadmin)
     Route::get('/users', [UserController::class, 'index']);
+    Route::get('/users/{id}', [UserController::class, 'show']);
     Route::post('/users', [UserController::class, 'store']);
     Route::post('/users/import', [UserController::class, 'bulkImport']);
     Route::post('/users/{id}/impersonate', [UserController::class, 'impersonate']);
