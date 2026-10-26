@@ -22,6 +22,16 @@
         <NuxtLink to="/profile" class="p-2 text-gray-600 rounded-lg hover:bg-gray-100 transition">
           <User class="w-5 h-5" />
         </NuxtLink>
+        <!-- Khusus Siswa: Tombol Logout di bar atas karena Siswa tidak memiliki drawer 'Lainnya' -->
+        <button
+          v-if="authStore.user?.role === 'SISWA'"
+          @click="handleLogout"
+          type="button"
+          class="p-2 text-gray-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
+          title="Keluar Akun"
+        >
+          <LogOut class="w-5 h-5" />
+        </button>
       </div>
     </div>
 

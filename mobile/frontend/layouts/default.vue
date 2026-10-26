@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-[#FAFAFA] flex flex-col antialiased">
     <!-- Main Content Area (mobile-first: header in page, bottom nav fixed) -->
-    <div class="flex-1 flex flex-col pb-20">
+    <div class="flex-1 flex flex-col pt-16 pb-20">
       <slot />
     </div>
 

@@ -709,12 +709,6 @@ async function handleToggleActive(user: any) {
 }
 
 onMounted(() => {
-  if (authStore.user?.role === 'GURU_PEMBIMBING') {
-    return navigateTo('/manajemen-murid')
-  }
-  if (authStore.user?.role === 'SUPERADMIN') {
-    return navigateTo('/manajemen-guru')
-  }
   fetchUsers()
 })
 </script>

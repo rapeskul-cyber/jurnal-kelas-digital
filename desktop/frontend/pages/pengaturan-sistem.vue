@@ -289,7 +289,7 @@ const downloadingBackup = ref(false)
 
 // Settings state
 const settings = ref({
-  school_name: 'SMK Negeri 1 Digital',
+  school_name: 'SMK Negeri 71 Jakarta',
   school_npsn: '20104567',
   school_address: 'Jl. Pendidikan Industri No. 45, Jakarta',
   headmaster_name: 'Dr. H. Bambang Soeprapto, M.Pd',

@@ -9,7 +9,6 @@ export const ROLE_MENUS: Record<string, MenuItem[]> = {
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
     { name: 'Jurnal Pelajaran', to: '/jurnal-pelajaran', icon: 'BookOpen' },
     { name: 'Riwayat Kehadiran', to: '/riwayat-kehadiran', icon: 'CalendarCheck' },
-    { name: 'Surat Izin', to: '/surat-izin', icon: 'FileSpreadsheet' },
     { name: 'Profil Saya', to: '/profile', icon: 'User' },
   ],
   SEKRETARIS: [
@@ -41,7 +40,8 @@ export const ROLE_MENUS: Record<string, MenuItem[]> = {
   SUPERADMIN: [
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
     { name: 'Master Data', to: '/master-data', icon: 'Layers' },
-    { name: 'Manajemen Guru', to: '/manajemen-guru', icon: 'Users' },
+    { name: 'Manajemen Pengguna', to: '/manajemen-user', icon: 'Users' },
+    { name: 'Manajemen Guru & Staf', to: '/manajemen-guru', icon: 'GraduationCap' },
     { name: 'Buka Kunci Presensi', to: '/presensi-override', icon: 'ShieldAlert' },
     { name: 'Siaran Broadcast', to: '/broadcast', icon: 'Megaphone' },
     { name: 'WhatsApp Gateway', to: '/wa-gateway', icon: 'MessageSquare' },

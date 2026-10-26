@@ -263,7 +263,7 @@ class AuthController extends Controller
         $token = env('WA_GATEWAY_TOKEN', env('FONNTE_TOKEN', 'rapiuw-admin-secret-2026'));
 
         try {
-            $resp = \Illuminate\Support\Facades\Http::timeout(10)
+            $resp = \Illuminate\Support\Facades\Http::timeout(30)
                 ->withHeaders([
                     'x-admin-token' => $token,
                     'Authorization' => "Bearer {$token}",

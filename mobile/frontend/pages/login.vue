@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-[#FAFAFA] flex flex-col justify-center items-center p-4">
+  <div class="min-h-screen bg-[#FAFAFA] flex flex-col justify-center items-center p-4 py-8">
     <!-- Auth Card -->
-    <div class="w-full max-w-md bg-white border border-gray-200 rounded-3xl p-8 sm:p-10 shadow-sm text-center">
+    <div class="w-full max-w-md bg-white border border-gray-200 rounded-3xl p-6 sm:p-8 shadow-sm text-center my-auto">
       <!-- Logo Icon -->
       <div class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-sm">
         <Book class="w-6 h-6" />
@@ -103,6 +103,13 @@
             class="px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:text-primary hover:border-primary/40 bg-gray-50/50 hover:bg-red-50/30 transition-colors text-[11px] font-medium"
           >
             Guru Pembimbing
+          </button>
+          <button
+            type="button"
+            @click="handleQuickLogin('SUPERADMIN')"
+            class="col-span-2 px-2.5 py-1.5 rounded-lg border border-purple-200 text-purple-700 hover:text-purple-900 hover:border-purple-400 bg-purple-50/60 hover:bg-purple-100/50 transition-colors text-[11px] font-bold text-center"
+          >
+            🛡️ Super Administrator (Akses Penuh)
           </button>
         </div>
       </div>

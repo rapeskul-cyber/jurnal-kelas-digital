@@ -94,7 +94,7 @@ class SystemController extends Controller
             'server_time' => Carbon::now()->toIso8601String(),
             'total_users' => User::count(),
             'total_audit_logs' => AuditLog::count(),
-            'school_name' => Setting::get('school_name', 'SMK Negeri 1 Digital'),
+            'school_name' => Setting::get('school_name', 'SMK Negeri 71 Jakarta'),
         ]);
     }
 

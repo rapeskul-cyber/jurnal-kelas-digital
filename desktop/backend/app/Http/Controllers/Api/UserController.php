@@ -31,12 +31,12 @@ class UserController extends Controller
             $query->where('class_id', $classId)->whereIn('role', ['SISWA', 'SEKRETARIS']);
         } else {
             // SUPERADMIN filters
-            if ($category === 'GURU') {
+            if ($role && $role !== 'Semua Peran' && $role !== 'ALL') {
+                $query->where('role', $role);
+            } elseif ($category === 'GURU') {
                 $query->whereIn('role', ['GURU_PEMBIMBING', 'GURU_PENGAJAR']);
             } elseif ($category === 'SISWA') {
                 $query->whereIn('role', ['SISWA', 'SEKRETARIS']);
-            } elseif ($role && $role !== 'Semua Peran' && $role !== 'ALL') {
-                $query->where('role', $role);
             }
         }
 
