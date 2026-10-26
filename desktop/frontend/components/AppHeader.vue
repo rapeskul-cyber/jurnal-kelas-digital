@@ -49,15 +49,26 @@
         <User class="w-4 h-4" />
       </NuxtLink>
 
-      <!-- Logout Button -->
+      <!-- Logout Button (Desktop untuk semua role) -->
       <button
         v-if="!hideLogout"
         @click="handleLogout"
         type="button"
-        class="flex items-center gap-1.5 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 bg-white border border-gray-200 hover:border-red-200 hover:text-primary rounded-lg md:rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
+        class="hidden md:flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 hover:border-red-200 hover:text-primary rounded-xl text-xs sm:text-sm font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
+      >
+        <LogOut class="w-4 h-4 md:w-4.5 md:h-4.5" />
+        <span>Keluar</span>
+      </button>
+
+      <!-- Logout Button (Khusus Mobile untuk role SISWA saja, karena role lain logout via menu 'Lainnya') -->
+      <button
+        v-if="!hideLogout && authStore.user?.role === 'SISWA'"
+        @click="handleLogout"
+        type="button"
+        class="md:hidden p-1.5 text-gray-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
+        title="Keluar Akun"
       >
         <LogOut class="w-4 h-4" />
-        <span class="hidden sm:inline">Keluar</span>
       </button>
     </div>
   </header>
