@@ -171,7 +171,7 @@
                       Guru Pengajar
                     </span>
                     <p class="text-[11px] text-gray-600 font-medium">
-                      Mapel: <span class="font-bold text-gray-900">{{ t.specialization || (t.taught_subjects?.[0]?.name) || 'Belum Diatur' }}</span>
+                      Mapel: <span class="font-bold text-gray-900">{{ t.taught_subjects?.[0]?.name || t.specialization || 'Belum Diatur' }}</span>
                     </p>
                   </div>
                   <div v-else-if="t.role === 'SUPERADMIN'" class="space-y-1">
@@ -528,8 +528,10 @@ function setRoleFilter(role: string) {
 
 function onSubjectSelect() {
   const chosen = subjects.value.find(s => s.id === form.value.subject_id)
-  if (chosen && !form.value.specialization) {
+  if (chosen) {
     form.value.specialization = chosen.name
+  } else {
+    form.value.specialization = ''
   }
 }
 
