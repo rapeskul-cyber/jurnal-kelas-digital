@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\SchoolClass;
+use App\Models\Subject;
 use App\Models\Notification;
 use App\Models\AuditLog;
 
