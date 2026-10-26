@@ -163,7 +163,7 @@
                       Guru Pembimbing
                     </span>
                     <p class="text-[11px] text-gray-600 font-medium">
-                      Wali Kelas: <span class="font-bold text-gray-900">{{ t.guided_class?.name || t.school_class?.name || 'Belum Ditugaskan' }}</span>
+                      Wali Kelas: <span class="font-bold text-gray-900" :class="!(t.guided_class?.name || t.school_class?.name) ? 'text-amber-600 font-semibold' : ''">{{ t.guided_class?.name || t.school_class?.name || 'Belum Memiliki Kelas' }}</span>
                     </p>
                   </div>
                   <div v-else-if="t.role === 'GURU_PENGAJAR'" class="space-y-1">
@@ -349,6 +349,20 @@
                 {{ cls.name }} (Jurusan {{ cls.major }})
               </option>
             </select>
+
+            <!-- Peringatan jika kelas sudah memiliki Guru Pembimbing -->
+            <div
+              v-if="selectedClassAdvisor"
+              class="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2.5 shadow-2xs"
+            >
+              <AlertCircle class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div class="space-y-0.5">
+                <p class="font-bold text-amber-900">Perhatian: Kelas Sudah Memiliki Guru Pembimbing</p>
+                <p class="text-[11px] leading-relaxed">
+                  Kelas <strong>{{ selectedClassAdvisor.className }}</strong> saat ini sudah dibina oleh <strong>{{ selectedClassAdvisor.advisorName }}</strong>. Jika Anda menyimpan, tanggung jawab wali kelas akan dialihkan ke <strong>{{ form.name || 'guru ini' }}</strong>, dan status <strong>{{ selectedClassAdvisor.advisorName }}</strong> otomatis berubah menjadi <em>"Belum Memiliki Kelas"</em>.
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- Penugasan Khusus: Guru Pengajar (Spesialisasi Mapel) -->
@@ -449,6 +463,22 @@ const walasCount = computed(() => teachers.value.filter(t => t.role === 'GURU_PE
 const pengajarCount = computed(() => teachers.value.filter(t => t.role === 'GURU_PENGAJAR').length)
 const totalActiveCount = computed(() => teachers.value.filter(t => t.is_active).length)
 
+// Deteksi apakah kelas yang dipilih sudah memiliki Guru Pembimbing
+const selectedClassAdvisor = computed(() => {
+  if (form.value.role !== 'GURU_PEMBIMBING' || !form.value.class_id) return null
+  const targetClass = classes.value.find((c: any) => c.id === form.value.class_id)
+  if (!targetClass || !targetClass.advisor_id) return null
+  if (isEditing.value && targetClass.advisor_id === editingId.value) return null
+
+  const advisorTeacher = teachers.value.find((t: any) => t.id === targetClass.advisor_id)
+  const advisorName = targetClass.advisor?.name || advisorTeacher?.name || 'Guru Pembimbing lain'
+  return {
+    className: targetClass.name,
+    advisorName,
+    advisorId: targetClass.advisor_id,
+  }
+})
+
 async function fetchTeachers() {
   if (!authStore.token) return
   loading.value = true
@@ -540,6 +570,21 @@ function closeModal() {
 }
 
 async function handleSubmit() {
+  if (form.value.role === 'GURU_PEMBIMBING' && selectedClassAdvisor.value) {
+    const targetInfo = selectedClassAdvisor.value
+    const isConfirmed = confirm(
+      `PERINGATAN GURU PEMBIMBING SUDAH ADA:\n\n` +
+      `Kelas "${targetInfo.className}" saat ini sudah dibina oleh ${targetInfo.advisorName}.\n\n` +
+      `Apakah Anda yakin ingin memindahkan tanggung jawab wali kelas ini ke ${form.value.name || 'guru ini'}?\n\n` +
+      `Jika Anda melanjutkan:\n` +
+      `1. Tanggung jawab wali kelas ${targetInfo.className} akan dialihkan ke ${form.value.name || 'guru ini'}.\n` +
+      `2. Status ${targetInfo.advisorName} akan otomatis berubah menjadi "Belum Memiliki Kelas".`
+    )
+    if (!isConfirmed) {
+      return
+    }
+  }
+
   saving.value = true
   errorMsg.value = ''
   try {

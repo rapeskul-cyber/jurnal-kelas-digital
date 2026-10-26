@@ -54,6 +54,6 @@ export const ROLE_LABELS: Record<string, string> = {
   SISWA: 'Siswa',
   SEKRETARIS: 'Sekretaris Kelas',
   GURU_PENGAJAR: 'Guru Pengajar',
-  GURU_PEMBIMBING: 'Guru Pembimbing Sekolah',
+  GURU_PEMBIMBING: 'Guru Pembimbing',
   SUPERADMIN: 'Super Administrator',
 }

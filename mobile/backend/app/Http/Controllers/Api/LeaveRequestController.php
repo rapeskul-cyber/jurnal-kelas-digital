@@ -77,7 +77,7 @@ class LeaveRequestController extends Controller
             'type' => $request->type,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
-            'recipient' => $request->recipient ?: 'Guru Pembimbing Sekolah / Wali Kelas',
+            'recipient' => $request->recipient ?: 'Guru Pembimbing / Wali Kelas',
             'reason' => $request->reason,
             'attachment_path' => $path,
             'signature' => $request->signature,

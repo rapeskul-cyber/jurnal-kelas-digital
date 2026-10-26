@@ -307,6 +307,8 @@ class UserController extends Controller
 
         $user->update($updateData);
 
+        $reassignedNotice = null;
+
         // Khusus Guru Pembimbing: Atur relasi 1:1 ke rombel binaan secara bersih
         if ($user->role === 'GURU_PEMBIMBING') {
             // 1. Lepas status wali kelas dari rombel-rombel yang sebelumnya dibina guru ini
@@ -314,11 +316,26 @@ class UserController extends Controller
 
             // 2. Jika ada class_id baru yang dipilih:
             if ($request->filled('class_id')) {
-                // Lepas pembimbing lain yang sebelumnya membina kelas ini (1 kelas = 1 wali)
-                User::where('class_id', $request->class_id)
-                    ->where('role', 'GURU_PEMBIMBING')
-                    ->where('id', '!=', $user->id)
-                    ->update(['class_id' => null]);
+                $targetClass = SchoolClass::with('advisor')->find($request->class_id);
+                $oldAdvisorId = $targetClass->advisor_id ?? null;
+
+                // Cari guru pembimbing lain yang sebelumnya membina kelas ini
+                $oldAdvisor = null;
+                if ($oldAdvisorId && $oldAdvisorId != $user->id) {
+                    $oldAdvisor = User::find($oldAdvisorId);
+                }
+                if (!$oldAdvisor) {
+                    $oldAdvisor = User::where('class_id', $request->class_id)
+                        ->where('role', 'GURU_PEMBIMBING')
+                        ->where('id', '!=', $user->id)
+                        ->first();
+                }
+
+                if ($oldAdvisor) {
+                    $oldAdvisor->update(['class_id' => null]);
+                    $targetClassName = $targetClass->name ?? 'kelas';
+                    $reassignedNotice = "Tanggung jawab wali kelas {$targetClassName} dialihkan ke {$user->name}. Status {$oldAdvisor->name} kini menjadi 'Belum Memiliki Kelas'.";
+                }
 
                 SchoolClass::where('id', $request->class_id)->update(['advisor_id' => $user->id]);
                 $user->update(['class_id' => $request->class_id]);
@@ -351,7 +368,7 @@ class UserController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Data pengguna berhasil diperbarui',
+            'message' => $reassignedNotice ?: 'Data guru berhasil disimpan.',
             'user' => $user->load(['schoolClass', 'guidedClass', 'taughtSubjects']),
         ]);
     }

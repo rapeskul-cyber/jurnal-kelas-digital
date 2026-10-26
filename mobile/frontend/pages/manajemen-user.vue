@@ -236,7 +236,7 @@
                   required
                 >
                   <option v-if="authStore.user?.role === 'SUPERADMIN'" value="SUPERADMIN">Super Administrator (Akses Penuh)</option>
-                  <option value="GURU_PEMBIMBING">Guru Pembimbing Sekolah</option>
+                  <option value="GURU_PEMBIMBING">Guru Pembimbing</option>
                   <option value="GURU_PENGAJAR">Guru Pengajar</option>
                   <option value="SEKRETARIS">Sekretaris Kelas</option>
                   <option value="SISWA">Siswa</option>
