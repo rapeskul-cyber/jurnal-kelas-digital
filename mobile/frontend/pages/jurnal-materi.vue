@@ -56,7 +56,6 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-gray-100 gap-2.5">
             <div>
               <h2 class="text-sm sm:text-base font-bold text-gray-900 tracking-tight leading-snug">Jadwal Mengajar & Status Jurnal</h2>
-              <p class="text-[11px] text-gray-400 mt-0.5">Daftar kelas aktif dan status verifikasi hari ini</p>
             </div>
             <div class="flex items-center gap-2 self-start sm:self-auto">
               <button

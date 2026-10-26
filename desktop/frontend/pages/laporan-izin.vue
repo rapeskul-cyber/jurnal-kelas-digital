@@ -33,17 +33,16 @@
             <option value="REJECTED">Ditolak</option>
           </select>
         </div>
-        <div>
+        <div v-if="authStore.user?.role === 'SUPERADMIN' || authStore.user?.role === 'GURU_PENGAJAR'">
           <label class="block text-[11px] font-semibold text-gray-500 mb-1">Pilih Kelas</label>
           <select
             v-model="classFilter"
             class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
           >
             <option value="Semua">Semua Kelas</option>
-            <option value="1">XI RPL 1</option>
-            <option value="2">XI RPL 2</option>
-            <option value="3">XII RPL 1</option>
-            <option value="4">XII RPL 2</option>
+            <option v-for="cls in availableClasses" :key="cls.id" :value="cls.id">
+              {{ cls.name }}
+            </option>
           </select>
         </div>
       </div>
@@ -165,6 +164,18 @@ const list = ref<any[]>([])
 const statusFilter = ref('Semua')
 const classFilter = ref('Semua')
 const searchQuery = ref('')
+const availableClasses = ref<any[]>([])
+
+const fetchClasses = async () => {
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/classes`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    availableClasses.value = res || []
+  } catch (e) {
+    console.warn('Gagal memuat kelas:', e)
+  }
+}
 
 const filteredList = computed(() => {
   return list.value.filter(item => {
@@ -224,5 +235,6 @@ const exportExcel = () => {
 
 onMounted(() => {
   fetchList()
+  fetchClasses()
 })
 </script>

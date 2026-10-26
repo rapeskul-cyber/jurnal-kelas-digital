@@ -40,7 +40,6 @@
       <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-5">
         <div class="border-b border-gray-100 pb-3">
           <h3 class="text-sm font-bold text-gray-900">Informasi Pribadi & Kontak</h3>
-          <p class="text-xs text-gray-500 mt-0.5">Nomor WhatsApp digunakan untuk verifikasi pengiriman kode OTP lupa kata sandi.</p>
         </div>
 
         <div v-if="successMsg" class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
@@ -84,7 +83,7 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">Role / Peran Sistem</label>
+              <label class="block text-xs font-semibold text-gray-700 mb-1.5">Role</label>
               <input
                 :value="roleLabel"
                 disabled
@@ -265,67 +264,6 @@
           </div>
         </div>
       </div>
-
-      <!-- WhatsApp Gateway Integration Box (Eksklusif GURU_PEMBIMBING selaku Wali/Admin Sekolah) -->
-      <div v-if="authStore.user?.role === 'GURU_PEMBIMBING'" class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-4">
-        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-          <div>
-            <h3 class="text-sm font-bold text-gray-900">Koneksi WhatsApp Gateway (Fonte Mandiri)</h3>
-            <p class="text-xs text-gray-500 mt-0.5">Tautkan nomor WhatsApp sekolah untuk pengiriman OTP & Auto-Funnel tanpa bayar.</p>
-          </div>
-          <span
-            :class="(waStatus.status === 'connected' || waStatus.connected) ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-            class="text-[11px] font-bold px-2.5 py-1 rounded-full border"
-          >
-            {{ (waStatus.status === 'connected' || waStatus.connected) ? '● WhatsApp Terhubung' : '○ Belum Terhubung' }}
-          </span>
-        </div>
-
-        <div v-if="waStatus.status !== 'connected' && !waStatus.connected" class="space-y-3">
-          <p class="text-xs text-gray-600">
-            Ketik nomor WhatsApp yang ingin dijadikan bot/pengirim OTP, lalu klik <strong>Minta Kode Pairing</strong>:
-          </p>
-          <div class="flex gap-2">
-            <input
-              v-model="waPhoneInput"
-              type="text"
-              placeholder="Contoh: 088298674462"
-              class="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
-            />
-            <button
-              type="button"
-              :disabled="requestingWa || !waPhoneInput"
-              @click="requestWaPairing"
-              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50 cursor-pointer"
-            >
-              {{ requestingWa ? 'Meminta Kode...' : 'Minta Kode Pairing' }}
-            </button>
-          </div>
-
-          <div v-if="pairingCode" class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-1">
-            <p class="text-xs text-emerald-800">Kode Pairing WhatsApp Anda:</p>
-            <div class="text-3xl font-mono font-black tracking-widest text-emerald-700 select-all py-1">
-              {{ pairingCode }}
-            </div>
-            <p class="text-[11px] text-emerald-600">
-              Buka WhatsApp di HP ➔ <strong>Perangkat Tertaut</strong> ➔ <strong>Tautkan dengan nomor telepon</strong> ➔ Masukkan kode di atas.
-            </p>
-          </div>
-        </div>
-
-        <div v-else class="flex items-center justify-between p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
-          <div class="text-xs text-emerald-800">
-            Bot terhubung dengan nomor: <strong>{{ waStatus.user?.id || 'Aktif' }}</strong>
-          </div>
-          <button
-            type="button"
-            @click="logoutWa"
-            class="px-3 py-1 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold rounded-lg transition"
-          >
-            Putuskan Koneksi
-          </button>
-        </div>
-      </div>
     </main>
   </div>
 </template>
@@ -344,88 +282,13 @@ const form = ref({
   new_password_confirmation: '',
 })
 
-const saving = ref(false)
-const successMsg = ref('')
-const errorMsg = ref('')
+        const saving = ref(false)
+        const successMsg = ref('')
+        const errorMsg = ref('')
 
-// WhatsApp Gateway state
-const config = useRuntimeConfig()
-const apiBase = config.public.apiBase || '/api'
-const waStatus = ref<any>({ status: 'disconnected' })
-const waPhoneInput = ref('')
-const pairingCode = ref('')
-const requestingWa = ref(false)
-
-const fetchWaStatus = async () => {
-  if (authStore.user?.role !== 'GURU_PEMBIMBING') return
-  try {
-    const res: any = await $fetch(`${apiBase}/wa-gateway/status`, {
-      headers: { Authorization: `Bearer ${authStore.token}` }
-    })
-    if (res) {
-      const data = res.data || res
-      waStatus.value = data
-      if (data.status === 'connected' || data.connected === true) {
-        pairingCode.value = ''
-      }
-    }
-  } catch (e) {
-    console.warn('Gagal memuat status WhatsApp gateway:', e)
-    waStatus.value = { status: 'disconnected', connected: false }
-  }
-}
-
-const requestWaPairing = async () => {
-  if (!waPhoneInput.value) return
-  requestingWa.value = true
-  pairingCode.value = ''
-  try {
-    const res: any = await $fetch(`${apiBase}/wa-gateway/pairing-code`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${authStore.token}` },
-      body: { phone: waPhoneInput.value }
-    })
-    if (res && (res.code || (res.data && res.data.code))) {
-      pairingCode.value = res.code || res.data.code
-    } else if (res && res.message) {
-      alert(res.message)
-    }
-  } catch (e: any) {
-    alert(e?.data?.message || 'Gagal meminta kode pairing WhatsApp')
-  } finally {
-    requestingWa.value = false
-    fetchWaStatus()
-  }
-}
-
-const logoutWa = async () => {
-  if (!confirm('Putuskan koneksi bot WhatsApp ini?')) return
-  try {
-    await $fetch(`${apiBase}/wa-gateway/logout`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${authStore.token}` }
-    })
-    pairingCode.value = ''
-    fetchWaStatus()
-  } catch (e: any) {
-    alert(e?.data?.message || 'Gagal memutuskan WhatsApp')
-  }
-}
-
-let pollInterval: any = null
-
-onMounted(() => {
-  fetchWaStatus()
-  pollInterval = setInterval(fetchWaStatus, 3000)
-})
-
-onUnmounted(() => {
-  if (pollInterval) clearInterval(pollInterval)
-})
-
-const userInitial = computed(() => {
-  return authStore.user?.name ? authStore.user.name.charAt(0).toUpperCase() : 'U'
-})
+        const userInitial = computed(() => {
+        return authStore.user?.name ? authStore.user.name.charAt(0).toUpperCase() : 'U'
+        })
 
 const roleLabel = computed(() => {
   const role = authStore.user?.role

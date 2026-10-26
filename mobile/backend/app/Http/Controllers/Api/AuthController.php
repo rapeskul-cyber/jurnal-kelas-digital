@@ -269,7 +269,8 @@ class AuthController extends Controller
                     'Authorization' => "Bearer {$token}",
                 ])
                 ->post("{$baseUrl}/api/device/pairing-code", [
-                    'phone' => $request->phone
+                    'phone' => $request->phone,
+                    'custom_code' => $request->custom_code ?? $request->code ?? 'JURNAL71',
                 ]);
 
             if ($resp->successful()) {

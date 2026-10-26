@@ -3,24 +3,13 @@
     <AppHeader
       :title="pageTitle"
       :subtitle="pageSubtitle"
-    >
-      <template #actions>
-        <button
-          @click="exportReport"
-          type="button"
-          class="px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
-        >
-          <DownloadIcon class="w-3.5 h-3.5 text-gray-500" />
-          <span>Ekspor Log Jurnal</span>
-        </button>
-      </template>
-    </AppHeader>
+    />
 
     <main class="px-6 md:px-8 pb-10 space-y-6">
 
     <!-- Filter Card -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-4 md:p-5 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap items-end gap-3">
         <div>
           <label class="block text-[11px] font-semibold text-gray-500 mb-1">Periode Bulan & Tahun</label>
           <MonthYearPicker v-model="selectedMonth" @change="fetchJournals" />
@@ -37,10 +26,19 @@
             <option value="PENDING">Menunggu Konfirmasi Guru Pengajar</option>
           </select>
         </div>
+
+        <button
+          @click="exportReport"
+          type="button"
+          class="px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 transition flex items-center gap-1.5 shadow-2xs cursor-pointer h-[38px]"
+        >
+          <DownloadIcon class="w-3.5 h-3.5 text-gray-500" />
+          <span>Ekspor Log Jurnal</span>
+        </button>
       </div>
 
       <div class="w-full md:w-72">
-        <label class="block text-[11px] font-semibold text-gray-500 mb-1">Cari Materi / Mapel</label>
+        <label class="block text-[11px] font-semibold text-gray-500 mb-1">Cari Materi</label>
         <div class="relative">
           <SearchIcon class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -58,7 +56,6 @@
       <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 class="text-base font-bold text-gray-800">Daftar Aktivitas Jurnal</h2>
-          <p class="text-xs text-gray-400 mt-0.5">Semua catatan proses kegiatan belajar mengajar</p>
         </div>
         <span class="text-xs text-gray-500 font-medium">Total: {{ filteredJournals.length }} Log</span>
       </div>

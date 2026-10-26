@@ -42,7 +42,6 @@
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-gray-900">Daftar Materi & Modul Pembelajaran</h3>
-            <p class="text-xs text-gray-400">Berkas modul digital yang diunggah instruktur untuk dipelajari</p>
           </div>
           <button
             v-if="search"

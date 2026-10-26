@@ -23,7 +23,6 @@
             <MailIcon class="w-5 h-5 text-brand-red" />
             Detail Permohonan Izin
           </h2>
-          <p class="text-xs text-gray-400 mt-0.5">Lengkapi formulir permohonan dengan tanda tangan valid</p>
         </div>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">

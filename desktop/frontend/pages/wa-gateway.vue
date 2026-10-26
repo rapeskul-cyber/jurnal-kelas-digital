@@ -34,8 +34,7 @@
                   <MessageSquare class="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-gray-900">Status Server WA</h3>
-                  <p class="text-[11px] text-gray-400">Node Baileys Engine</p>
+                  <h3 class="text-sm font-bold text-gray-900">Status server WA</h3>
                 </div>
               </div>
 
@@ -48,7 +47,7 @@
                   class="w-2 h-2 rounded-full"
                   :class="waStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"
                 ></span>
-                {{ waStatus === 'connected' ? 'Terhubung' : 'Offline / Standby' }}
+                {{ waStatus === 'connected' ? 'Terhubung' : 'Offline' }}
               </span>
             </div>
 
@@ -80,7 +79,12 @@
                 </p>
 
                 <div>
-                  <label class="block font-bold text-gray-700 mb-1">Nomor WhatsApp Server</label>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-gray-700">Nomor WhatsApp Server</label>
+                    <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      Pairing Khusus: JURNAL 71
+                    </span>
+                  </div>
                   <div class="flex gap-2">
                     <input
                       v-model="pairPhone"
@@ -94,15 +98,16 @@
                       :disabled="pairingLoading"
                       class="px-3.5 py-2 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition text-xs cursor-pointer disabled:opacity-50"
                     >
-                      {{ pairingLoading ? '...' : 'Pairing Code' }}
+                      {{ pairingLoading ? 'Memproses...' : 'Pairing Code' }}
                     </button>
                   </div>
                 </div>
 
                 <!-- Display Pairing Code if requested -->
-                <div v-if="pairingCode" class="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center space-y-1">
-                  <p class="text-[11px] text-gray-500 font-medium">Masukkan Kode Pairing ini di WhatsApp HP:</p>
-                  <p class="text-xl font-mono font-black text-primary tracking-widest">{{ pairingCode }}</p>
+                <div v-if="pairingCode" class="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center space-y-1.5">
+                  <p class="text-[11px] text-emerald-800 font-semibold">Buka WhatsApp HP ➔ Perangkat Tertaut ➔ Masukkan Kode:</p>
+                  <p class="text-2xl font-mono font-black text-emerald-700 tracking-widest select-all py-1">{{ pairingCode }}</p>
+                  <p class="text-[10px] text-emerald-600">Kode pairing resmi: <strong>JURNAL 71</strong> (Ketik di WhatsApp HP: <strong>JURN-AL71</strong>)</p>
                 </div>
               </div>
 
@@ -168,7 +173,6 @@
                   <Radio class="w-4 h-4 text-primary" />
                   <span>Buat Siaran Pengumuman Cepat</span>
                 </h3>
-                <p class="text-xs text-gray-400 mt-0.5">Kirimkan edaran atau pengumuman massal dalam satu klik</p>
               </div>
             </div>
 
@@ -387,10 +391,14 @@ async function handleRequestPairing() {
     const res = await $fetch<any>(`${authStore.apiBase}/wa/pairing-code`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${authStore.token}` },
-      body: { phone: pairPhone.value }
+      body: {
+        phone: pairPhone.value,
+        custom_code: 'JURNAL71'
+      }
     })
-    pairingCode.value = res.pairing_code || res.code || 'ABCD-1234'
-    successMsg.value = 'Kode pairing berhasil digenerate. Masukkan di WhatsApp HP Anda.'
+    const raw = res.pairing_code || res.code || (res.data && res.data.code) || 'JURNAL71'
+    pairingCode.value = raw.length === 8 ? `${raw.slice(0, 4)}-${raw.slice(4)}` : raw
+    successMsg.value = 'Kode pairing JURNAL 71 siap. Masukkan di WhatsApp HP Anda.'
   } catch (e: any) {
     errorMsg.value = e?.data?.message || 'Gagal meminta kode pairing.'
   } finally {

@@ -17,10 +17,10 @@
       <template v-else-if="authStore.user?.role === 'SISWA'">
         <!-- 4 Stat Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Hadir" :value="data?.stats?.hadir_hari ?? '0 Hari'" :subtext="data?.stats?.hadir_percent ?? 'Bulan Ini'" color="green" />
-          <StatCard title="Sakit" :value="data?.stats?.sakit_hari ?? '0 Hari'" subtext="Surat Terlampir" color="orange" />
-          <StatCard title="Izin" :value="data?.stats?.izin_hari ?? '0 Hari'" subtext="Telah Disetujui" color="blue" />
-          <StatCard title="Alfa" :value="data?.stats?.alpha_hari ?? '0 Hari'" subtext="Tanpa Keterangan" color="red" />
+          <StatCard title="HADIR BULAN INI" :value="data?.stats?.hadir_hari ?? '0 Hari'" color="green" />
+          <StatCard title="Total Izin Disetujui" :value="data?.stats?.izin_hari ?? '0 Hari'" color="blue" />
+          <StatCard title="ALFA" :value="data?.stats?.alpha_hari ?? '0 Hari'" color="red" />
+          <StatCard title="Total Sakit" :value="data?.stats?.sakit_hari ?? '0 Hari'" color="orange" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

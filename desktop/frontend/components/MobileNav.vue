@@ -29,8 +29,7 @@
       <div class="w-full bg-white rounded-t-3xl p-6 shadow-2xl space-y-3 max-h-[75vh] overflow-y-auto pb-10">
         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
           <div>
-            <h3 class="font-bold text-gray-900 text-sm">Menu Tambahan</h3>
-            <p class="text-[11px] text-gray-400">Pilihan menu lain untuk peran Anda</p>
+            <h3 class="font-bold text-gray-900 text-sm">Menu Lainnya</h3>
           </div>
           <button @click="showMore = false" class="p-1.5 rounded-full bg-gray-100 text-gray-500 hover:text-gray-800">
             <X class="w-4 h-4" />

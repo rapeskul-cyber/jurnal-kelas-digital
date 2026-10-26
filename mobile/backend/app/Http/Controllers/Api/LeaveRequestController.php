@@ -15,16 +15,55 @@ class LeaveRequestController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
         $status = $request->input('status');
         $classId = $request->input('class_id');
 
         $query = LeaveRequest::with(['student.schoolClass', 'submittedBy', 'reviewer'])->latest();
 
+        // Otoritas Berdasarkan Peran Pengguna (Role Scoping)
+        if ($user->role === 'SISWA') {
+            // Siswa hanya melihat permohonan miliknya sendiri
+            $query->where('student_id', $user->id);
+        } elseif ($user->role === 'SEKRETARIS') {
+            // Sekretaris hanya melihat permohonan di kelasnya
+            if ($user->class_id) {
+                $query->whereHas('student', function ($q) use ($user) {
+                    $q->where('class_id', $user->class_id);
+                });
+            }
+        } elseif ($user->role === 'GURU_PEMBIMBING') {
+            // Guru Pembimbing (Wali Kelas) HANYA melihat izin dari rombel binaannya
+            $advisedClassIds = \App\Models\SchoolClass::where('advisor_id', $user->id)
+                ->pluck('id')
+                ->toArray();
+
+            if ($user->class_id && !in_array($user->class_id, $advisedClassIds)) {
+                $advisedClassIds[] = $user->class_id;
+            }
+
+            if (!empty($advisedClassIds)) {
+                $query->whereHas('student', function ($q) use ($advisedClassIds) {
+                    $q->whereIn('class_id', $advisedClassIds);
+                });
+            } else {
+                // Jika belum ditugaskan kelas binaan, jangan tampilkan data kelas lain
+                $query->whereRaw('1 = 0');
+            }
+        } elseif ($user->role === 'GURU_PENGAJAR') {
+            $taughtClassIds = $user->taughtClasses()->pluck('classes.id')->toArray();
+            if (!empty($taughtClassIds)) {
+                $query->whereHas('student', function ($q) use ($taughtClassIds) {
+                    $q->whereIn('class_id', $taughtClassIds);
+                });
+            }
+        }
+
         if ($status && $status !== 'Semua') {
             $query->where('status', $status);
         }
 
-        if ($classId) {
+        if ($classId && $classId !== 'Semua') {
             $query->whereHas('student', function ($q) use ($classId) {
                 $q->where('class_id', $classId);
             });

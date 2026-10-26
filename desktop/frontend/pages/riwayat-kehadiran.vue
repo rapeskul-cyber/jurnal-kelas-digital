@@ -19,10 +19,10 @@
     <main class="px-8 pb-8 space-y-6">
       <!-- 4 Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Hadir Bulan Ini" :value="(summary?.hadir ?? 0) + ' Hari'" :subtext="(summary?.hadir_percent ?? 0) + '% Kehadiran'" color="green" />
-        <StatCard title="Total Sakit" :value="(summary?.sakit ?? 0) + ' Hari'" subtext="Dilengkapi Surat Dokter" color="orange" />
-        <StatCard title="Total Izin Disetujui" :value="(summary?.izin ?? 0) + ' Hari'" subtext="Sesuai Permohonan Online" color="blue" />
-        <StatCard title="ALFA / Tanpa Kabar" :value="(summary?.alpha ?? 0) + ' Hari'" subtext="Catatan Kehadiran Riil" color="red" />
+        <StatCard title="HADIR BULAN INI" :value="(summary?.hadir ?? 0) + ' Hari'" color="green" />
+        <StatCard title="Total Izin Disetujui" :value="(summary?.izin ?? 0) + ' Hari'" color="blue" />
+        <StatCard title="ALFA" :value="(summary?.alpha ?? 0) + ' Hari'" color="red" />
+        <StatCard title="Total Sakit" :value="(summary?.sakit ?? 0) + ' Hari'" color="orange" />
       </div>
 
       <!-- Diagram Kehadiran Card -->
@@ -98,13 +98,19 @@
           </div>
 
           <!-- Bar Chart: Kehadiran per Minggu -->
-          <div>
-            <h4 class="text-xs font-bold text-gray-700 mb-6">Kehadiran per Minggu</h4>
-            <div class="flex items-end justify-between h-44 px-4 pb-2 border-b border-gray-100">
-              <div v-for="(week, idx) in weeklyData" :key="idx" class="flex flex-col items-center gap-2 flex-1">
-                <span class="text-[10px] text-gray-400 font-semibold">{{ week.week }}</span>
-                <div class="w-10 bg-emerald-600/80 rounded-t-lg transition-all" :style="{ height: week.height + '%' }"></div>
-                <span class="text-[10px] text-gray-400">...</span>
+          <div class="flex flex-col justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-gray-700 mb-1">Kehadiran per Minggu</h4>
+              <p class="text-[11px] text-gray-400">Total kehadiran efektif siswa per pekan</p>
+            </div>
+            <div class="flex items-end justify-between h-44 px-3 pb-2 border-b border-gray-100 gap-3 pt-6">
+              <div v-for="(week, idx) in formattedWeeklyData" :key="idx" class="flex flex-col items-center gap-2 flex-1 h-full justify-end">
+                <span class="text-[11px] font-bold text-emerald-700">{{ week.count }} Hari</span>
+                <div
+                  class="w-full max-w-[48px] bg-emerald-500 hover:bg-emerald-600 rounded-t-lg transition-all duration-300 shadow-2xs"
+                  :style="{ height: week.height + '%' }"
+                ></div>
+                <span class="text-[11px] text-gray-600 font-semibold mt-1">{{ week.week }}</span>
               </div>
             </div>
           </div>
@@ -201,12 +207,29 @@ const filteredDetails = computed(() => {
   return details.value.filter(d => d.status === statusFilter.value)
 })
 
-const weeklyData = [
-  { week: 'Minggu 1', height: 95 },
-  { week: 'Minggu 2', height: 90 },
-  { week: 'Minggu 3', height: 90 },
-  { week: 'Minggu 4', height: 85 },
-]
+const rawWeekly = ref<any[]>([])
+
+const formattedWeeklyData = computed(() => {
+  if (rawWeekly.value && rawWeekly.value.length > 0) {
+    return rawWeekly.value.map(w => {
+      const count = Number(w.count) || 0
+      const maxDays = 5
+      const pct = Math.min(100, Math.round((count / maxDays) * 100))
+      return {
+        week: w.week,
+        count: count,
+        percent: pct,
+        height: count > 0 ? Math.max(16, pct) : 6
+      }
+    })
+  }
+  return [
+    { week: 'Minggu 1', count: 0, percent: 0, height: 6 },
+    { week: 'Minggu 2', count: 0, percent: 0, height: 6 },
+    { week: 'Minggu 3', count: 0, percent: 0, height: 6 },
+    { week: 'Minggu 4', count: 0, percent: 0, height: 6 },
+  ]
+})
 
 const fetchHistory = async () => {
   try {
@@ -214,6 +237,7 @@ const fetchHistory = async () => {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
     summary.value = res.summary
+    rawWeekly.value = res.weekly || []
     details.value = res.details || []
   } catch (e) {
     console.error(e)
