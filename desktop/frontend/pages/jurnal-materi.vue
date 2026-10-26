@@ -728,26 +728,7 @@ const fetchTeacherSchedulesAndJournals = async () => {
         }
       })
     } else {
-      scheduleItems.value = [
-        {
-          id: 1,
-          journal_id: null,
-          time: '07:30 - 09:00',
-          subject: 'Pemrograman Web (XI RPL 1)',
-          status: 'Terverifikasi',
-          topic: 'Optimasi query dan routing Vue/Nuxt',
-          notes: 'Praktikum berjalan lancar di Lab 1'
-        },
-        {
-          id: 2,
-          journal_id: null,
-          time: '09:15 - 11:45',
-          subject: 'Basis Data (XI RPL 1)',
-          status: 'Menunggu Konfirmasi Guru Pengajar',
-          topic: 'Normalisasi Database 3NF dan perbaikan skema relasi',
-          notes: 'Menunggu pengesahan dari guru pengajar'
-        }
-      ]
+      scheduleItems.value = []
     }
 
     // Update stat cards
@@ -829,19 +810,8 @@ const submitMaterial = async () => {
     selectedFile.value = null
     if (fileInputRef.value) fileInputRef.value.value = ''
   } catch (err: any) {
-    console.warn('Network API note:', err)
-    const newMod = {
-      id: Date.now(),
-      title: materialForm.value.topic || 'Modul Pembelajaran Baru',
-      class: materialForm.value.schedule_id === '2' ? 'XI RPL 1 - Pemrograman Web' : 'XI RPL 2 - Basis Data',
-      filename: selectedFile.value?.name || 'materi-belajar.pdf'
-    }
-    publishedModules.value.unshift(newMod)
-    successMsg.value = 'Rencana pembelajaran dan berkas materi berhasil disimpan & dikirimkan ke siswa!'
-    materialForm.value.topic = ''
-    materialForm.value.assignment = ''
-    selectedFile.value = null
-    if (fileInputRef.value) fileInputRef.value.value = ''
+    console.error('Error creating material:', err)
+    alert(err?.data?.message || err?.message || 'Gagal menyimpan rencana pembelajaran & materi.')
   } finally {
     submitting.value = false
   }

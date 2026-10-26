@@ -208,8 +208,8 @@ class DashboardController extends Controller
         $attendanceSummary = $classesToSummarize->map(function ($cls) use ($today) {
             $totalStudents = User::where('class_id', $cls->id)->whereIn('role', ['SISWA', 'SEKRETARIS'])->count() ?: 36;
             $session = AttendanceSession::where('class_id', $cls->id)->where('date', $today)->first();
-            $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : round($totalStudents * 0.94);
-            $pct = round(($presentCount / $totalStudents) * 100);
+            $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : 0;
+            $pct = $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100) : 0;
             return [
                 'class' => $cls->name,
                 'present_ratio' => "{$presentCount}/{$totalStudents} siswa",
@@ -274,6 +274,8 @@ class DashboardController extends Controller
             ->latest()
             ->get();
 
+        $todayJournalsCount = ClassJournal::whereDate('date', $today)->count();
+
         $monitoredClasses = $allClasses->map(function ($cls) use ($today) {
             $session = AttendanceSession::where('class_id', $cls->id)
                 ->where('date', $today)
@@ -285,15 +287,15 @@ class DashboardController extends Controller
                 ->first();
 
             $totalStudents = User::where('class_id', $cls->id)->whereIn('role', ['SISWA', 'SEKRETARIS'])->count() ?: 36;
-            $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : round($totalStudents * 0.91);
-            $pct = round(($presentCount / $totalStudents) * 100);
+            $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : 0;
+            $pct = $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100) : 0;
 
             return [
                 'id' => $cls->id,
                 'class' => $cls->name,
-                'secretary' => $cls->secretary->name ?? 'Rina Safitri',
+                'secretary' => $cls->secretary->name ?? 'Belum Ditugaskan',
                 'journal_status' => $journal ? ($journal->verification_status === 'TERVERIFIKASI' ? 'Sudah Diisi' : 'Menunggu Konfirmasi Guru Pengajar') : 'Belum Diisi',
-                'attendance_percent' => "{$pct}% Kehadiran",
+                'attendance_percent' => $session ? "{$pct}% Kehadiran" : 'Belum Ada Presensi',
             ];
         });
 
@@ -301,7 +303,7 @@ class DashboardController extends Controller
             return [
                 'id' => $lv->id,
                 'student_name' => $lv->student->name ?? 'Siswa',
-                'class' => $lv->student->schoolClass->name ?? 'XI RPL 1',
+                'class' => $lv->student->schoolClass->name ?? ($lv->student->class_id ? 'Kelas ' . $lv->student->class_id : 'Belum Ada Kelas'),
                 'type' => $lv->type,
                 'reason' => $lv->reason,
                 'attachment' => $lv->attachment_path ? basename($lv->attachment_path) : null,
@@ -312,7 +314,7 @@ class DashboardController extends Controller
         return response()->json([
             'stats' => [
                 'total_kelas' => $allClasses->count() . ' Kelas',
-                'jurnal_terisi' => '4 / ' . $allClasses->count() . ' Kelas',
+                'jurnal_terisi' => "{$todayJournalsCount} / " . $allClasses->count() . ' Kelas',
                 'surat_izin_pending' => $pendingLeaves->count() . ' Permohonan',
             ],
             'monitored_classes' => $monitoredClasses,
@@ -342,7 +344,7 @@ class DashboardController extends Controller
             $totalPresentToday += $present;
             $totalRecordsToday += $recCount;
         }
-        $avgAttendance = $totalRecordsToday > 0 ? round(($totalPresentToday / $totalRecordsToday) * 100) : 94;
+        $avgAttendance = $totalRecordsToday > 0 ? round(($totalPresentToday / $totalRecordsToday) * 100) : 0;
 
         // Class journals filled today
         $journalsTodayCount = ClassJournal::whereDate('date', $today)->count();
@@ -362,8 +364,8 @@ class DashboardController extends Controller
                 ->first();
 
             $stdCount = User::where('class_id', $cls->id)->whereIn('role', ['SISWA', 'SEKRETARIS'])->count() ?: 36;
-            $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : round($stdCount * 0.94);
-            $pct = round(($presentCount / $stdCount) * 100);
+            $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : 0;
+            $pct = $stdCount > 0 ? round(($presentCount / $stdCount) * 100) : 0;
 
             return [
                 'id' => $cls->id,
@@ -375,7 +377,7 @@ class DashboardController extends Controller
                 'session_status' => $session ? $session->status : 'BELUM_DIBUKA',
                 'session_date' => $today,
                 'attendance_percent' => $pct,
-                'present_ratio' => "{$presentCount}/{$stdCount} Siswa",
+                'present_ratio' => $session ? "{$presentCount}/{$stdCount} Siswa" : "0/{$stdCount} Siswa",
                 'journal_status' => $journal ? ($journal->verification_status === 'TERVERIFIKASI' ? 'Terverifikasi' : 'Pending Guru') : 'Belum Diisi',
             ];
         });

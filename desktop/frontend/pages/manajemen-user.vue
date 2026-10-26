@@ -468,20 +468,6 @@ const successMsg = ref('')
 const searchQuery = ref('')
 const roleFilter = ref('Semua Peran')
 
-const defaultMockUsers = computed(() => [
-  {
-    id: authStore.user?.id || 1,
-    name: authStore.user?.name || 'Siti Aminah, M.Pd',
-    nip_nis: authStore.user?.nip_nis || '19890314002',
-    role: authStore.user?.role || 'GURU_PEMBIMBING',
-    class_name: '-'
-  },
-  { id: 101, name: 'Budi Santoso, S.Pd', nip_nis: '19840212001', role: 'GURU_PENGAJAR', class_name: '-' },
-  { id: 102, name: 'Rina Safitri', nip_nis: '102401', role: 'SEKRETARIS', class_name: 'XI RPL 1' },
-  { id: 103, name: 'Ahmad Fadillah', nip_nis: '102402', role: 'SISWA', class_name: 'XI RPL 1' },
-  { id: 104, name: 'Hendra Wijaya', nip_nis: '102403', role: 'SISWA', class_name: 'XI RPL 2' }
-])
-
 const users = ref<any[]>([])
 
 const newUser = ref({
@@ -521,29 +507,14 @@ const fetchUsers = async () => {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
     const rawData = res.data?.data || res.data || []
-    if (Array.isArray(rawData) && rawData.length > 0) {
-      let mapped = rawData.map((u: any) => ({
+    if (Array.isArray(rawData)) {
+      users.value = rawData.map((u: any) => ({
         ...u,
-        class_name: u.school_class?.name || (u.class_id ? `Kelas ${u.class_id}` : '-')
+        class_name: u.school_class?.name || (u.guided_class?.name ? `Wali: ${u.guided_class.name}` : (u.class_id ? `Kelas ${u.class_id}` : '-'))
       }))
-
-      // Pastikan akun Guru Pembimbing yang sedang login selalu tampil di daftar
-      if (authStore.user && !mapped.some((u: any) => u.id === authStore.user?.id || u.email === authStore.user?.email)) {
-        mapped.unshift({
-          id: authStore.user.id,
-          name: authStore.user.name,
-          nip_nis: authStore.user.nip_nis || '-',
-          role: authStore.user.role,
-          class_name: authStore.user.school_class?.name || '-'
-        })
-      }
-
-      users.value = mapped
-    } else {
-      users.value = [...defaultMockUsers.value]
     }
   } catch (err: any) {
-    users.value = [...defaultMockUsers.value]
+    console.error('Error fetching users:', err)
   } finally {
     loadingUsers.value = false
   }
@@ -553,7 +524,7 @@ const submitCreateUser = async () => {
   creating.value = true
   successMsg.value = ''
   try {
-    await $fetch(`${config.public.apiBase}/users`, {
+    const res: any = await $fetch(`${config.public.apiBase}/users`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${authStore.token}`
@@ -568,15 +539,7 @@ const submitCreateUser = async () => {
       }
     })
 
-    successMsg.value = `Pengguna baru "${newUser.value.name}" berhasil didaftarkan!`
-    users.value.unshift({
-      id: Date.now(),
-      name: newUser.value.name,
-      nip_nis: newUser.value.nip_nis || '-',
-      role: newUser.value.role,
-      class_name: newUser.value.class_id ? 'XI RPL 1' : '-'
-    })
-
+    successMsg.value = res?.message || `Pengguna baru "${newUser.value.name}" berhasil didaftarkan!`
     newUser.value = {
       name: '',
       role: 'GURU_PEMBIMBING',
@@ -585,24 +548,9 @@ const submitCreateUser = async () => {
       email: '',
       phone: ''
     }
+    await fetchUsers()
   } catch (err: any) {
-    // If local test or fallback
-    successMsg.value = `Pengguna baru "${newUser.value.name}" berhasil didaftarkan!`
-    users.value.unshift({
-      id: Date.now(),
-      name: newUser.value.name,
-      nip_nis: newUser.value.nip_nis || '-',
-      role: newUser.value.role,
-      class_name: newUser.value.class_id ? 'XI RPL 1' : '-'
-    })
-    newUser.value = {
-      name: '',
-      role: 'GURU_PEMBIMBING',
-      nip_nis: '',
-      class_id: '1',
-      email: '',
-      phone: ''
-    }
+    alert(err?.data?.message || err?.message || 'Gagal mendaftarkan pengguna baru.')
   } finally {
     creating.value = false
   }
