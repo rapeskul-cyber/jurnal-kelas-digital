@@ -111,7 +111,7 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Kode Verifikasi (OTP)
+              Kode Verifikasi
             </label>
             <button type="button" @click="currentStep = 1" class="text-[11px] text-primary hover:underline font-semibold">
               Ganti Email

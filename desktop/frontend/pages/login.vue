@@ -78,7 +78,7 @@
 
       <!-- Quick Login Section (Dev & Demo) -->
       <div class="mt-8 pt-6 border-t border-gray-100">
-        <p class="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider">Akses Cepat (Demo Role)</p>
+        <p class="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider">Akses Cepat Pengguna</p>
         <div class="grid grid-cols-2 gap-2 text-xs">
           <button
             type="button"
@@ -114,7 +114,7 @@
             class="col-span-2 py-2 px-3 rounded-xl border border-red-200 bg-red-50/80 hover:bg-red-100 text-primary font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
           >
             <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-            <span>Masuk Cepat: Super Administrator (Semua Hak Akses)</span>
+            <span>Super Administrator</span>
           </button>
         </div>
       </div>

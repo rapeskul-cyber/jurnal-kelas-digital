@@ -17,10 +17,10 @@
       <template v-else-if="authStore.user?.role === 'SISWA'">
         <!-- 4 Stat Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Hadir Bulan Ini" :value="data?.stats?.hadir_hari ?? '0 Hari'" :subtext="data?.stats?.hadir_percent ?? '0% Kehadiran'" color="green" />
-          <StatCard title="Total Sakit" :value="data?.stats?.sakit_hari ?? '0 Hari'" subtext="Dilengkapi Surat Dokter" color="orange" />
-          <StatCard title="Total Izin Disetujui" :value="data?.stats?.izin_hari ?? '0 Hari'" subtext="Sesuai Permohonan Online" color="blue" />
-          <StatCard title="ALFA / Tanpa Kabar" :value="data?.stats?.alpha_hari ?? '0 Hari'" subtext="Catatan Presensi Riil" color="red" />
+          <StatCard title="Hadir" :value="data?.stats?.hadir_hari ?? '0 Hari'" :subtext="data?.stats?.hadir_percent ?? 'Bulan Ini'" color="green" />
+          <StatCard title="Sakit" :value="data?.stats?.sakit_hari ?? '0 Hari'" subtext="Surat Terlampir" color="orange" />
+          <StatCard title="Izin" :value="data?.stats?.izin_hari ?? '0 Hari'" subtext="Telah Disetujui" color="blue" />
+          <StatCard title="Alfa" :value="data?.stats?.alpha_hari ?? '0 Hari'" subtext="Tanpa Keterangan" color="red" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -125,14 +125,14 @@
             <div
               v-for="item in data?.attendance_list || []"
               :key="item.student_id"
-              class="py-2.5 flex items-center justify-between gap-3"
+              class="py-3 flex items-center justify-between gap-3"
             >
               <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs font-bold text-gray-400 w-5">{{ item.no }}.</span>
-                  <p class="text-xs font-bold text-gray-900 truncate">{{ item.name }}</p>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-gray-400 w-5">{{ item.no }}.</span>
+                  <p class="text-sm font-bold text-gray-900 truncate">{{ item.name }}</p>
                 </div>
-                <p class="text-[10px] text-gray-500 pl-6.5 truncate">
+                <p class="text-xs text-gray-500 pl-7 truncate mt-0.5">
                   NIS: {{ item.nis }} <span v-if="item.note" class="text-gray-400">• {{ item.note }}</span>
                 </p>
               </div>
@@ -144,29 +144,29 @@
 
           <!-- Desktop Table View (>= sm) -->
           <div class="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-            <table class="w-full text-left text-xs whitespace-nowrap min-w-[560px]">
+            <table class="w-full text-left text-sm whitespace-nowrap min-w-[560px]">
               <thead>
-                <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100">
-                  <th class="pb-3 font-semibold w-10">No</th>
-                  <th class="pb-3 font-semibold min-w-[150px]">Nama Siswa</th>
-                  <th class="pb-3 font-semibold w-24">NIS</th>
-                  <th class="pb-3 font-semibold text-center w-28">Status</th>
-                  <th class="pb-3 font-semibold min-w-[140px]">Keterangan</th>
-                  <th class="pb-3 font-semibold text-right w-28">Verifikasi</th>
+                <tr class="text-gray-400 uppercase text-xs border-b border-gray-100">
+                  <th class="pb-3.5 font-semibold w-10">No</th>
+                  <th class="pb-3.5 font-semibold min-w-[160px]">Nama Siswa</th>
+                  <th class="pb-3.5 font-semibold w-28">NIS</th>
+                  <th class="pb-3.5 font-semibold text-center w-32">Status</th>
+                  <th class="pb-3.5 font-semibold min-w-[160px]">Keterangan</th>
+                  <th class="pb-3.5 font-semibold text-right w-32">Verifikasi</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-50">
+              <tbody class="divide-y divide-gray-100">
                 <tr v-for="item in data?.attendance_list || []" :key="item.student_id" class="hover:bg-gray-50/50">
-                  <td class="py-3 text-gray-400 font-medium">{{ item.no }}</td>
-                  <td class="py-3 font-semibold text-gray-900">{{ item.name }}</td>
-                  <td class="py-3 text-gray-500 font-mono text-[11px]">{{ item.nis }}</td>
-                  <td class="py-3 text-center"><StatusBadge :status="item.status" /></td>
-                  <td class="py-3 text-gray-500 max-w-[200px] truncate" :title="item.note">{{ item.note || '-' }}</td>
-                  <td class="py-3 text-right">
-                    <span v-if="item.verified" class="inline-flex items-center text-emerald-600 font-semibold gap-1 text-[11px]">
-                      <CheckCircle2 class="w-3.5 h-3.5" /> Terverifikasi
+                  <td class="py-3.5 text-gray-400 font-medium">{{ item.no }}</td>
+                  <td class="py-3.5 font-semibold text-gray-900">{{ item.name }}</td>
+                  <td class="py-3.5 text-gray-500 font-mono text-xs">{{ item.nis }}</td>
+                  <td class="py-3.5 text-center"><StatusBadge :status="item.status" /></td>
+                  <td class="py-3.5 text-gray-500 max-w-[240px] truncate" :title="item.note">{{ item.note || '-' }}</td>
+                  <td class="py-3.5 text-right">
+                    <span v-if="item.verified" class="inline-flex items-center text-emerald-600 font-semibold gap-1 text-xs">
+                      <CheckCircle2 class="w-4 h-4" /> Terverifikasi
                     </span>
-                    <span v-else class="text-gray-400 text-[11px]">-</span>
+                    <span v-else class="text-gray-400 text-xs">-</span>
                   </td>
                 </tr>
               </tbody>
@@ -302,15 +302,15 @@
       <template v-else-if="authStore.user?.role === 'GURU_PEMBIMBING'">
         <!-- 3 Stat Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard title="Total Kelas Binaan" :value="data?.stats?.total_kelas ?? '0 Kelas'" subtext="Kelas Binaan Terdaftar" color="blue" />
-          <StatCard title="Jurnal Terisi Hari Ini" :value="data?.stats?.jurnal_terisi ?? '0 Kelas'" subtext="Administrasi Terdata" color="green" />
-          <StatCard title="Surat Izin Pending" :value="data?.stats?.surat_izin_pending ?? '0 Permohonan'" subtext="Butuh Persetujuan" color="orange" />
+          <StatCard title="Kelas Binaan" :value="data?.stats?.total_kelas ?? '0 Kelas'" subtext="Semester Ini" color="blue" />
+          <StatCard title="Jurnal Terisi" :value="data?.stats?.jurnal_terisi ?? '0 Kelas'" subtext="Hari Ini" color="green" />
+          <StatCard title="Izin Menunggu" :value="data?.stats?.surat_izin_pending ?? '0 Permohonan'" subtext="Perlu Verifikasi" color="orange" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Pemantauan Real-time Jurnal Kelas (2 cols) -->
+          <!-- Pemantauan Jurnal Kelas (2 cols) -->
           <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs">
-            <h3 class="text-sm font-bold text-gray-900 mb-4">Pemantauan Real-time Jurnal Kelas Binaan</h3>
+            <h3 class="text-sm font-bold text-gray-900 mb-4">Pemantauan Jurnal Kelas Binaan</h3>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
                 <thead>
@@ -386,12 +386,12 @@
       <template v-else-if="authStore.user?.role === 'SUPERADMIN'">
         <!-- 6 Academic Stat Cards -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
-          <StatCard title="Guru Pembimbing" :value="data?.stats?.total_guru_pembimbing ?? '0 Walas'" subtext="Wali Kelas Aktif" color="green" />
-          <StatCard title="Guru Pengajar" :value="data?.stats?.total_guru_pengajar ?? '0 Guru'" subtext="Mata Pelajaran" color="blue" />
-          <StatCard title="Total Siswa" :value="data?.stats?.total_siswa ?? '0 Siswa'" subtext="Terdata di Rombel" color="cyan" />
-          <StatCard title="Rombel / Kelas" :value="data?.stats?.total_kelas ?? '0 Rombel'" :subtext="`RPL: ${data?.stats?.majors?.rpl || 0} • DKV: ${data?.stats?.majors?.dkv || 0} • ANI: ${data?.stats?.majors?.animasi || 0}`" color="orange" />
-          <StatCard title="Rata-rata Presensi" :value="data?.stats?.kehadiran_rata_rata ?? '0%'" subtext="Kehadiran Hari Ini" color="emerald" />
-          <StatCard title="Jurnal KBM Terisi" :value="data?.stats?.jurnal_terisi_today ?? '0 Sesi'" subtext="Pertemuan Hari Ini" color="purple" />
+          <StatCard title="Guru Pembimbing" :value="data?.stats?.total_guru_pembimbing ?? '0'" subtext="Wali Kelas Aktif" color="green" />
+          <StatCard title="Guru Pengajar" :value="data?.stats?.total_guru_pengajar ?? '0'" subtext="Pengampu Mapel" color="blue" />
+          <StatCard title="Total Siswa" :value="data?.stats?.total_siswa ?? '0'" subtext="Terdata di Rombel" color="blue" />
+          <StatCard title="Rombel" :value="data?.stats?.total_kelas ?? '0'" :subtext="`RPL: ${data?.stats?.majors?.rpl || 0} • DKV: ${data?.stats?.majors?.dkv || 0} • ANI: ${data?.stats?.majors?.animasi || 0}`" color="orange" />
+          <StatCard title="Rata-rata Presensi" :value="data?.stats?.kehadiran_rata_rata ?? '0%'" subtext="Hari Ini" color="green" />
+          <StatCard title="Jurnal Terisi" :value="data?.stats?.jurnal_terisi_today ?? '0'" subtext="Hari Ini" color="blue" />
         </div>
 
         <!-- 2 Column Master Layout -->

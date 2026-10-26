@@ -9,7 +9,7 @@
         </div>
         <div>
           <h1 class="text-base font-bold text-gray-900 leading-tight">Jurnal Kelas</h1>
-          <p class="text-[10px] font-bold text-primary tracking-wider uppercase">EDISI DIGITAL</p>
+          <p class="text-[10px] font-bold text-primary tracking-wider uppercase">SMKN 71 JAKARTA</p>
         </div>
       </div>
 
@@ -51,7 +51,7 @@
     <!-- Bottom Academic Year Footer -->
     <div class="p-6 border-t border-gray-100">
       <p class="text-[11px] text-gray-400 font-medium">Tahun Ajaran</p>
-      <p class="text-xs font-bold text-gray-800 mt-0.5">2026/2027 - Ganjil</p>
+      <p class="text-xs font-bold text-gray-800 mt-0.5">2026/2027 • Semester Ganjil</p>
     </div>
   </aside>
 </template>

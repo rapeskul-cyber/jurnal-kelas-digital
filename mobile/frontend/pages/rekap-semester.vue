@@ -36,9 +36,9 @@
             @change="fetchData"
             class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
           >
-            <option value="2026-1">2026/2027 - Ganjil (Aktif)</option>
-            <option value="2025-2">2025/2026 - Genap</option>
-            <option value="2025-1">2025/2026 - Ganjil</option>
+            <option value="2026-1">2026/2027 - Semester Ganjil</option>
+            <option value="2025-2">2025/2026 - Semester Genap</option>
+            <option value="2025-1">2025/2026 - Semester Ganjil</option>
           </select>
         </div>
         <div>

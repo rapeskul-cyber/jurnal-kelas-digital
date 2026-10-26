@@ -157,30 +157,30 @@
                       <button
                         v-if="authStore.user?.role === 'SUPERADMIN' && u.id !== authStore.user?.id"
                         @click="handleImpersonate(u)"
-                        class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-                        title="Masuk sebagai pengguna ini (Impersonate)"
+                        class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                        title="Masuk sebagai pengguna ini"
                       >
-                        <LogIn class="w-3 h-3" />
-                        <span>Masuk As</span>
+                        <LogIn class="w-3.5 h-3.5" />
+                        <span>Akses Akun</span>
                       </button>
 
                       <!-- Reset Password Button -->
                       <button
                         @click="handleResetPassword(u)"
-                        class="p-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-medium transition cursor-pointer"
-                        title="Reset Kata Sandi ke default (password123)"
+                        class="p-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-xs font-medium transition cursor-pointer"
+                        title="Reset Kata Sandi Default"
                       >
-                        <KeyRound class="w-3.5 h-3.5 text-gray-500" />
+                        <KeyRound class="w-4 h-4 text-gray-500" />
                       </button>
 
                       <!-- Toggle Active Status -->
                       <button
                         @click="handleToggleActive(u)"
-                        class="p-1.5 rounded-lg border text-[10px] transition cursor-pointer"
+                        class="p-1.5 rounded-lg border text-xs transition cursor-pointer"
                         :class="u.is_active !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'"
-                        :title="u.is_active !== false ? 'Akun Aktif (Klik untuk nonaktifkan)' : 'Akun Nonaktif (Klik untuk aktifkan)'"
+                        :title="u.is_active !== false ? 'Akun Aktif' : 'Akun Nonaktif'"
                       >
-                        <Power class="w-3.5 h-3.5" />
+                        <Power class="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -235,7 +235,7 @@
                   class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
                   required
                 >
-                  <option v-if="authStore.user?.role === 'SUPERADMIN'" value="SUPERADMIN">Super Administrator (Akses Penuh)</option>
+                  <option v-if="authStore.user?.role === 'SUPERADMIN'" value="SUPERADMIN">Super Administrator</option>
                   <option value="GURU_PEMBIMBING">Guru Pembimbing</option>
                   <option value="GURU_PENGAJAR">Guru Pengajar</option>
                   <option value="SEKRETARIS">Sekretaris Kelas</option>
@@ -246,7 +246,7 @@
               <!-- Nomor Identitas (NIP / NISN) -->
               <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">
-                  Nomor Identitas (NIP / NISN)
+                  Nomor Identitas / NISN
                 </label>
                 <input
                   v-model="newUser.nip_nis"
@@ -265,11 +265,11 @@
                   v-model="newUser.class_id"
                   class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
                 >
-                  <option value="1">XI RPL 1 (Rekayasa Perangkat Lunak 1)</option>
-                  <option value="2">XI RPL 2 (Rekayasa Perangkat Lunak 2)</option>
-                  <option value="3">XII RPL 1 (Rekayasa Perangkat Lunak 1)</option>
-                  <option value="4">XII RPL 2 (Rekayasa Perangkat Lunak 2)</option>
-                  <option value="">- (Tidak Terikat Kelas)</option>
+                  <option value="1">XI RPL 1</option>
+                  <option value="2">XI RPL 2</option>
+                  <option value="3">XII RPL 1</option>
+                  <option value="4">XII RPL 2</option>
+                  <option value="">- Tidak Terikat Kelas -</option>
                 </select>
               </div>
 
@@ -397,7 +397,7 @@
       <!-- TAB 2: KONFIGURASI HAK AKSES -->
       <div v-else class="bg-white rounded-2xl border border-gray-100 shadow-card p-5 md:p-6 space-y-4">
         <div>
-          <h2 class="text-base font-bold text-gray-800">Konfigurasi Hak Akses & Matriks Peran (RBAC)</h2>
+          <h2 class="text-base font-bold text-gray-800">Matriks Hak Akses Peran Pengguna</h2>
           <p class="text-xs text-gray-400 mt-0.5">Pemetaan otorisasi modul sistem sesuai spesifikasi kebutuhan pengguna</p>
         </div>
 

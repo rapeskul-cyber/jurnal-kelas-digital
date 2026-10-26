@@ -69,7 +69,7 @@
                     @click="handleLogoutWa"
                     class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl border border-rose-200 transition text-center cursor-pointer"
                   >
-                    Putuskan Sambungan (Logout)
+                    Putuskan Sambungan
                   </button>
                 </div>
               </div>
@@ -80,7 +80,7 @@
                 </p>
 
                 <div>
-                  <label class="block font-bold text-gray-700 mb-1">Nomor WhatsApp Server (Bot)</label>
+                  <label class="block font-bold text-gray-700 mb-1">Nomor WhatsApp Server</label>
                   <div class="flex gap-2">
                     <input
                       v-model="pairPhone"

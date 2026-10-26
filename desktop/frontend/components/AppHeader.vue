@@ -1,23 +1,23 @@
 <template>
-  <header class="bg-white md:bg-transparent border-b md:border-b-0 border-gray-150 px-4 md:px-8 py-2.5 md:py-0 md:h-20 select-none sticky md:static top-0 z-30 shadow-2xs md:shadow-none flex items-center justify-between min-w-0">
-    <div class="flex items-center gap-2.5 md:gap-3 min-w-0 flex-1">
+  <header class="bg-white md:bg-transparent border-b md:border-b-0 border-gray-200 px-4 md:px-8 py-3 md:py-0 md:h-20 select-none sticky md:static top-0 z-30 shadow-2xs md:shadow-none flex items-center justify-between min-w-0">
+    <div class="flex items-center gap-3 min-w-0 flex-1">
       <button
         v-if="showBack"
         @click="handleBack"
         type="button"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs flex-shrink-0 cursor-pointer"
+        class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 transition shadow-2xs shrink-0 cursor-pointer active:scale-95"
       >
-        <ArrowLeft class="w-4 h-4" />
+        <ArrowLeft class="w-4 h-4 md:w-5 md:h-5" />
         <span class="hidden sm:inline">Kembali</span>
       </button>
 
-      <div v-else class="md:hidden w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shrink-0 shadow-xs">
-        <Book class="w-4 h-4" />
+      <div v-else class="md:hidden w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white shrink-0 shadow-xs">
+        <Book class="w-5 h-5" />
       </div>
 
       <div class="min-w-0 flex-1">
-        <h2 class="text-sm md:text-xl font-bold text-gray-900 tracking-tight truncate leading-tight">{{ title }}</h2>
-        <p v-if="subtitle" class="text-[10px] md:text-xs text-gray-500 mt-0.5 truncate leading-none md:leading-normal">{{ subtitle }}</p>
+        <h2 class="text-base sm:text-lg md:text-2xl font-bold text-gray-900 tracking-tight truncate leading-tight">{{ title }}</h2>
+        <p v-if="subtitle" class="text-xs md:text-sm text-gray-500 mt-0.5 truncate leading-normal">{{ subtitle }}</p>
       </div>
     </div>
 
