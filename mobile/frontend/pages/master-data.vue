@@ -5,18 +5,18 @@
       subtitle="Kelola rombongan belajar, mata pelajaran, jadwal mengajar, dan tahun ajaran sekolah"
     />
 
-    <main class="px-6 md:px-8 pb-10 space-y-6">
+    <main class="px-4 sm:px-6 md:px-8 pb-10 space-y-6 max-w-full overflow-x-hidden min-w-0">
       <!-- Tabs Navigation -->
-      <div class="flex items-center gap-6 border-b border-gray-200">
+      <div class="flex items-center gap-4 sm:gap-6 border-b border-gray-200 overflow-x-auto scrollbar-none whitespace-nowrap -mx-1 px-1">
         <button
           v-for="tab in tabs"
           :key="tab.id"
           type="button"
           @click="activeTab = tab.id"
-          class="pb-3 text-xs font-bold transition relative cursor-pointer flex items-center gap-2"
+          class="pb-3 text-xs font-bold transition relative cursor-pointer flex items-center gap-2 flex-shrink-0 whitespace-nowrap"
           :class="activeTab === tab.id ? 'text-primary' : 'text-gray-500 hover:text-gray-800'"
         >
-          <component :is="tab.icon" class="w-4 h-4" />
+          <component :is="tab.icon" class="w-4 h-4 flex-shrink-0" />
           <span>{{ tab.label }}</span>
           <span
             v-if="activeTab === tab.id"

@@ -3,7 +3,6 @@
     <AppHeader
       title="Pengajuan Surat Izin Belajar"
       subtitle="Ajukan permohonan absen kelas resmi secara daring"
-      :show-back="true"
     />
 
     <main class="px-6 md:px-8 pb-10 space-y-6">
@@ -274,9 +273,11 @@ const loadingLeaves = ref(false)
 const submitting = ref(false)
 const successMsg = ref('')
 
+const route = useRoute()
+
 const form = ref({
-  student_id: '',
-  type: 'SAKIT',
+  student_id: route.query.student_id ? String(route.query.student_id) : '',
+  type: route.query.type ? String(route.query.type) : 'SAKIT',
   start_date: new Date().toISOString().slice(0, 10),
   end_date: new Date().toISOString().slice(0, 10),
   reason: ''

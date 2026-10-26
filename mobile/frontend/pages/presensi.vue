@@ -7,39 +7,49 @@
 
     <main class="px-8 pb-8 space-y-6">
       <!-- 5 Summary Metric Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-gray-400 uppercase">Total Siswa</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">{{ summary.total }}</p>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
+        <div class="bg-white border border-gray-150 rounded-xl p-3 sm:p-4 shadow-2xs">
+          <p class="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase">Total Siswa</p>
+          <p class="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 sm:mt-1">{{ summary.total }}</p>
         </div>
-        <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-emerald-600 uppercase">Hadir</p>
-          <p class="text-2xl font-bold text-emerald-600 mt-1">{{ summary.hadir }}</p>
+        <div class="bg-white border border-gray-150 rounded-xl p-3 sm:p-4 shadow-2xs">
+          <p class="text-[10px] sm:text-[11px] font-semibold text-emerald-600 uppercase">Hadir</p>
+          <p class="text-xl sm:text-2xl font-bold text-emerald-600 mt-0.5 sm:mt-1">{{ summary.hadir }}</p>
         </div>
-        <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-amber-600 uppercase">Sakit</p>
-          <p class="text-2xl font-bold text-amber-600 mt-1">{{ summary.sakit }}</p>
+        <div class="bg-white border border-gray-150 rounded-xl p-3 sm:p-4 shadow-2xs">
+          <p class="text-[10px] sm:text-[11px] font-semibold text-amber-600 uppercase">Sakit</p>
+          <p class="text-xl sm:text-2xl font-bold text-amber-600 mt-0.5 sm:mt-1">{{ summary.sakit }}</p>
         </div>
-        <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-blue-600 uppercase">Izin</p>
-          <p class="text-2xl font-bold text-blue-600 mt-1">{{ summary.izin }}</p>
+        <div class="bg-white border border-gray-150 rounded-xl p-3 sm:p-4 shadow-2xs">
+          <p class="text-[10px] sm:text-[11px] font-semibold text-blue-600 uppercase">Izin</p>
+          <p class="text-xl sm:text-2xl font-bold text-blue-600 mt-0.5 sm:mt-1">{{ summary.izin }}</p>
         </div>
-        <div class="bg-white border border-gray-150 rounded-2xl p-4 shadow-2xs">
-          <p class="text-[11px] font-semibold text-red-600 uppercase">ALFA</p>
-          <p class="text-2xl font-bold text-red-600 mt-1">{{ summary.alpha }}</p>
+        <div class="bg-white border border-gray-150 rounded-xl p-3 sm:p-4 shadow-2xs">
+          <p class="text-[10px] sm:text-[11px] font-semibold text-red-600 uppercase">ALFA</p>
+          <p class="text-xl sm:text-2xl font-bold text-red-600 mt-0.5 sm:mt-1">{{ summary.alpha }}</p>
         </div>
       </div>
 
-      <!-- Action Bar: Tandai Semua Hadir & Search -->
+      <!-- Action Bar: Tandai Semua Hadir, Input Surat Izin & Search -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <button
-          type="button"
-          @click="markAllPresent"
-          class="px-4 py-2.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-xl text-xs font-semibold shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <Check class="w-4 h-4" />
-          <span>Tandai Semua Hadir</span>
-        </button>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            @click="markAllPresent"
+            class="px-3.5 py-2 sm:px-4 sm:py-2.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-xl text-xs font-semibold shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Check class="w-4 h-4" />
+            <span>Tandai Semua Hadir</span>
+          </button>
+
+          <NuxtLink
+            to="/surat-izin"
+            class="px-3.5 py-2 sm:px-4 sm:py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer"
+          >
+            <FileText class="w-4 h-4 text-blue-600" />
+            <span>+ Catat / Lampirkan Surat Izin</span>
+          </NuxtLink>
+        </div>
 
         <div class="relative w-full sm:w-72">
           <Search class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -47,7 +57,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Cari nama siswa..."
-            class="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            class="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
         </div>
       </div>
@@ -117,7 +127,7 @@
                       </button>
                     </div>
                   </td>
-                  <!-- Note Input -->
+                  <!-- Note Input & Surat Izin Link -->
                   <td class="py-3">
                     <input
                       v-model="student.note"
@@ -125,6 +135,16 @@
                       placeholder="Catatan..."
                       class="w-full px-2.5 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                     />
+                    <div v-if="student.status === 'SAKIT' || student.status === 'IZIN'" class="mt-1">
+                      <NuxtLink
+                        :to="`/surat-izin?student_id=${student.student_id}&type=${student.status}`"
+                        class="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-semibold flex items-center gap-1"
+                        title="Unggah surat dokter / bukti izin untuk siswa ini"
+                      >
+                        <FileText class="w-3 h-3 text-blue-500" />
+                        <span>Lampirkan Surat Izin Fisik →</span>
+                      </NuxtLink>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -245,7 +265,7 @@
 </template>
 
 <script setup lang="ts">
-import { Check, Search, Lock } from 'lucide-vue-next'
+import { Check, Search, Lock, FileText } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
 const authStore = useAuthStore()

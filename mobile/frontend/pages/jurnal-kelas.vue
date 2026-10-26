@@ -62,19 +62,19 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <button
             @click="exportExcel"
             type="button"
-            class="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors text-xs font-semibold shadow-2xs cursor-pointer"
+            class="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors text-[11px] sm:text-xs font-semibold shadow-2xs cursor-pointer"
           >
             <FileSpreadsheetIcon class="w-3.5 h-3.5" />
-            <span>Export Excel</span>
+            <span>Export CSV</span>
           </button>
           <button
             @click="exportPdf"
             type="button"
-            class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-xs font-semibold shadow-2xs cursor-pointer"
+            class="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors text-[11px] sm:text-xs font-semibold shadow-2xs cursor-pointer"
           >
             <DownloadIcon class="w-3.5 h-3.5" />
             <span>Export PDF</span>
