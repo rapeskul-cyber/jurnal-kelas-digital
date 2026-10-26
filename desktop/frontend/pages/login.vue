@@ -66,7 +66,11 @@
 
         <!-- Forgot Password Link -->
         <div class="text-center pt-2">
-          <NuxtLink to="/forgot-password" class="text-xs text-primary hover:underline font-medium">
+          <NuxtLink
+            to="/forgot-password"
+            @click="navigateTo('/forgot-password')"
+            class="inline-block text-xs text-primary hover:underline font-semibold py-1.5 px-3 rounded-lg hover:bg-red-50/50 transition cursor-pointer"
+          >
             Lupa kata sandi?
           </NuxtLink>
         </div>

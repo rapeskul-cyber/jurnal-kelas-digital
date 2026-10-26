@@ -412,7 +412,7 @@ class AuthController extends Controller
             'masked_phone' => $this->maskPhone($user->phone ?? '6285812343414'),
             'cooldown' => 60,
             'expires_in_minutes' => 5,
-            'otp_preview' => config('app.debug') ? $otp : null,
+            'otp_preview' => config('app.debug') || !$waSent ? $otp : null,
             'wa_gateway_active' => $waSent,
             'wa_gateway_note' => $waSent ? 'Terkirim via Fonte Gateway mandiri' : ($waError ? "Gateway lokal belum terhubung ke nomor WA: {$waError}" : 'Gateway siap'),
         ]);

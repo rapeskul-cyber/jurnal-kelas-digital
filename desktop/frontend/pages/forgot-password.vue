@@ -93,6 +93,21 @@
           <p class="text-gray-500">WhatsApp Tujuan: <span class="font-semibold text-gray-800">{{ maskedPhone }}</span></p>
         </div>
 
+        <!-- Helper preview OTP saat gateway offline / testing -->
+        <div v-if="otpPreview" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-1">
+          <p class="font-bold flex items-center justify-between">
+            <span>🔔 Mode Simulasi / OTP Cepat:</span>
+            <button
+              type="button"
+              @click="otp = otpPreview"
+              class="text-[11px] underline text-primary font-semibold hover:text-primary-hover cursor-pointer"
+            >
+              Isi Otomatis
+            </button>
+          </p>
+          <p>Gateway WA belum terhubung ke nomor riil. Masukkan kode uji coba: <strong class="font-mono text-sm text-primary tracking-wider">{{ otpPreview }}</strong></p>
+        </div>
+
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -210,6 +225,7 @@ const email = ref('rina.safitri@gmail.com')
 const maskedEmail = ref('')
 const maskedPhone = ref('')
 const otp = ref('')
+const otpPreview = ref<string | null>(null)
 const newPassword = ref('')
 const newPasswordConfirmation = ref('')
 const cooldown = ref(0)
@@ -238,6 +254,7 @@ async function handleStep1() {
     })
     maskedEmail.value = res.masked_email
     maskedPhone.value = res.masked_phone
+    otpPreview.value = res.otp_preview || null
     startCooldown(res.cooldown || 60)
     currentStep.value = 2
   } catch (e: any) {
