@@ -1,40 +1,5 @@
 <template>
   <div class="md:hidden">
-    <!-- Top Mobile Bar -->
-    <div class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 px-4 flex items-center justify-between z-30 shadow-2xs">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold shadow-xs">
-          <Book class="w-4 h-4" />
-        </div>
-        <div class="flex flex-col">
-          <span class="font-bold text-gray-900 text-xs leading-none">Jurnal Kelas</span>
-          <span class="text-[10px] text-gray-500 font-medium">Versi Mobile</span>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-1.5">
-        <NuxtLink to="/notifikasi" class="relative p-2 text-gray-600 rounded-lg hover:bg-gray-100 transition">
-          <Bell class="w-5 h-5" />
-          <span v-if="unreadCount > 0" class="absolute top-1 right-1 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-            {{ unreadCount }}
-          </span>
-        </NuxtLink>
-        <NuxtLink to="/profile" class="p-2 text-gray-600 rounded-lg hover:bg-gray-100 transition">
-          <User class="w-5 h-5" />
-        </NuxtLink>
-        <!-- Khusus Siswa: Tombol Logout di bar atas karena Siswa tidak memiliki drawer 'Lainnya' -->
-        <button
-          v-if="authStore.user?.role === 'SISWA'"
-          @click="handleLogout"
-          type="button"
-          class="p-2 text-gray-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
-          title="Keluar Akun"
-        >
-          <LogOut class="w-5 h-5" />
-        </button>
-      </div>
-    </div>
-
     <!-- Bottom Navigation Bar -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-1.5 flex items-center justify-around z-30 shadow-lg pb-safe">
       <NuxtLink

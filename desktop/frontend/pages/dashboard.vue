@@ -95,64 +95,73 @@
       <!-- ============================================== -->
       <template v-else-if="authStore.user?.role === 'SEKRETARIS'">
         <!-- 4 Stat Cards Hari Ini -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Hadir Hari Ini" :value="data?.stats?.hadir_count ?? '0 Siswa'" :subtext="data?.stats?.hadir_percent ?? '0% Tingkat Kehadiran'" color="green" />
-          <StatCard title="Izin Keperluan" :value="data?.stats?.izin_count ?? '0 Siswa'" subtext="Wajib Verifikasi Surat" color="blue" />
-          <StatCard title="Sakit (Disertai Surat)" :value="data?.stats?.sakit_count ?? '0 Siswa'" subtext="Dalam Konfirmasi Wali Kelas" color="orange" />
-          <StatCard title="ALFA (Tanpa Keterangan)" :value="data?.stats?.alpha_count ?? '0 Siswa'" subtext="Tindakan Lebih Lanjut" color="red" />
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <StatCard title="Hadir" :value="data?.stats?.hadir_count ?? '0 Siswa'" :subtext="data?.stats?.hadir_percent ?? '0% Kehadiran'" color="green" />
+          <StatCard title="Izin" :value="data?.stats?.izin_count ?? '0 Siswa'" subtext="Verifikasi Surat" color="blue" />
+          <StatCard title="Sakit" :value="data?.stats?.sakit_count ?? '0 Siswa'" subtext="Konfirmasi Wali" color="orange" />
+          <StatCard title="Alfa" :value="data?.stats?.alpha_count ?? '0 Siswa'" subtext="Tanpa Keterangan" color="red" />
         </div>
 
-        <!-- Presensi Kelas Hari Ini Table -->
-        <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs">
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+        <!-- Presensi Kelas Hari Ini Table / List -->
+        <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
             <div>
-              <h3 class="text-sm font-bold text-gray-900">Isi Presensi Kelas {{ data?.class_name || 'XI RPL 1' }} Hari ini</h3>
-              <p class="text-xs text-gray-400 mt-0.5">Tanggal: Hari ini, status: {{ data?.session_status }}</p>
+              <h3 class="text-sm font-bold text-gray-900">Presensi Kelas {{ data?.class_name || 'XI RPL 1' }} Hari ini</h3>
+              <p class="text-xs text-gray-400 mt-0.5">Status sesi: <span class="font-semibold text-primary">{{ data?.session_status || 'DRAFT' }}</span></p>
             </div>
-            <div class="flex items-center gap-2">
-              <NuxtLink
-                to="/surat-izin"
-                class="px-3 py-2 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
-              >
-                <Mail class="w-3.5 h-3.5 text-primary" />
-                <span class="hidden sm:inline">Surat Izin</span>
-              </NuxtLink>
-              <NuxtLink
-                to="/jurnal-kelas"
-                class="px-3 py-2 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
-              >
-                <FileText class="w-3.5 h-3.5 text-primary" />
-                <span class="hidden sm:inline">Isi Jurnal</span>
-              </NuxtLink>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
               <NuxtLink
                 to="/presensi"
-                class="px-3.5 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
+                class="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition"
               >
                 <ClipboardCheck class="w-4 h-4" />
-                <span>Input Presensi</span>
+                <span>Input Presensi Lengkap →</span>
               </NuxtLink>
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+          <!-- Mobile Friendly List View (< sm) -->
+          <div class="sm:hidden divide-y divide-gray-100">
+            <div
+              v-for="item in data?.attendance_list || []"
+              :key="item.student_id"
+              class="py-2.5 flex items-center justify-between gap-3"
+            >
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-gray-400 w-5">{{ item.no }}.</span>
+                  <p class="text-xs font-bold text-gray-900 truncate">{{ item.name }}</p>
+                </div>
+                <p class="text-[10px] text-gray-500 pl-6.5 truncate">
+                  NIS: {{ item.nis }} <span v-if="item.note" class="text-gray-400">• {{ item.note }}</span>
+                </p>
+              </div>
+              <div class="shrink-0 flex items-center gap-1.5">
+                <StatusBadge :status="item.status" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table View (>= sm) -->
+          <div class="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table class="w-full text-left text-xs whitespace-nowrap min-w-[560px]">
               <thead>
                 <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100">
-                  <th class="pb-3 font-semibold">No</th>
-                  <th class="pb-3 font-semibold">Nama Siswa</th>
-                  <th class="pb-3 font-semibold">NIS</th>
-                  <th class="pb-3 font-semibold">Status Presensi</th>
-                  <th class="pb-3 font-semibold">Keterangan</th>
-                  <th class="pb-3 font-semibold text-right">TTD Digital</th>
+                  <th class="pb-3 font-semibold w-10">No</th>
+                  <th class="pb-3 font-semibold min-w-[150px]">Nama Siswa</th>
+                  <th class="pb-3 font-semibold w-24">NIS</th>
+                  <th class="pb-3 font-semibold text-center w-28">Status</th>
+                  <th class="pb-3 font-semibold min-w-[140px]">Keterangan</th>
+                  <th class="pb-3 font-semibold text-right w-28">Verifikasi</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-50">
                 <tr v-for="item in data?.attendance_list || []" :key="item.student_id" class="hover:bg-gray-50/50">
-                  <td class="py-3 text-gray-400">{{ item.no }}</td>
+                  <td class="py-3 text-gray-400 font-medium">{{ item.no }}</td>
                   <td class="py-3 font-semibold text-gray-900">{{ item.name }}</td>
-                  <td class="py-3 text-gray-500">{{ item.nis }}</td>
-                  <td class="py-3"><StatusBadge :status="item.status" /></td>
-                  <td class="py-3 text-gray-500">{{ item.note || '-' }}</td>
+                  <td class="py-3 text-gray-500 font-mono text-[11px]">{{ item.nis }}</td>
+                  <td class="py-3 text-center"><StatusBadge :status="item.status" /></td>
+                  <td class="py-3 text-gray-500 max-w-[200px] truncate" :title="item.note">{{ item.note || '-' }}</td>
                   <td class="py-3 text-right">
                     <span v-if="item.verified" class="inline-flex items-center text-emerald-600 font-semibold gap-1 text-[11px]">
                       <CheckCircle2 class="w-3.5 h-3.5" /> Terverifikasi

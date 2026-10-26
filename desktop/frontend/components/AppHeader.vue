@@ -1,6 +1,6 @@
 <template>
-  <header class="h-20 bg-transparent flex items-center justify-between px-6 md:px-8 select-none">
-    <div class="flex items-center gap-3 min-w-0">
+  <header class="bg-white md:bg-transparent border-b md:border-b-0 border-gray-150 px-4 md:px-8 py-2.5 md:py-0 md:h-20 select-none sticky md:static top-0 z-30 shadow-2xs md:shadow-none flex items-center justify-between min-w-0">
+    <div class="flex items-center gap-2.5 md:gap-3 min-w-0 flex-1">
       <button
         v-if="showBack"
         @click="handleBack"
@@ -8,32 +8,45 @@
         class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs flex-shrink-0 cursor-pointer"
       >
         <ArrowLeft class="w-4 h-4" />
-        <span>Kembali</span>
+        <span class="hidden sm:inline">Kembali</span>
       </button>
 
-      <div class="min-w-0">
-        <h2 class="text-xl font-bold text-gray-900 tracking-tight truncate">{{ title }}</h2>
-        <p v-if="subtitle" class="text-xs text-gray-500 mt-0.5 truncate">{{ subtitle }}</p>
+      <div v-else class="md:hidden w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shrink-0 shadow-xs">
+        <Book class="w-4 h-4" />
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <h2 class="text-sm md:text-xl font-bold text-gray-900 tracking-tight truncate leading-tight">{{ title }}</h2>
+        <p v-if="subtitle" class="text-[10px] md:text-xs text-gray-500 mt-0.5 truncate leading-none md:leading-normal">{{ subtitle }}</p>
       </div>
     </div>
 
-    <div class="flex items-center gap-3 flex-shrink-0">
+    <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
       <slot name="actions" />
 
       <!-- Notification Bell -->
       <NuxtLink
         v-if="!hideNotifications"
         to="/notifikasi"
-        class="relative w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:border-gray-300 transition shadow-2xs"
+        class="relative w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:border-gray-300 transition shadow-2xs"
         title="Pemberitahuan"
       >
-        <Bell class="w-5 h-5" />
+        <Bell class="w-4 h-4 md:w-5 md:h-5" />
         <span
           v-if="unreadCount > 0"
-          class="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[11px] font-bold rounded-full flex items-center justify-center ring-2 ring-white"
+          class="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-primary text-white text-[9px] md:text-[11px] font-bold rounded-full flex items-center justify-center ring-2 ring-white"
         >
           {{ unreadCount }}
         </span>
+      </NuxtLink>
+
+      <!-- Profile Icon on Mobile -->
+      <NuxtLink
+        to="/profile"
+        class="md:hidden p-1.5 text-gray-600 rounded-lg hover:bg-gray-100 transition"
+        title="Profil Saya"
+      >
+        <User class="w-4 h-4" />
       </NuxtLink>
 
       <!-- Logout Button -->
@@ -41,7 +54,7 @@
         v-if="!hideLogout"
         @click="handleLogout"
         type="button"
-        class="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 hover:border-red-200 hover:text-primary rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
+        class="flex items-center gap-1.5 md:gap-2 px-2.5 py-1.5 md:px-3.5 md:py-2 bg-white border border-gray-200 hover:border-red-200 hover:text-primary rounded-lg md:rounded-xl text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
       >
         <LogOut class="w-4 h-4" />
         <span class="hidden sm:inline">Keluar</span>
@@ -51,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { Bell, LogOut, ArrowLeft } from 'lucide-vue-next'
+import { Bell, LogOut, ArrowLeft, Book, User } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
 const props = withDefaults(
