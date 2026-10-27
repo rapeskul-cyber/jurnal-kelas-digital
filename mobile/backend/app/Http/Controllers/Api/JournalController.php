@@ -23,9 +23,14 @@ class JournalController extends Controller
         $query = ClassJournal::with(['schoolClass', 'schedule.subject', 'createdBy', 'confirmedBy'])->latest('date');
 
         if ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') {
-            $classId = $user->class_id ?: 1;
+            $classId = $user->class_id ?: SchoolClass::where('name', 'Kelas Industri')->value('id');
             $query->where('class_id', $classId);
-        } elseif ($classId) {
+        } elseif ($user->role === 'GURU_PEMBIMBING') {
+            $guidedId = SchoolClass::where('advisor_id', $user->id)->value('id') ?? $user->class_id ?? SchoolClass::where('name', 'Kelas Industri')->value('id');
+            if ($guidedId) {
+                $query->where('class_id', $guidedId);
+            }
+        } elseif ($classId && $classId !== 'Semua') {
             $query->where('class_id', $classId);
         }
 
@@ -41,7 +46,7 @@ class JournalController extends Controller
                 'schedule_id' => $j->schedule_id,
                 'date' => Carbon::parse($j->date)->format('Y-m-d'),
                 'date_time' => Carbon::parse($j->date)->translatedFormat('d M,') . ' ' . ($j->schedule->start_time ?? '07:30'),
-                'class' => $j->schoolClass->name ?? 'XI RPL 1',
+                'class' => $j->schoolClass->name ?? 'Kelas Industri',
                 'teacher' => $j->confirmedBy->name ?? ($j->schedule->teacher->name ?? 'Budi Santoso, S.Pd'),
                 'subject' => $j->schedule->subject->name ?? 'Pemrograman Web',
                 'topic' => $j->notes ? explode(' | ', $j->activity)[0] : $j->activity,

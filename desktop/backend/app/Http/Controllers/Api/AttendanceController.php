@@ -16,11 +16,34 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    private function resolveTargetClassId(User $user, Request $request)
+    {
+        if ($request->filled('class_id') && $request->input('class_id') !== 'Semua') {
+            return (int) $request->input('class_id');
+        }
+
+        if ($user->role === 'GURU_PEMBIMBING') {
+            $guidedId = SchoolClass::where('advisor_id', $user->id)->value('id');
+            if ($guidedId) return (int) $guidedId;
+        }
+
+        if ($user->class_id) {
+            return (int) $user->class_id;
+        }
+
+        if ($user->role === 'GURU_PENGAJAR') {
+            $taughtId = $user->taughtClasses()->value('classes.id');
+            if ($taughtId) return (int) $taughtId;
+        }
+
+        return (int) (SchoolClass::first()->id ?? 1);
+    }
+
     public function getToday(Request $request)
     {
         $user = $request->user();
         $date = $request->input('date', Carbon::today()->toDateString());
-        $classId = ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') ? ($user->class_id ?: 1) : $request->input('class_id', $user->class_id ?? 1);
+        $classId = $this->resolveTargetClassId($user, $request);
 
         $session = AttendanceSession::where('class_id', $classId)
             ->whereDate('date', $date)
@@ -386,7 +409,7 @@ class AttendanceController extends Controller
     {
         $user = $request->user();
         $date = $request->input('date', Carbon::today()->toDateString());
-        $classId = ($user->role === 'SEKRETARIS' || $user->role === 'SISWA') ? ($user->class_id ?: 1) : $request->input('class_id', $user->class_id ?? 1);
+        $classId = $this->resolveTargetClassId($user, $request);
 
         $session = AttendanceSession::where('class_id', $classId)
             ->whereDate('date', $date)
@@ -401,7 +424,7 @@ class AttendanceController extends Controller
         if (!$session) {
             return response()->json([
                 'date_formatted' => Carbon::parse($date)->translatedFormat('l, d F Y'),
-                'class_name' => SchoolClass::find($classId)->name ?? 'XI RPL 1',
+                'class_name' => SchoolClass::find($classId)->name ?? 'Kelas Industri',
                 'summary' => [
                     'hadir' => 0,
                     'sakit' => 0,
@@ -438,7 +461,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'date_formatted' => Carbon::parse($date)->translatedFormat('l, d F Y'),
-            'class_name' => SchoolClass::find($classId)->name ?? 'XI RPL 1',
+            'class_name' => SchoolClass::find($classId)->name ?? 'Kelas Industri',
             'summary' => [
                 'hadir' => $hadir,
                 'sakit' => $sakit,
@@ -453,11 +476,7 @@ class AttendanceController extends Controller
     public function semesterRecap(Request $request)
     {
         $user = $request->user();
-        if ($user && ($user->role === 'SEKRETARIS' || $user->role === 'SISWA')) {
-            $classId = $user->class_id ?: 1;
-        } else {
-            $classId = $request->input('class_id', 1);
-        }
+        $classId = $this->resolveTargetClassId($user, $request);
 
         $students = User::where('class_id', $classId)
             ->whereIn('role', ['SISWA', 'SEKRETARIS'])

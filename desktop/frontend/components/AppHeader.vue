@@ -40,8 +40,9 @@
         </span>
       </NuxtLink>
 
-      <!-- Profile Icon on Mobile -->
+      <!-- Profile Icon on Mobile (disembunyikan untuk role SISWA karena profil sudah ada di navbar bawah) -->
       <NuxtLink
+        v-if="authStore.user?.role !== 'SISWA'"
         to="/profile"
         class="md:hidden p-2 text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition active:scale-95 cursor-pointer"
         title="Profil Saya"

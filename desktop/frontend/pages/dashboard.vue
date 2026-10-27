@@ -106,7 +106,7 @@
         <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-4">
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
             <div>
-              <h3 class="text-sm font-bold text-gray-900">Presensi Kelas {{ data?.class_name || 'XI RPL 1' }} Hari ini</h3>
+              <h3 class="text-sm font-bold text-gray-900">Presensi Kelas {{ data?.class_name || authStore.user?.school_class?.name || 'Kelas Industri' }} Hari ini</h3>
               <p class="text-xs text-gray-400 mt-0.5">Status sesi: <span class="font-semibold text-primary">{{ data?.session_status || 'DRAFT' }}</span></p>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -616,9 +616,9 @@ const dashboardTitle = computed(() => {
   const role = authStore.user?.role
   if (role === 'SUPERADMIN') return 'Dashboard Super Administrator'
   if (role === 'SISWA') return 'Dashboard Presensi Mandiri Siswa'
-  if (role === 'SEKRETARIS') return 'Dashboard Presensi ' + (data.value?.class_name || 'Kelas XI RPL 1')
+  if (role === 'SEKRETARIS') return 'Dashboard Presensi ' + (data.value?.class_name || authStore.user?.school_class?.name || 'Kelas Industri')
   if (role === 'GURU_PENGAJAR') return 'Dashboard Pengajar'
-  if (role === 'GURU_PEMBIMBING') return authStore.user?.name || 'Siti Aminah, M.Pd'
+  if (role === 'GURU_PEMBIMBING') return authStore.user?.name || 'Nurhayatul Fadilla, S.Pd'
   return 'Dashboard'
 })
 

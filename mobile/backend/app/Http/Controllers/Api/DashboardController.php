@@ -156,7 +156,7 @@ class DashboardController extends Controller
         $percentage = round(($hadir / $total) * 100);
 
         return response()->json([
-            'class_name' => $user->schoolClass->name ?? 'XI RPL 1',
+            'class_name' => $user->schoolClass->name ?? 'Kelas Industri',
             'session_date' => $session ? Carbon::parse($session->date)->translatedFormat('l, d M Y') : 'Hari ini',
             'stats' => [
                 'hadir_count' => $hadir . ' Siswa',
@@ -268,13 +268,33 @@ class DashboardController extends Controller
 
     private function pembimbingDashboard(User $user, $today)
     {
-        $allClasses = SchoolClass::with(['secretary'])->get();
+        $advisedClassIds = SchoolClass::where('advisor_id', $user->id)->pluck('id')->toArray();
+        if ($user->class_id && !in_array($user->class_id, $advisedClassIds)) {
+            $advisedClassIds[] = $user->class_id;
+        }
+
+        $allClasses = SchoolClass::with(['secretary'])
+            ->whereIn('id', $advisedClassIds)
+            ->get();
+
+        if ($allClasses->isEmpty()) {
+            $allClasses = SchoolClass::with(['secretary'])->where('name', 'Kelas Industri')->get();
+            if ($allClasses->isEmpty()) {
+                $allClasses = SchoolClass::with(['secretary'])->take(1)->get();
+            }
+        }
+
+        $monitoredClassIds = $allClasses->pluck('id')->toArray();
+
         $pendingLeaves = LeaveRequest::with(['student.schoolClass'])
             ->where('status', 'PENDING')
+            ->whereHas('student', function ($q) use ($monitoredClassIds) {
+                $q->whereIn('class_id', $monitoredClassIds);
+            })
             ->latest()
             ->get();
 
-        $todayJournalsCount = ClassJournal::whereDate('date', $today)->count();
+        $todayJournalsCount = ClassJournal::whereIn('class_id', $monitoredClassIds)->whereDate('date', $today)->count();
 
         $monitoredClasses = $allClasses->map(function ($cls) use ($today) {
             $session = AttendanceSession::where('class_id', $cls->id)

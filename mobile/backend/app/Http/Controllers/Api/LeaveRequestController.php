@@ -76,7 +76,7 @@ class LeaveRequestController extends Controller
                 'date_formatted' => Carbon::parse($lv->start_date)->translatedFormat('l, d M Y'),
                 'student_name' => $lv->student->name ?? 'Siswa',
                 'nis' => $lv->student->nip_nis ?? '-',
-                'class' => $lv->student->schoolClass->name ?? 'XI RPL 1',
+                'class' => $lv->student->schoolClass->name ?? ($lv->student->specialization ? 'Kelas Industri (' . $lv->student->specialization . ')' : 'Kelas Industri'),
                 'type' => $lv->type,
                 'start_date' => $lv->start_date->toDateString(),
                 'end_date' => $lv->end_date->toDateString(),
