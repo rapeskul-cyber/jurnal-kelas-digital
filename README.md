@@ -1,4 +1,4 @@
-# 🏫 Jurnal Kelas Digital — SMKN  Jakarta
+# 🏫 Jurnal Kelas Digital
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Laravel](https://img.shields.io/badge/Backend-Laravel_11-FF2D20?logo=laravel)
@@ -7,7 +7,7 @@
 ![WhatsApp](https://img.shields.io/badge/Gateway-Baileys_WA-25D366?logo=whatsapp)
 ![Status](https://img.shields.io/badge/Status-Industry_Ready-success)
 
-Sistem Informasi Manajemen Kegiatan Belajar Mengajar (KBM), Presensi Digital Terpadu, Jurnal Guru, Perizinan Siswa, dan Notifikasi WhatsApp Gateway Mandiri berbasis Web & Mobile PWA untuk lingkungan akademik **SMKN 71 Jakarta**.
+Sistem Informasi Manajemen Kegiatan Belajar Mengajar (KBM), Presensi Digital Terpadu, Jurnal Guru, Perizinan Siswa, dan Notifikasi WhatsApp Gateway Mandiri berbasis Web & Mobile PWA untuk institusi pendidikan kejuruan modern.
 
 ---
 
@@ -16,8 +16,8 @@ Sistem Informasi Manajemen Kegiatan Belajar Mengajar (KBM), Presensi Digital Ter
 **Jurnal Kelas Digital** dirancang untuk mendigitalkan seluruh administrasi ruang kelas secara real-time dan terintegrasi. Sistem mengakomodasi kebutuhan presensi per jam pelajaran, pencatatan capaian materi pembelajaran harian, pengajuan izin/sakit siswa, rekapitulasi kehadiran berkala, serta pengiriman pesan otomatis ke nomor WhatsApp orang tua/wali murid saat kehadiran tercatat.
 
 Repositori ini menerapkan arsitektur **Dual-Platform Client** yang berbagi skema database dan protokol otentikasi RESTful API yang sama:
-1. **`desktop/`**: Dasbor komprehensif bagi Administrator, Manajemen Sekolah, dan Guru untuk rekapitulasi data, input jurnal harian, modul ajar, dan pengaturan sistem.
-2. **`mobile/`**: Antarmuka ringkas berorientasi *mobile-first* (Card & Bottom Navigation bar) yang dioptimalkan untuk perangkat ponsel pintar guru di kelas dan siswa.
+1. ****: Dasbor komprehensif bagi Administrator, Manajemen Sekolah, dan Guru untuk rekapitulasi data, input jurnal harian, modul ajar, dan pengaturan sistem.
+2. ****: Antarmuka ringkas berorientasi *mobile-first* (Card & Bottom Navigation bar) yang dioptimalkan untuk perangkat ponsel pintar guru di kelas dan siswa.
 
 ---
 
@@ -36,16 +36,16 @@ Repositori ini menerapkan arsitektur **Dual-Platform Client** yang berbagi skema
 * Presensi fleksibel per jam tatap muka dengan status: **Hadir (H)**, **Sakit (S)**, **Izin (I)**, dan **Alpa (A)**.
 * Pengajuan izin/sakit mandiri oleh siswa dilengkapi form unggah surat dokter / foto bukti fisik.
 * Persetujuan (*approval*) izin secara berjenjang oleh Guru Piket atau Wali Kelas.
-* Rekapitulasi otomatis dalam persentase bulanan/semester yang siap diekspor ke format pelaporan dinas.
+* Rekapitulasi otomatis dalam persentase bulanan/semester yang siap diekspor ke format pelaporan berkala.
 
-### 4. 🏢 Master Data Terstruktur SMKN 71 Jakarta
+### 4. 🏢 Master Data Terstruktur & Multi-Jurusan
 * **18 Rombongan Belajar Reguler:**
   * **RPL (Rekayasa Perangkat Lunak):** Tingkat X, XI, XII (Kelas 1 & 2) — *Identitas Warna Merah*
   * **DKV (Desain Komunikasi Visual):** Tingkat X, XI, XII (Kelas 1 & 2) — *Identitas Warna Hijau*
   * **Animasi:** Tingkat X, XI, XII (Kelas 1 & 2) — *Identitas Warna Kuning*
 * **1 Rombongan Belajar Khusus (Kelas Industri):**
-  * Terisolasi penuh dengan kuota 15 siswa terpilih dan dibina langsung oleh Pembimbing Khusus (Bu Fadhilah & Pak Bagas).
-* **26 Tenaga Pendidik Resmi SMKN 71 Jakarta** yang telah terdaftar lengkap beserta kode mata pelajaran resmi.
+  * Terisolasi penuh dengan kuota 15 siswa dan dibina langsung oleh Guru Pembimbing Industri.
+* **26 Tenaga Pendidik Terdaftar** dengan jadwal mata pelajaran kejuruan dan umum yang terstruktur.
 
 ### 5. 🛡️ Role-Based Access Control (RBAC) Ketat
 * **Superadmin:** Konfigurasi sekolah, manajemen tahun ajaran/semester, kontrol server, dan audit log.
@@ -60,27 +60,7 @@ Repositori ini menerapkan arsitektur **Dual-Platform Client** yang berbagi skema
 
 ## 📂 Struktur Repositori
 
-```text
-jurnal-kelas-digital/
-├── desktop/                         # Klien Dasbor Desktop (Manajemen & Tata Usaha)
-│   ├── backend/                     # Laravel 11 REST API Service
-│   │   ├── app/Http/Controllers/    # Controller API (Presensi, Jurnal, Izin, WA)
-│   │   ├── database/migrations/     # Skema 14+ Tabel Relasional
-│   │   ├── database/seeders/        # Seeder Resmi SMKN 71 & Kelas Industri
-│   │   └── routes/api.php           # REST API Endpoints
-│   ├── frontend/                    # Nuxt 3 Desktop Application
-│   │   ├── pages/                   # Halaman Dasbor, Master Data, WA Gateway
-│   │   └── components/              # Komponen UI responsif
-│   └── docs/                        # Dokumentasi arsitektur & rancangan visual
-│
-├── mobile/                          # Klien Tampilan Mobile (Guru di Kelas & Siswa)
-│   ├── backend/                     # Laravel 11 Backend API (Tersinkronisasi)
-│   ├── frontend/                    # Nuxt 3 Mobile Viewport (MobileNav & Card UI)
-│   └── docs/                        # Spesifikasi mobile layout & panduan
-│
-├── database_schema_and_data.sql     # Skrip dump database SQL siap pakai
-└── README.md                        # Dokumentasi resmi proyek
-```
+
 
 ---
 
@@ -101,7 +81,7 @@ jurnal-kelas-digital/
 ## 🚀 Panduan Instalasi & Menjalankan
 
 ### Prasyarat Sistem
-* **PHP:** >= 8.2 (ekstensi `pdo`, `sqlite3` atau `pdo_mysql`, `mbstring`, `fileinfo`)
+* **PHP:** >= 8.2 (ekstensi ,  atau , , )
 * **Node.js:** >= 18.x
 * **Composer:** >= 2.5
 * **NPM / Bun / Yarn**
@@ -112,80 +92,72 @@ jurnal-kelas-digital/
 
 Navigasikan ke direktori backend:
 
-```bash
-cd desktop/backend
 
-# 1. Pasang dependensi PHP
-composer install
-
-# 2. Siapkan file konfigurasi environment
-cp .env.example .env
-
-# 3. Generate Application Key
-php artisan key:generate
-
-# 4. Jalankan Migrasi & Seeder Resmi SMKN 71
-php artisan migrate:fresh --seed
-
-# 5. Buat tautan penyimpanan publik (untuk upload PDF modul & surat izin)
-php artisan storage:link
-
-# 6. Jalankan server lokal
-php artisan serve --port=8000
-```
-> **Info:** Backend API aktif melayani request di `http://127.0.0.1:8000`.
+> **Info:** Backend API aktif melayani request di .
 
 ---
 
 ### Langkah 2: Setup Frontend Web (Nuxt 3)
 
 #### Untuk Versi Desktop:
-```bash
-cd desktop/frontend
 
-# Pasang dependensi Node.js
-npm install
+up to date, audited 138 packages in 5s
 
-# Jalankan server pengembangan
-npm run dev -- -p 3000
-```
-> Akses melalui browser: `http://localhost:3000`
+19 packages are looking for funding
+  run `npm fund` for details
+
+12 high severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+> Akses melalui browser: 
 
 #### Untuk Versi Mobile:
-```bash
-cd mobile/frontend
 
-# Pasang dependensi Node.js
-npm install
+up to date, audited 138 packages in 1s
 
-# Jalankan server pengembangan
-npm run dev -- -p 3001
-```
-> Akses melalui browser: `http://localhost:3001` (dianjurkan membuka *Device Mode / Inspect Mobile View* di browser).
+19 packages are looking for funding
+  run `npm fund` for details
+
+12 high severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+> Akses melalui browser:  (dianjurkan membuka *Device Mode / Inspect Mobile View* di browser).
 
 ---
 
 ## 🔑 Kredensial Akun Pengujian (Demo Data)
 
-Setelah menjalankan seeder default (`php artisan migrate:fresh --seed`), akun pengujian berikut siap digunakan:
+Setelah menjalankan seeder default (), akun pengujian berikut siap digunakan:
 
 | Peran (Role) | Identitas Pengguna | Email / NIP | Password Default | Akses Menu |
 | :--- | :--- | :--- | :--- | :--- |
-| **Superadmin** | Administrator Sistem | `superadmin@sekolah.sch.id` | `password123` | Konfigurasi global, User, WhatsApp Gateway, Pengaturan |
-| **Pembimbing / Guru** | Bu Fadhilah (Kelas Industri) | `fadhilah@guru.smkn71.sch.id` | `password123` | Jurnal KBM, Presensi Kelas Industri, Modul Ajar |
-| **Guru Reguler** | Nanda Arsyia Murti, S.Kom | `nanda.arsyia@guru.smkn71.sch.id` | `password123` | Jurnal KBM RPL/Informatika, Presensi Kelas Reguler |
-| **Siswa** | Siswa Demo (Kelas Industri) | `siswa1@smkn71.sch.id` | `password123` | Dashboard Siswa, Riwayat Kehadiran, Form Pengajuan Izin |
+| **Superadmin** | Administrator Sistem |  |  | Konfigurasi global, User, WhatsApp Gateway, Pengaturan |
+| **Pembimbing Industri** | Guru Pembimbing (Kelas Industri) |  |  | Jurnal KBM, Presensi Kelas Industri, Modul Ajar |
+| **Guru Reguler** | Guru Pengampu Kejuruan |  |  | Jurnal KBM, Presensi Kelas Reguler, Modul Ajar |
+| **Siswa** | Siswa Perwakilan Kelas |  |  | Dashboard Siswa, Riwayat Kehadiran, Form Pengajuan Izin |
 
 ---
 
 ## 🛡️ Keamanan & Integritas Data
-* **Sanitasi Kredensial:** Seluruh berkas sensitif (`.env`, database credentials, log file, token session) dilindungi oleh `.gitignore` dan tidak terlacak ke VCS.
+* **Sanitasi Kredensial:** Seluruh berkas sensitif (, database credentials, log file, token session) dilindungi oleh  dan tidak terlacak ke VCS.
 * **Prinsip Least Privilege:** Endpoint REST API backend diproteksi middleware Sanctum dengan pengecekan peran ketat di level controller.
 * **Audit Trail:** Modul audit log mencatat setiap interaksi pengubahan data presensi dan status persetujuan surat izin secara kronologis.
 
 ---
 
 ## 👨‍💻 Hak Cipta & Lisensi
-Dikembangkan dan dirawat di bawah organisasi repositori **`rapeskul-cyber`** untuk keperluan operasional akademik SMK Negeri 71 Jakarta.
+Dikembangkan untuk keperluan operasional akademik dan sistem informasi manajemen kelas digital.
 
 Didistribusikan di bawah lisensi open-source **MIT License**.
