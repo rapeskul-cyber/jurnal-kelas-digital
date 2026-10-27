@@ -117,8 +117,8 @@
           <div class="bg-white rounded-2xl p-6 border-2 border-red-100 hover:border-red-300 transition-all shadow-xs flex flex-col justify-between">
             <div class="space-y-4">
               <div class="flex items-center justify-between">
-                <div class="w-14 h-14 bg-red-50 rounded-xl p-2.5 border border-red-200 shadow-2xs flex items-center justify-center">
-                  <img src="/images/logo-rpl.png" alt="RPL" class="w-full h-full object-contain" />
+                <div class="w-12 h-12 bg-red-50 rounded-xl border border-red-200 shadow-2xs flex items-center justify-center text-red-600">
+                  <Code2 class="w-6 h-6" />
                 </div>
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-red-50 text-red-700 border border-red-200">
                   RPL • Merah
@@ -140,8 +140,8 @@
           <div class="bg-white rounded-2xl p-6 border-2 border-emerald-100 hover:border-emerald-300 transition-all shadow-xs flex flex-col justify-between">
             <div class="space-y-4">
               <div class="flex items-center justify-between">
-                <div class="w-14 h-14 bg-emerald-50 rounded-xl p-2.5 border border-emerald-200 shadow-2xs flex items-center justify-center">
-                  <img src="/images/logo-dkv.png" alt="DKV" class="w-full h-full object-contain" />
+                <div class="w-12 h-12 bg-emerald-50 rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-center text-emerald-600">
+                  <Palette class="w-6 h-6" />
                 </div>
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
                   DKV • Hijau
@@ -163,8 +163,8 @@
           <div class="bg-white rounded-2xl p-6 border-2 border-amber-100 hover:border-amber-300 transition-all shadow-xs flex flex-col justify-between">
             <div class="space-y-4">
               <div class="flex items-center justify-between">
-                <div class="w-14 h-14 bg-amber-50 rounded-xl p-2.5 border border-amber-200 shadow-2xs flex items-center justify-center">
-                  <img src="/images/logo-animasi.png" alt="Animasi" class="w-full h-full object-contain" />
+                <div class="w-12 h-12 bg-amber-50 rounded-xl border border-amber-200 shadow-2xs flex items-center justify-center text-amber-600">
+                  <Film class="w-6 h-6" />
                 </div>
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-300">
                   Animasi • Kuning
@@ -277,7 +277,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, ChevronRight } from 'lucide-vue-next'
+import { ArrowRight, ChevronRight, Code2, Palette, Film } from 'lucide-vue-next'
 
 definePageMeta({
   layout: false
