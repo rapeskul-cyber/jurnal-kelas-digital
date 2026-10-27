@@ -426,7 +426,7 @@ const handleNotificationClick = async (item: any) => {
       navigateTo('/dashboard')
     }
   } else if (type === 'USER') {
-    navigateTo(role === 'GURU_PEMBIMBING' ? '/manajemen-user' : '/profile')
+    navigateTo(role === 'GURU_PEMBIMBING' ? '/manajemen-murid' : '/profile')
   } else {
     navigateTo('/dashboard')
   }

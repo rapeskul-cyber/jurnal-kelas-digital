@@ -37,7 +37,6 @@ export const ROLE_MENUS: Record<string, MenuItem[]> = {
   SUPERADMIN: [
     { name: 'Dashboard', to: '/dashboard', icon: 'Home' },
     { name: 'Master Data & Jadwal', to: '/master-data', icon: 'Layers' },
-    { name: 'Manajemen Pengguna', to: '/manajemen-user', icon: 'Users' },
     { name: 'Manajemen Guru & Staf', to: '/manajemen-guru', icon: 'GraduationCap' },
     { name: 'Buka Kunci Presensi', to: '/presensi-override', icon: 'ShieldAlert' },
     { name: 'WhatsApp Gateway', to: '/wa-gateway', icon: 'MessageSquare' },

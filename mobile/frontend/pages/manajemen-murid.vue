@@ -103,7 +103,17 @@
           </div>
         </div>
 
-        <div>
+        <div class="flex items-center gap-2">
+          <!-- Tombol Import Massal -->
+          <button
+            type="button"
+            @click="openImportModal"
+            class="px-3.5 py-2.5 rounded-xl bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 text-xs font-bold transition flex items-center gap-2 shadow-2xs cursor-pointer"
+          >
+            <FileSpreadsheet class="w-4 h-4 text-emerald-600" />
+            <span>Import Massal Siswa</span>
+          </button>
+
           <!-- Tambah Murid Button -->
           <button
             type="button"
@@ -111,7 +121,7 @@
             class="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm hover:shadow cursor-pointer"
           >
             <Plus class="w-4 h-4" />
-            <span>+ Tambah Murid Kelas</span>
+            <span>+ Tambah Murid</span>
           </button>
         </div>
       </div>
@@ -331,6 +341,179 @@
         </form>
       </div>
     </div>
+
+    <!-- MODAL IMPORT MASSAL MURID -->
+    <div
+      v-if="showImportModal"
+      class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+    >
+      <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-gray-150 overflow-hidden my-6">
+        <!-- Header Modal -->
+        <div class="p-5 border-b border-gray-150 flex items-center justify-between bg-gray-50/50">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <FileSpreadsheet class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-gray-900">Import Massal Siswa Kelas</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Tambah banyak siswa sekaligus ke Kelas <span class="font-bold text-gray-800">{{ className }}</span></p>
+            </div>
+          </div>
+          <button @click="closeImportModal" class="p-1 hover:bg-gray-200/60 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <div class="p-6 space-y-5 text-xs">
+          <!-- Guide & Sample Buttons -->
+          <div class="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-150 text-emerald-900 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs flex items-center gap-1.5">
+                <FileText class="w-4 h-4 text-emerald-600" />
+                Format Data yang Didukung:
+              </span>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="copyTemplate"
+                  class="px-2.5 py-1 bg-white hover:bg-emerald-100/50 border border-emerald-200 text-emerald-800 rounded-lg font-semibold text-[11px] transition flex items-center gap-1 cursor-pointer"
+                >
+                  <Copy class="w-3.5 h-3.5" />
+                  <span>{{ copied ? 'Tersalin!' : 'Salin Contoh' }}</span>
+                </button>
+                <button
+                  type="button"
+                  @click="downloadTemplate"
+                  class="px-2.5 py-1 bg-white hover:bg-emerald-100/50 border border-emerald-200 text-emerald-800 rounded-lg font-semibold text-[11px] transition flex items-center gap-1 cursor-pointer"
+                >
+                  <Download class="w-3.5 h-3.5" />
+                  <span>Unduh CSV</span>
+                </button>
+              </div>
+            </div>
+            <p class="text-[11px] text-emerald-700 leading-relaxed">
+              Kolom wajib: <strong>Nama Lengkap</strong> dan <strong>NISN</strong>. Kolom opsional: <strong>Email</strong> dan <strong>No. WhatsApp</strong>.
+              Bisa langsung copy-paste tabel dari Excel / Google Sheets atau ketik format CSV (dipisah koma / tab).
+            </p>
+          </div>
+
+          <!-- Input Mode Tabs -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="block font-bold text-gray-800">Tempel Data Teks / CSV atau Unggah Berkas</label>
+              <label class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-semibold cursor-pointer flex items-center gap-1.5 transition">
+                <Upload class="w-3.5 h-3.5 text-gray-600" />
+                <span>Pilih Berkas (.csv / .txt)</span>
+                <input type="file" accept=".csv,.txt" class="hidden" @change="handleFileUpload" />
+              </label>
+            </div>
+
+            <textarea
+              v-model="rawImportText"
+              @input="parseRawText"
+              rows="6"
+              placeholder="Contoh format (Bisa langsung paste dari Excel):
+Ahmad Rizky	102401	ahmad@sekolah.sch.id	081234567891
+Budi Santoso	102402		081234567892
+Citra Lestari	102403	citra@sekolah.sch.id	
+Dian Pratama	102404		"
+              class="w-full p-3.5 font-mono text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white placeholder-gray-400"
+            ></textarea>
+          </div>
+
+          <!-- Live Preview Table -->
+          <div v-if="parsedPreview.length" class="space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="font-bold text-gray-800 flex items-center gap-2">
+                <span>Pratinjau Data Siswa Terdeteksi:</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
+                  {{ validPreviewCount }} Siap Impor
+                </span>
+                <span v-if="invalidPreviewCount > 0" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800">
+                  {{ invalidPreviewCount }} Data Kurang Lengkap
+                </span>
+              </div>
+              <button
+                type="button"
+                @click="clearImport"
+                class="text-gray-400 hover:text-gray-600 text-[11px] underline cursor-pointer"
+              >
+                Hapus Data
+              </button>
+            </div>
+
+            <div class="max-h-48 overflow-y-auto border border-gray-150 rounded-xl overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-gray-50/80 sticky top-0 border-b border-gray-150 text-[10px] uppercase font-bold text-gray-500">
+                  <tr>
+                    <th class="py-2 px-3 w-10 text-center">No</th>
+                    <th class="py-2 px-3">Nama Lengkap</th>
+                    <th class="py-2 px-3">NISN</th>
+                    <th class="py-2 px-3">Email Sistem</th>
+                    <th class="py-2 px-3">No. WA</th>
+                    <th class="py-2 px-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-for="(item, idx) in parsedPreview" :key="idx" class="hover:bg-gray-50/50">
+                    <td class="py-2 px-3 text-center text-gray-400 font-mono">{{ idx + 1 }}</td>
+                    <td class="py-2 px-3 font-semibold text-gray-900">{{ item.name || '(Nama Kosong)' }}</td>
+                    <td class="py-2 px-3 font-mono text-gray-600">{{ item.nip_nis || '-' }}</td>
+                    <td class="py-2 px-3 text-gray-600">
+                      <span v-if="item.email">{{ item.email }}</span>
+                      <span v-else class="text-gray-400 italic font-mono text-[11px]">Otomatis: siswa_{{ item.nip_nis || 'auto' }}@smkn71.sch.id</span>
+                    </td>
+                    <td class="py-2 px-3 text-gray-600">{{ item.phone || '-' }}</td>
+                    <td class="py-2 px-3 text-center">
+                      <span
+                        v-if="item.name"
+                        class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      >
+                        ✓ Siap
+                      </span>
+                      <span
+                        v-else
+                        class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200"
+                      >
+                        ✗ Nama Wajib
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Error Feedback inside modal if any -->
+          <div v-if="importError" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+            {{ importError }}
+          </div>
+
+          <!-- Modal Footer Actions -->
+          <div class="pt-4 border-t border-gray-150 flex items-center justify-between">
+            <span class="text-[11px] text-gray-400">Kata sandi default untuk semua siswa baru: <strong>password123</strong></span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="closeImportModal"
+                class="px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                @click="executeImport"
+                :disabled="isImporting || validPreviewCount === 0"
+                class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <Upload class="w-4 h-4" />
+                <span>{{ isImporting ? 'Memproses Impor...' : `Mulai Impor ${validPreviewCount} Murid` }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -347,6 +530,11 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  FileSpreadsheet,
+  Upload,
+  Download,
+  Copy,
+  FileText,
 } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
@@ -365,6 +553,17 @@ const errorMsg = ref('')
 const showModal = ref(false)
 const isEditing = ref(false)
 const editingId = ref<number | null>(null)
+
+// State Import Massal
+const showImportModal = ref(false)
+const rawImportText = ref('')
+const parsedPreview = ref<any[]>([])
+const isImporting = ref(false)
+const importError = ref('')
+const copied = ref(false)
+
+const validPreviewCount = computed(() => parsedPreview.value.filter(p => p.name).length)
+const invalidPreviewCount = computed(() => parsedPreview.value.filter(p => !p.name).length)
 
 const form = ref({
   name: '',
@@ -543,6 +742,125 @@ async function handleDelete(student: any) {
     fetchClassStudents()
   } catch (e: any) {
     errorMsg.value = e?.data?.message || 'Gagal menghapus data murid.'
+  }
+}
+
+// Handler Import Massal Murid
+function openImportModal() {
+  showImportModal.value = true
+  rawImportText.value = ''
+  parsedPreview.value = []
+  importError.value = ''
+}
+
+function closeImportModal() {
+  showImportModal.value = false
+}
+
+function clearImport() {
+  rawImportText.value = ''
+  parsedPreview.value = []
+  importError.value = ''
+}
+
+function parseRawText() {
+  if (!rawImportText.value.trim()) {
+    parsedPreview.value = []
+    return
+  }
+
+  const lines = rawImportText.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+  const result: any[] = []
+
+  for (const line of lines) {
+    // Skip baris judul / header
+    if (line.toLowerCase().includes('nama') && (line.toLowerCase().includes('nis') || line.toLowerCase().includes('lengkap'))) {
+      continue
+    }
+
+    let parts: string[] = []
+    if (line.includes('\t')) {
+      parts = line.split('\t')
+    } else if (line.includes(';')) {
+      parts = line.split(';')
+    } else {
+      parts = line.split(',')
+    }
+
+    const name = parts[0]?.trim() || ''
+    const nip_nis = parts[1]?.trim() || ''
+    const email = parts[2]?.trim() || ''
+    const phone = parts[3]?.trim() || ''
+
+    if (name || nip_nis || email) {
+      result.push({
+        name,
+        nip_nis,
+        email,
+        phone,
+        role: 'SISWA'
+      })
+    }
+  }
+
+  parsedPreview.value = result
+}
+
+function handleFileUpload(event: any) {
+  const file = event.target?.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    rawImportText.value = (e.target?.result as string) || ''
+    parseRawText()
+  }
+  reader.readAsText(file)
+}
+
+function copyTemplate() {
+  const sample = "Nama Lengkap\tNISN\tEmail\tNo WhatsApp\nAhmad Rizky\t102401\tahmad@siswa.smkn71.sch.id\t081234567891\nBudi Santoso\t102402\tbudi@siswa.smkn71.sch.id\t081234567892\nCitra Lestari\t102403\t\t081234567893"
+  navigator.clipboard.writeText(sample)
+  copied.value = true
+  setTimeout(() => { copied.value = false }, 2000)
+}
+
+function downloadTemplate() {
+  const csvContent = "Nama Lengkap,NISN,Email,No WhatsApp\nAhmad Rizky,102401,ahmad@siswa.smkn71.sch.id,081234567891\nBudi Santoso,102402,budi@siswa.smkn71.sch.id,081234567892\nCitra Lestari,102403,,081234567893"
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `Template_Import_Siswa_${className.value.replace(/\s+/g, '_')}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+async function executeImport() {
+  const validStudents = parsedPreview.value.filter(p => p.name)
+  if (!validStudents.length) {
+    importError.value = 'Tidak ada data siswa valid yang dapat diimpor.'
+    return
+  }
+
+  isImporting.value = true
+  importError.value = ''
+
+  try {
+    const res: any = await $fetch(`${authStore.apiBase}/users/import`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      body: { students: validStudents }
+    })
+
+    successMsg.value = res.message || `Berhasil mengimpor ${res.created_count || validStudents.length} murid ke kelas!`
+    closeImportModal()
+    fetchClassStudents()
+  } catch (e: any) {
+    importError.value = e?.data?.message || 'Gagal memproses impor siswa ke kelas.'
+  } finally {
+    isImporting.value = false
   }
 }
 

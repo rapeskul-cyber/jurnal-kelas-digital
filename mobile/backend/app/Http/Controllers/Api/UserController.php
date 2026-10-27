@@ -438,54 +438,104 @@ class UserController extends Controller
     public function bulkImport(Request $request)
     {
         $currentUser = $request->user();
-        if ($currentUser->role !== 'SUPERADMIN') {
-            return response()->json(['message' => 'Hanya Superadmin yang berhak melakukan impor data pengguna.'], 403);
+        if (!in_array($currentUser->role, ['SUPERADMIN', 'GURU_PEMBIMBING'])) {
+            return response()->json(['message' => 'Anda tidak memiliki hak akses untuk melakukan impor massal murid.'], 403);
         }
 
-        $request->validate([
-            'users' => 'required|array|min:1',
-            'users.*.name' => 'required|string',
-            'users.*.email' => 'required|email',
-            'users.*.role' => 'required|in:SISWA,SEKRETARIS,GURU_PENGAJAR,GURU_PEMBIMBING,SUPERADMIN',
-            'users.*.nip_nis' => 'nullable|string',
-            'users.*.phone' => 'nullable|string',
-            'users.*.class_id' => 'nullable|exists:classes,id',
-        ]);
+        $targetClassId = null;
+        if ($currentUser->role === 'GURU_PEMBIMBING') {
+            $targetClassId = $currentUser->class_id ?? SchoolClass::where('advisor_id', $currentUser->id)->value('id');
+            if (!$targetClassId) {
+                return response()->json(['message' => 'Anda belum terdaftar sebagai wali kelas dari kelas manapun.'], 422);
+            }
+        }
+
+        $students = $request->input('students') ?? $request->input('users') ?? [];
+
+        if (empty($students) || !is_array($students)) {
+            return response()->json(['message' => 'Daftar data murid wajib diisi dan berupa array.'], 422);
+        }
 
         $created = 0;
         $skipped = 0;
         $defaultPassword = Hash::make('password123');
+        $skippedDetails = [];
 
-        foreach ($request->users as $u) {
-            $existing = User::where('email', $u['email'])->first();
-            if ($existing) {
-                $skipped++;
-                continue;
+        DB::beginTransaction();
+        try {
+            foreach ($students as $index => $u) {
+                $name = trim($u['name'] ?? '');
+                if (!$name) {
+                    $skipped++;
+                    $skippedDetails[] = "Baris " . ($index + 1) . ": Nama kosong";
+                    continue;
+                }
+
+                $nipNis = trim($u['nip_nis'] ?? $u['nisn'] ?? $u['nis'] ?? '');
+                $phone = trim($u['phone'] ?? $u['no_hp'] ?? $u['no_wa'] ?? '');
+                $role = strtoupper(trim($u['role'] ?? 'SISWA'));
+                if (!in_array($role, ['SISWA', 'SEKRETARIS'])) {
+                    $role = 'SISWA';
+                }
+
+                $email = trim($u['email'] ?? '');
+                if (!$email) {
+                    if ($nipNis) {
+                        $cleanNis = preg_replace('/[^a-zA-Z0-9]/', '', $nipNis);
+                        $email = "siswa_{$cleanNis}@smkn71.sch.id";
+                    } else {
+                        $cleanName = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', str_replace(' ', '.', $name)));
+                        $email = "{$cleanName}." . rand(100, 999) . "@siswa.smkn71.sch.id";
+                    }
+                }
+
+                // Check existing email
+                $existing = User::where('email', $email)->first();
+                if ($existing) {
+                    $skipped++;
+                    $skippedDetails[] = "{$name} ({$email}): Email sudah terdaftar";
+                    continue;
+                }
+
+                $finalClassId = ($currentUser->role === 'GURU_PEMBIMBING')
+                    ? $targetClassId
+                    : ($u['class_id'] ?? $targetClassId);
+
+                $user = User::create([
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => $defaultPassword,
+                    'phone' => $phone ?: null,
+                    'nip_nis' => $nipNis ?: null,
+                    'role' => $role,
+                    'class_id' => $finalClassId,
+                    'is_active' => true,
+                ]);
+
+                if ($role === 'SEKRETARIS' && $finalClassId) {
+                    SchoolClass::where('id', $finalClassId)->update(['secretary_id' => $user->id]);
+                }
+
+                $created++;
             }
 
-            User::create([
-                'name' => $u['name'],
-                'email' => $u['email'],
-                'password' => $defaultPassword,
-                'phone' => $u['phone'] ?? null,
-                'nip_nis' => $u['nip_nis'] ?? null,
-                'role' => $u['role'],
-                'class_id' => $u['class_id'] ?? null,
-                'is_active' => true,
+            DB::commit();
+
+            AuditLog::create([
+                'user_id' => $currentUser->id,
+                'action' => "Impor massal murid: {$created} murid berhasil ditambahkan ke kelas, {$skipped} dilewati",
+                'ip_address' => $request->ip(),
             ]);
-            $created++;
+
+            return response()->json([
+                'message' => "Proses impor selesai: {$created} murid berhasil ditambahkan ke kelas, {$skipped} dilewati.",
+                'created_count' => $created,
+                'skipped_count' => $skipped,
+                'skipped_details' => $skippedDetails,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal memproses impor massal: ' . $e->getMessage()], 500);
         }
-
-        AuditLog::create([
-            'user_id' => $currentUser->id,
-            'action' => "Impor massal pengguna: {$created} berhasil dibuat, {$skipped} dilewati",
-            'ip_address' => $request->ip(),
-        ]);
-
-        return response()->json([
-            'message' => "Proses impor selesai: {$created} akun berhasil ditambahkan, {$skipped} dilewati (email sudah ada).",
-            'created_count' => $created,
-            'skipped_count' => $skipped,
-        ]);
     }
 }
