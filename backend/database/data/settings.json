@@ -1,0 +1,10 @@
+{
+  "school_name": "SMK Negeri 71 Jakarta",
+  "school_npsn": "20104567",
+  "school_address": "Jl. Pendidikan Industri No. 45, Jakarta",
+  "headmaster_name": "Dr. H. Bambang Soeprapto, M.Pd",
+  "headmaster_nip": "197505101999031002",
+  "default_school_hours": "07:30 - 15:30",
+  "attendance_lock_pin": "1234",
+  "system_status": "NORMAL"
+}

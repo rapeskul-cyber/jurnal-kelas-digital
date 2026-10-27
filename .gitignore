@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -9,6 +9,10 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
+# wa-gateway
+wa-gateway/session_auth/
+wa-gateway/.env*
 
 # testing
 /coverage
@@ -50,6 +54,9 @@ frontend/dist/
 # Laravel & Backend
 backend/vendor/
 backend/.env
+backend/database/*.sqlite*
+backend/database/database.sqlite
+*.sqlite*
 backend/storage/logs/*
 backend/storage/framework/cache/*
 backend/storage/framework/sessions/*
@@ -61,6 +68,4 @@ backend/bootstrap/cache/*
 *.docx
 *.doc
 PROMPT_ANTIGRAVITY_JURNAL_KELAS.md
-database.sqlite
-*.sqlite
-*.db
+analisis/
