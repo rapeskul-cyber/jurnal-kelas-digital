@@ -1,8 +1,8 @@
 <template>
   <div class="flex-1 flex flex-col">
     <AppHeader
-      title="Manajemen Pengguna & Kelas"
-      subtitle="Kelola kredensial akun, rombongan belajar, dan hak akses sistem"
+      title="Manajemen Pengguna"
+      subtitle="Kelola kredensial akun, data kelas, dan hak akses sistem"
     />
 
     <main class="px-6 md:px-8 pb-10 space-y-6">

@@ -57,7 +57,7 @@
             <!-- Info Bar Singkat -->
             <div class="pt-6 border-t border-slate-200 grid grid-cols-3 gap-4 text-left max-w-md mx-auto lg:mx-0">
               <div>
-                <div class="text-lg font-bold text-slate-900">3 Rombel</div>
+                <div class="text-lg font-bold text-slate-900">19 Kelas</div>
                 <div class="text-[11px] text-slate-500">RPL &bull; Animasi &bull; DKV</div>
               </div>
               <div>
@@ -107,7 +107,7 @@
             Jurusan Unggulan SMKN 71 Jakarta
           </h2>
           <p class="text-xs sm:text-sm text-slate-500">
-            Presensi dan jurnal mengajar mencakup seluruh rombongan belajar kejuruan berikut.
+            Presensi dan jurnal mengajar mencakup seluruh kelas kejuruan berikut.
           </p>
         </div>
 
@@ -132,7 +132,7 @@
               </div>
             </div>
             <div class="pt-4 border-t border-red-100 mt-5 text-[11px] font-semibold text-red-700">
-              Rombel: Kelas X, XI, XII RPL &amp; Kelas Industri
+              Kelas: X, XI, XII RPL &amp; Kelas Industri
             </div>
           </div>
 
@@ -155,7 +155,7 @@
               </div>
             </div>
             <div class="pt-4 border-t border-emerald-100 mt-5 text-[11px] font-semibold text-emerald-700">
-              Rombel: Kelas X, XI, XII DKV
+              Kelas: X, XI, XII DKV
             </div>
           </div>
 
@@ -178,7 +178,7 @@
               </div>
             </div>
             <div class="pt-4 border-t border-amber-100 mt-5 text-[11px] font-semibold text-amber-800">
-              Rombel: Kelas X, XI, XII Animasi
+              Kelas: X, XI, XII Animasi
             </div>
           </div>
 
@@ -212,7 +212,7 @@
           <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-2">
             <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 font-bold flex items-center justify-center">3</div>
             <div class="font-bold text-slate-900">Guru Pembimbing</div>
-            <p class="text-slate-500 leading-relaxed">Memvalidasi surat keterangan sakit/izin dokter dan memantau rekap absensi rombel.</p>
+            <p class="text-slate-500 leading-relaxed">Memvalidasi surat keterangan sakit/izin dokter dan memantau rekap absensi kelas.</p>
           </div>
 
           <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-2">

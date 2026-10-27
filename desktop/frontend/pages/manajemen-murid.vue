@@ -12,7 +12,7 @@
           <div>
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Murid Terdaftar</p>
             <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ students.length }} Siswa</h3>
-            <p class="text-[11px] text-gray-500 font-medium mt-0.5">Rombongan Belajar {{ className }}</p>
+            <p class="text-[11px] text-gray-500 font-medium mt-0.5">Kelas {{ className }}</p>
           </div>
           <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
             <GraduationCap class="w-6 h-6" />
@@ -231,7 +231,7 @@
             <h3 class="text-base font-bold text-gray-900">
               {{ isEditing ? 'Edit Data Murid' : 'Tambah Murid Kelas Baru' }}
             </h3>
-            <p class="text-xs text-gray-400 mt-0.5">Rombongan Belajar: {{ className }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Kelas: {{ className }}</p>
           </div>
           <button @click="closeModal" class="p-1 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer">
             <X class="w-5 h-5" />

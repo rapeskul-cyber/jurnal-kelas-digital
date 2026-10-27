@@ -239,7 +239,7 @@
               <span>ℹ️ Informasi Pencadangan Data:</span>
             </p>
             <p class="text-blue-800 leading-relaxed">
-              Berkas backup mencakup seluruh tabel master data: Pengguna, Rombel/Kelas, Mata Pelajaran, Jadwal Pelajaran, Semester/Tahun Ajaran, Pengaturan Sekolah, serta 200 Audit Log terkini. Disarankan melakukan pencadangan berkala setiap akhir semester.
+              Berkas backup mencakup seluruh tabel master data: Pengguna, Data Kelas, Mata Pelajaran, Jadwal Pelajaran, Semester/Tahun Ajaran, Pengaturan Sekolah, serta 200 Audit Log terkini. Disarankan melakukan pencadangan berkala setiap akhir semester.
             </p>
           </div>
 

@@ -12,7 +12,7 @@
           <div>
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Guru Pembimbing (Walas)</p>
             <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ walasCount }} Guru</h3>
-            <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Membimbing Rombel Kelas</p>
+            <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Membimbing Kelas</p>
           </div>
           <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
             <Users class="w-6 h-6" />
@@ -257,7 +257,7 @@
             <h3 class="text-base font-bold text-gray-900">
               {{ isEditing ? 'Edit Data Akun Guru' : 'Tambah Akun Guru Baru' }}
             </h3>
-            <p class="text-xs text-gray-400 mt-0.5">Kelola tipe guru, NIP, penugasan rombel atau mapel</p>
+            <p class="text-xs text-gray-400 mt-0.5">Kelola tipe guru, NIP, penugasan kelas atau mapel</p>
           </div>
           <button @click="closeModal" class="p-1 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer">
             <X class="w-5 h-5" />
@@ -276,7 +276,7 @@
                 :class="form.role === 'GURU_PEMBIMBING' ? 'border-gray-900 bg-white shadow-2xs text-gray-900 font-bold ring-1 ring-gray-900' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
               >
                 <div class="font-bold">Guru Pembimbing</div>
-                <div class="text-[10px] text-gray-500 mt-0.5">Wali kelas & pembina rombel</div>
+                <div class="text-[10px] text-gray-500 mt-0.5">Wali kelas & pembina kelas</div>
               </button>
 
               <button
@@ -337,14 +337,14 @@
             />
           </div>
 
-          <!-- Penugasan Khusus: Guru Pembimbing (Pilih Rombel / Kelas Binaan) -->
+          <!-- Penugasan Khusus: Guru Pembimbing (Pilih Kelas Binaan) -->
           <div v-if="form.role === 'GURU_PEMBIMBING'">
             <label class="block font-bold text-gray-700 mb-1">Kelas Binaan (Wali Kelas) *</label>
             <select
               v-model="form.class_id"
               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
             >
-              <option :value="null">-- Pilih Rombel Kelas --</option>
+              <option :value="null">-- Pilih Kelas Binaan --</option>
               <option v-for="cls in classes" :key="cls.id" :value="cls.id">
                 {{ cls.name }} (Jurusan {{ cls.major }})
               </option>

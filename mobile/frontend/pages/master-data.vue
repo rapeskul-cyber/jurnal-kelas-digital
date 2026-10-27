@@ -1,8 +1,8 @@
 <template>
   <div class="flex-1 flex flex-col">
     <AppHeader
-      title="Master Data Akademik"
-      subtitle="Kelola rombongan belajar, mata pelajaran, jadwal mengajar, dan tahun ajaran sekolah"
+      title="Master Data Sekolah"
+      subtitle="Kelola data kelas, mata pelajaran, jadwal mengajar, dan tahun ajaran sekolah"
     />
 
     <main class="px-4 sm:px-6 md:px-8 pb-10 space-y-6 max-w-full overflow-x-hidden min-w-0">
@@ -49,7 +49,7 @@
         <!-- Top Row: Title & Action Buttons -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 class="text-sm font-bold text-gray-900">Daftar Rombongan Belajar (Kelas)</h2>
+            <h2 class="text-sm font-bold text-gray-900">Daftar Kelas</h2>
             <p class="text-xs text-gray-400 mt-0.5">Kelola kelas per jurusan (RPL, DKV, Animasi), penugasan wali kelas, dan sekretaris</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
@@ -65,7 +65,7 @@
               class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus class="w-4 h-4" />
-              <span>Tambah Rombel Baru</span>
+              <span>Tambah Kelas Baru</span>
             </button>
           </div>
         </div>
@@ -111,20 +111,20 @@
           </div>
 
           <div class="text-xs text-gray-500 font-medium px-2">
-            Menampilkan <span class="font-bold text-gray-900">{{ filteredClasses.length }}</span> dari {{ classes.length }} Rombel
+            Menampilkan <span class="font-bold text-gray-900">{{ filteredClasses.length }}</span> dari {{ classes.length }} Kelas
           </div>
         </div>
 
         <div class="bg-white rounded-2xl border border-gray-150 shadow-2xs overflow-hidden">
           <div v-if="loadingClasses" class="py-12 text-center text-gray-400 text-xs">
-            Memuat data rombongan belajar...
+            Memuat data kelas...
           </div>
           <div v-else class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead>
                 <tr class="bg-gray-50/70 border-b border-gray-150 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
                   <th class="py-3 px-4 w-12 text-center">No</th>
-                  <th class="py-3 px-4">Nama Rombel</th>
+                  <th class="py-3 px-4">Nama Kelas</th>
                   <th class="py-3 px-4">Jurusan</th>
                   <th class="py-3 px-4">Guru Pembimbing (Wali)</th>
                   <th class="py-3 px-4">Sekretaris Kelas</th>
@@ -157,17 +157,17 @@
                     <div class="inline-flex items-center gap-1.5">
                       <button
                         @click="editClass(cls)"
-                        class="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition cursor-pointer"
-                        title="Edit Rombel"
+                        class="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-800 transition cursor-pointer"
+                        title="Edit Kelas"
                       >
-                        <Edit class="w-3.5 h-3.5" />
+                        <Edit3 class="w-4 h-4" />
                       </button>
                       <button
                         @click="deleteClass(cls)"
-                        class="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                        title="Hapus Rombel"
+                        class="p-1.5 hover:bg-rose-50 rounded-lg text-rose-500 hover:text-rose-700 transition cursor-pointer"
+                        title="Hapus Kelas"
                       >
-                        <Trash2 class="w-3.5 h-3.5" />
+                        <Trash2 class="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -341,13 +341,13 @@
           <div v-else class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead>
-                <tr class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+                <tr class="bg-gray-50/70 border-b border-gray-150 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
                   <th class="py-3 px-4 w-12 text-center">No</th>
                   <th class="py-3 px-4">Hari & Jam</th>
-                  <th class="py-3 px-4">Rombel / Kelas</th>
+                  <th class="py-3 px-4">Kelas</th>
                   <th class="py-3 px-4">Mata Pelajaran</th>
                   <th class="py-3 px-4">Guru Pengajar</th>
-                  <th class="py-3 px-4">Ruang</th>
+                  <th class="py-3 px-4 text-center">Ruang</th>
                   <th class="py-3 px-4 text-center">Aksi</th>
                 </tr>
               </thead>
@@ -463,13 +463,13 @@
     <div v-if="showClassModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 class="text-sm font-bold text-gray-900">{{ editingClassId ? 'Edit Rombel' : 'Tambah Rombongan Belajar' }}</h3>
+          <h3 class="text-sm font-bold text-gray-900">{{ editingClassId ? 'Edit Kelas' : 'Tambah Kelas Baru' }}</h3>
           <button @click="showClassModal = false" class="text-gray-400 hover:text-gray-600 p-1">✕</button>
         </div>
         <form @submit.prevent="saveClass" class="space-y-3.5 text-xs">
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">Nama Rombel / Kelas *</label>
-            <input v-model="classForm.name" type="text" placeholder="Contoh: XII RPL 1" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+            <label class="block font-semibold text-gray-700 mb-1">Nama Kelas *</label>
+            <input v-model="classForm.name" type="text" placeholder="Contoh: XII RPL 1 atau Kelas Industri" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>
 
           <div>
@@ -499,7 +499,7 @@
 
           <div class="pt-3 flex justify-end gap-2">
             <button type="button" @click="showClassModal = false" class="px-4 py-2 border rounded-xl text-gray-600">Batal</button>
-            <button type="submit" :disabled="saving" class="px-5 py-2 bg-primary text-white font-bold rounded-xl">{{ saving ? 'Menyimpan...' : 'Simpan Rombel' }}</button>
+            <button type="submit" :disabled="saving" class="px-5 py-2 bg-primary text-white font-bold rounded-xl">{{ saving ? 'Menyimpan...' : 'Simpan Kelas' }}</button>
           </div>
         </form>
       </div>
@@ -509,11 +509,11 @@
     <div v-if="showPromoteModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 class="text-sm font-bold text-gray-900">Mutasi / Pindah Rombel Massal</h3>
+          <h3 class="text-sm font-bold text-gray-900">Mutasi / Pindah Kelas Massal</h3>
           <button @click="showPromoteModal = false" class="text-gray-400 hover:text-gray-600 p-1">✕</button>
         </div>
         <div class="space-y-3.5 text-xs">
-          <p class="text-gray-500">Pindahkan seluruh siswa dari satu rombel ke rombel berikutnya (misal kenaikan kelas XI RPL 1 ke XII RPL 1).</p>
+          <p class="text-gray-500">Pindahkan seluruh siswa dari satu kelas ke kelas berikutnya (misal kenaikan kelas XI RPL 1 ke XII RPL 1).</p>
           <div>
             <label class="block font-semibold text-gray-700 mb-1">Kelas Asal (Sumber)</label>
             <select v-model="promoteForm.source_class_id" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none bg-white">
@@ -700,7 +700,7 @@ const config = useRuntimeConfig()
 const apiBase = config.public.apiBase || '/api'
 
 const tabs = [
-  { id: 'classes', label: 'Rombongan Belajar', icon: Layers },
+  { id: 'classes', label: 'Daftar Kelas', icon: Layers },
   { id: 'subjects', label: 'Mata Pelajaran', icon: BookOpen },
   { id: 'schedules', label: 'Jadwal Mengajar', icon: Clock },
   { id: 'terms', label: 'Tahun Ajaran & Semester', icon: Calendar },
@@ -891,7 +891,7 @@ async function saveClass() {
 }
 
 async function deleteClass(cls: any) {
-  if (!confirm(`Hapus rombongan belajar ${cls.name}? Siswa di dalamnya akan dilepaskan keterikatannya.`)) return
+  if (!confirm(`Hapus kelas ${cls.name}? Siswa di dalamnya akan dilepaskan keterikatannya.`)) return
   try {
     const res: any = await $fetch(`${apiBase}/master/classes/${cls.id}`, {
       method: 'DELETE',

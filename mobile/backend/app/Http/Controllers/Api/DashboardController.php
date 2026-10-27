@@ -423,7 +423,7 @@ class DashboardController extends Controller
                 'total_guru_pembimbing' => $totalPembimbing . ' Walas',
                 'total_guru_pengajar' => $totalPengajar . ' Guru',
                 'total_siswa' => $totalStudents . ' Siswa',
-                'total_kelas' => $totalClasses . ' Rombel',
+                'total_kelas' => $totalClasses . ' Kelas',
                 'kehadiran_rata_rata' => $avgAttendance . '%',
                 'jurnal_terisi_today' => $journalsTodayCount . '/' . $totalClasses . ' Sesi',
                 'surat_izin_pending' => $pendingLeavesCount . ' Menunggu',

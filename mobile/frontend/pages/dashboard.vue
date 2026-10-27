@@ -388,20 +388,20 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
           <StatCard title="Guru Pembimbing" :value="data?.stats?.total_guru_pembimbing ?? '0'" subtext="Wali Kelas Aktif" color="green" />
           <StatCard title="Guru Pengajar" :value="data?.stats?.total_guru_pengajar ?? '0'" subtext="Pengampu Mapel" color="blue" />
-          <StatCard title="Total Siswa" :value="data?.stats?.total_siswa ?? '0'" subtext="Terdata di Rombel" color="blue" />
-          <StatCard title="Rombel" :value="data?.stats?.total_kelas ?? '0'" :subtext="`RPL: ${data?.stats?.majors?.rpl || 0} • DKV: ${data?.stats?.majors?.dkv || 0} • ANI: ${data?.stats?.majors?.animasi || 0}`" color="orange" />
+          <StatCard title="Total Siswa" :value="data?.stats?.total_siswa ?? '0'" subtext="Terdata di Kelas" color="blue" />
+          <StatCard title="Kelas" :value="data?.stats?.total_kelas ?? '0'" :subtext="`RPL: ${data?.stats?.majors?.rpl || 0} • DKV: ${data?.stats?.majors?.dkv || 0} • ANI: ${data?.stats?.majors?.animasi || 0}`" color="orange" />
           <StatCard title="Rata-rata Presensi" :value="data?.stats?.kehadiran_rata_rata ?? '0%'" subtext="Hari Ini" color="green" />
           <StatCard title="Jurnal Terisi" :value="data?.stats?.jurnal_terisi_today ?? '0'" subtext="Hari Ini" color="blue" />
         </div>
 
         <!-- 2 Column Master Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left: Pemantauan Seluruh Rombongan Belajar (2 Cols) -->
+          <!-- Left: Pemantauan Seluruh Kelas (2 Cols) -->
           <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 class="text-sm font-bold text-gray-900">Pemantauan Presensi & Jurnal Kelas Hari Ini</h3>
-                <p class="text-xs text-gray-400 mt-0.5">Pantau status pengisian presensi dan jurnal per rombongan belajar</p>
+                <p class="text-xs text-gray-400 mt-0.5">Pantau status pengisian presensi dan jurnal per kelas</p>
               </div>
 
               <!-- Filter Jurusan -->
@@ -445,7 +445,7 @@
               <table class="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100 font-bold bg-gray-50/50">
-                    <th class="py-2.5 px-3">Rombel</th>
+                    <th class="py-2.5 px-3">Kelas</th>
                     <th class="py-2.5 px-3">Jurusan</th>
                     <th class="py-2.5 px-3">Wali / Pembimbing</th>
                     <th class="py-2.5 px-3">Sekretaris</th>
@@ -624,7 +624,7 @@ const dashboardTitle = computed(() => {
 
 const dashboardSubtitle = computed(() => {
   const role = authStore.user?.role
-  if (role === 'SUPERADMIN') return 'Pengawasan operasional akademik, guru pembimbing, guru pengajar, dan presensi seluruh rombel'
+  if (role === 'SUPERADMIN') return 'Pengawasan operasional akademik, guru pembimbing, guru pengajar, dan presensi seluruh kelas'
   if (role === 'SISWA') return 'Ringkasan presensi mandiri dan pembelajaran siswa'
   if (role === 'SEKRETARIS') return 'Ringkasan presensi harian dan aktivitas kelas'
   if (role === 'GURU_PEMBIMBING') return 'Pengawasan presensi kelas binaan, jurnal, dan perizinan siswa'
@@ -648,7 +648,7 @@ async function loadDashboard() {
 }
 
 async function handleForceUnlock(classId: number) {
-  if (!confirm('Buka kunci sesi presensi rombel ini kembali ke status DRAFT?')) return
+  if (!confirm('Buka kunci sesi presensi kelas ini kembali ke status DRAFT?')) return
   try {
     const today = new Date().toISOString().split('T')[0]
     await $fetch(`${authStore.apiBase}/attendance/force-unlock`, {

@@ -68,7 +68,7 @@ class MasterDataController extends Controller
 
         AuditLog::create([
             'user_id' => $request->user()->id,
-            'action' => "Membuat rombongan belajar baru: {$cls->name} (Jurusan {$cls->major})",
+            'action' => "Membuat kelas baru: {$cls->name} (Jurusan {$cls->major})",
             'ip_address' => $request->ip(),
         ]);
 
@@ -126,7 +126,7 @@ class MasterDataController extends Controller
 
         AuditLog::create([
             'user_id' => $request->user()->id,
-            'action' => "Menghapus rombongan belajar: {$name}",
+            'action' => "Menghapus kelas: {$name}",
             'ip_address' => $request->ip(),
         ]);
 
