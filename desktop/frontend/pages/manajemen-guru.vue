@@ -79,7 +79,7 @@
             <button
               type="button"
               @click="setRoleFilter('ALL')"
-              class="px-3 py-1.5 rounded-lg transition"
+              class="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer"
               :class="selectedRoleFilter === 'ALL' ? 'bg-white text-gray-900 shadow-2xs font-bold' : 'text-gray-500 hover:text-gray-900'"
             >
               Semua Guru
@@ -87,24 +87,24 @@
             <button
               type="button"
               @click="setRoleFilter('GURU_PEMBIMBING')"
-              class="px-3 py-1.5 rounded-lg transition"
-              :class="selectedRoleFilter === 'GURU_PEMBIMBING' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-gray-500 hover:text-emerald-700'"
+              class="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer"
+              :class="selectedRoleFilter === 'GURU_PEMBIMBING' ? 'bg-white text-gray-900 shadow-2xs font-bold' : 'text-gray-500 hover:text-gray-900'"
             >
               Guru Pembimbing
             </button>
             <button
               type="button"
               @click="setRoleFilter('GURU_PENGAJAR')"
-              class="px-3 py-1.5 rounded-lg transition"
-              :class="selectedRoleFilter === 'GURU_PENGAJAR' ? 'bg-blue-600 text-white font-bold shadow-2xs' : 'text-gray-500 hover:text-blue-700'"
+              class="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer"
+              :class="selectedRoleFilter === 'GURU_PENGAJAR' ? 'bg-white text-gray-900 shadow-2xs font-bold' : 'text-gray-500 hover:text-gray-900'"
             >
               Guru Pengajar
             </button>
             <button
               type="button"
               @click="setRoleFilter('SUPERADMIN')"
-              class="px-3 py-1.5 rounded-lg transition"
-              :class="selectedRoleFilter === 'SUPERADMIN' ? 'bg-purple-600 text-white font-bold shadow-2xs' : 'text-gray-500 hover:text-purple-700'"
+              class="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer"
+              :class="selectedRoleFilter === 'SUPERADMIN' ? 'bg-white text-gray-900 shadow-2xs font-bold' : 'text-gray-500 hover:text-gray-900'"
             >
               Super Administrator
             </button>
@@ -273,7 +273,7 @@
                 type="button"
                 @click="form.role = 'GURU_PEMBIMBING'"
                 class="p-3 rounded-xl border text-left transition cursor-pointer"
-                :class="form.role === 'GURU_PEMBIMBING' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
+                :class="form.role === 'GURU_PEMBIMBING' ? 'border-gray-900 bg-white shadow-2xs text-gray-900 font-bold ring-1 ring-gray-900' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
               >
                 <div class="font-bold">Guru Pembimbing</div>
                 <div class="text-[10px] text-gray-500 mt-0.5">Wali kelas & pembina rombel</div>
@@ -283,7 +283,7 @@
                 type="button"
                 @click="form.role = 'GURU_PENGAJAR'"
                 class="p-3 rounded-xl border text-left transition cursor-pointer"
-                :class="form.role === 'GURU_PENGAJAR' ? 'border-blue-500 bg-blue-50 text-blue-800 font-bold' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
+                :class="form.role === 'GURU_PENGAJAR' ? 'border-gray-900 bg-white shadow-2xs text-gray-900 font-bold ring-1 ring-gray-900' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
               >
                 <div class="font-bold">Guru Pengajar</div>
                 <div class="text-[10px] text-gray-500 mt-0.5">Guru mata pelajaran KBM</div>
