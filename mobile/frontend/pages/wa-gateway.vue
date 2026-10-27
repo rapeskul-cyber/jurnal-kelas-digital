@@ -364,6 +364,8 @@ const broadcastForm = ref({
   channel: 'ALL',
 })
 
+let pollTimer: any = null
+
 async function checkWaStatus() {
   if (!authStore.token) return
   checkingStatus.value = true
@@ -371,8 +373,14 @@ async function checkWaStatus() {
     const res = await $fetch<any>(`${authStore.apiBase}/wa/status`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
-    waStatus.value = res.connected ? 'connected' : 'disconnected'
-    waNumber.value = res.number || ''
+    const isConn = res.connected === true || res.status === 'connected' || res.data?.status === 'connected'
+    waStatus.value = isConn ? 'connected' : 'disconnected'
+    waNumber.value = res.number || res.data?.user?.id || res.user?.id || ''
+
+    if (isConn && pairingCode.value) {
+      pairingCode.value = ''
+      successMsg.value = 'WhatsApp resmi SMKN 71 berhasil terhubung!'
+    }
   } catch (e) {
     waStatus.value = 'disconnected'
   } finally {
@@ -398,7 +406,11 @@ async function handleRequestPairing() {
     })
     const raw = res.pairing_code || res.code || (res.data && res.data.code) || 'JURNAL71'
     pairingCode.value = raw.length === 8 ? `${raw.slice(0, 4)}-${raw.slice(4)}` : raw
-    successMsg.value = 'Kode pairing JURNAL 71 siap. Masukkan di WhatsApp HP Anda.'
+    successMsg.value = 'Kode pairing JURNAL 71 siap. Masukkan di WhatsApp HP Anda sekarang.'
+
+    // Auto-polling cepat per 2 detik agar seketika terhubung di layar
+    if (pollTimer) clearInterval(pollTimer)
+    pollTimer = setInterval(checkWaStatus, 2000)
   } catch (e: any) {
     errorMsg.value = e?.data?.message || 'Gagal meminta kode pairing.'
   } finally {
@@ -489,5 +501,13 @@ async function handleSendBroadcast() {
 onMounted(() => {
   checkWaStatus()
   fetchBroadcasts()
+  pollTimer = setInterval(checkWaStatus, 8000)
+})
+
+onUnmounted(() => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
 })
 </script>

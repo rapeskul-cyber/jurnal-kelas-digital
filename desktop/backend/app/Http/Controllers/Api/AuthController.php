@@ -251,7 +251,17 @@ class AuthController extends Controller
                 ->get("{$baseUrl}/api/device/status");
 
             if ($resp->successful()) {
-                return response()->json($resp->json());
+                $raw = $resp->json();
+                $isConn = ($raw['status'] === true && isset($raw['data']) && ($raw['data']['status'] ?? '') === 'connected');
+                $num = $raw['data']['user']['id'] ?? '';
+                return response()->json([
+                    'status' => $isConn ? 'connected' : 'disconnected',
+                    'connected' => $isConn,
+                    'number' => $num,
+                    'user' => $raw['data']['user'] ?? null,
+                    'pairingCode' => $raw['data']['pairingCode'] ?? null,
+                    'data' => $raw['data'] ?? [],
+                ]);
             }
 
             return response()->json([
