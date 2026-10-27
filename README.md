@@ -1,4 +1,4 @@
-# 🏫 Jurnal Kelas Digital — SMKN 71 Jakarta
+# 🏫 Jurnal Kelas Digital — SMKN  Jakarta
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Laravel](https://img.shields.io/badge/Backend-Laravel_11-FF2D20?logo=laravel)
