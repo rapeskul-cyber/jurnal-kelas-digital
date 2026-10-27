@@ -55,7 +55,23 @@ class AuthController extends Controller
             'role' => 'required|in:SISWA,SEKRETARIS,GURU_PENGAJAR,GURU_PEMBIMBING,SUPERADMIN',
         ]);
 
-        $user = User::with('schoolClass')->where('role', $request->role)->where('is_active', true)->first();
+        $priorityEmails = [
+            'GURU_PEMBIMBING' => 'fadhilah@sekolah.sch.id',
+            'GURU_PENGAJAR' => 'bagas@sekolah.sch.id',
+            'SEKRETARIS' => 'raffi@sekolah.sch.id',
+            'SISWA' => 'faishal@sekolah.sch.id',
+            'SUPERADMIN' => 'superadmin@sekolah.sch.id',
+        ];
+
+        $targetEmail = $priorityEmails[$request->role] ?? null;
+        $user = null;
+        if ($targetEmail) {
+            $user = User::with('schoolClass')->where('email', $targetEmail)->where('is_active', true)->first();
+        }
+
+        if (!$user) {
+            $user = User::with('schoolClass')->where('role', $request->role)->where('is_active', true)->first();
+        }
 
         if (!$user) {
             return response()->json(['message' => 'User dengan role tersebut tidak ditemukan'], 404);
