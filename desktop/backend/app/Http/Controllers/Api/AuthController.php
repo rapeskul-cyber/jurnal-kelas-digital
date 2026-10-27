@@ -20,7 +20,7 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::with('schoolClass')->where('email', $request->email)->first();
+        $user = User::with(['schoolClass', 'guidedClass'])->where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -66,11 +66,11 @@ class AuthController extends Controller
         $targetEmail = $priorityEmails[$request->role] ?? null;
         $user = null;
         if ($targetEmail) {
-            $user = User::with('schoolClass')->where('email', $targetEmail)->where('is_active', true)->first();
+            $user = User::with(['schoolClass', 'guidedClass'])->where('email', $targetEmail)->where('is_active', true)->first();
         }
 
         if (!$user) {
-            $user = User::with('schoolClass')->where('role', $request->role)->where('is_active', true)->first();
+            $user = User::with(['schoolClass', 'guidedClass'])->where('role', $request->role)->where('is_active', true)->first();
         }
 
         if (!$user) {
@@ -94,7 +94,7 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        $user = $request->user()->load('schoolClass');
+        $user = $request->user()->load(['schoolClass', 'guidedClass']);
         // Update session if user updates profile
         if ($request->has('name')) $user->name = $request->name;
         if ($request->has('phone')) $user->phone = $request->phone;
@@ -136,7 +136,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Profil berhasil diperbarui',
-            'user' => $user->fresh()->load('schoolClass'),
+            'user' => $user->fresh()->load(['schoolClass', 'guidedClass']),
         ]);
     }
 

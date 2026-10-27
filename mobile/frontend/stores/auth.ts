@@ -13,6 +13,10 @@ export interface User {
     id: number
     name: string
   }
+  guided_class?: {
+    id: number
+    name: string
+  }
 }
 
 export const useAuthStore = defineStore('auth', () => {
