@@ -86,25 +86,28 @@
               <button
                 type="button"
                 @click="filterClassByMajor('RPL')"
-                class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
-                :class="classMajorFilter === 'RPL' ? 'bg-blue-600 text-white shadow-2xs' : 'text-gray-500 hover:text-blue-700'"
+                class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1"
+                :class="classMajorFilter === 'RPL' ? 'bg-red-600 text-white shadow-2xs' : 'text-gray-600 hover:text-red-700 hover:bg-red-50'"
               >
+                <span class="w-2 h-2 rounded-full bg-red-400 inline-block" v-if="classMajorFilter !== 'RPL'"></span>
                 RPL
               </button>
               <button
                 type="button"
                 @click="filterClassByMajor('DKV')"
-                class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
-                :class="classMajorFilter === 'DKV' ? 'bg-purple-600 text-white shadow-2xs' : 'text-gray-500 hover:text-purple-700'"
+                class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1"
+                :class="classMajorFilter === 'DKV' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-gray-600 hover:text-emerald-700 hover:bg-emerald-50'"
               >
+                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block" v-if="classMajorFilter !== 'DKV'"></span>
                 DKV
               </button>
               <button
                 type="button"
                 @click="filterClassByMajor('Animasi')"
-                class="w-18 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
-                :class="classMajorFilter === 'Animasi' ? 'bg-amber-600 text-white shadow-2xs' : 'text-gray-500 hover:text-amber-700'"
+                class="w-18 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1"
+                :class="classMajorFilter === 'Animasi' ? 'bg-amber-500 text-white shadow-2xs' : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50'"
               >
+                <span class="w-2 h-2 rounded-full bg-amber-400 inline-block" v-if="classMajorFilter !== 'Animasi'"></span>
                 Animasi
               </button>
             </div>
@@ -139,13 +142,18 @@
                   <td class="py-3.5 px-4 font-bold text-gray-900 text-sm">{{ cls.name }}</td>
                   <td class="py-3.5 px-4">
                     <span
-                      class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold"
                       :class="[
-                        cls.major === 'RPL' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                        cls.major === 'DKV' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
-                        'bg-amber-50 text-amber-700 border border-amber-200'
+                        cls.major === 'RPL' ? 'bg-red-50 text-red-700 border border-red-200' :
+                        cls.major === 'DKV' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        'bg-amber-50 text-amber-800 border border-amber-300'
                       ]"
                     >
+                      <img
+                        :src="cls.major === 'RPL' ? '/images/logo-rpl.png' : cls.major === 'DKV' ? '/images/logo-dkv.png' : '/images/logo-animasi.png'"
+                        :alt="cls.major"
+                        class="w-3.5 h-3.5 object-contain"
+                      />
                       {{ cls.major || 'RPL' }}
                     </span>
                   </td>
@@ -213,25 +221,28 @@
               <button
                 type="button"
                 @click="filterSubjectByMajor('RPL')"
-                class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
-                :class="subjectMajorFilter === 'RPL' ? 'bg-blue-600 text-white shadow-2xs' : 'text-gray-500 hover:text-blue-700'"
+                class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1"
+                :class="subjectMajorFilter === 'RPL' ? 'bg-red-600 text-white shadow-2xs' : 'text-gray-600 hover:text-red-700 hover:bg-red-50'"
               >
+                <span class="w-2 h-2 rounded-full bg-red-400 inline-block" v-if="subjectMajorFilter !== 'RPL'"></span>
                 RPL
               </button>
               <button
                 type="button"
                 @click="filterSubjectByMajor('DKV')"
-                class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
-                :class="subjectMajorFilter === 'DKV' ? 'bg-purple-600 text-white shadow-2xs' : 'text-gray-500 hover:text-purple-700'"
+                class="w-16 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1"
+                :class="subjectMajorFilter === 'DKV' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-gray-600 hover:text-emerald-700 hover:bg-emerald-50'"
               >
+                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block" v-if="subjectMajorFilter !== 'DKV'"></span>
                 DKV
               </button>
               <button
                 type="button"
                 @click="filterSubjectByMajor('Animasi')"
-                class="w-18 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer"
-                :class="subjectMajorFilter === 'Animasi' ? 'bg-amber-600 text-white shadow-2xs' : 'text-gray-500 hover:text-amber-700'"
+                class="w-18 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1"
+                :class="subjectMajorFilter === 'Animasi' ? 'bg-amber-500 text-white shadow-2xs' : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50'"
               >
+                <span class="w-2 h-2 rounded-full bg-amber-400 inline-block" v-if="subjectMajorFilter !== 'Animasi'"></span>
                 Animasi
               </button>
             </div>
@@ -266,14 +277,20 @@
                   <td class="py-3.5 px-4 font-bold text-gray-900">{{ sub.name }}</td>
                   <td class="py-3.5 px-4">
                     <span
-                      class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold"
                       :class="[
-                        sub.major === 'RPL' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                        sub.major === 'DKV' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
-                        sub.major === 'Animasi' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                        'bg-gray-100 text-gray-700 border border-gray-200'
+                        sub.major === 'RPL' ? 'bg-red-50 text-red-700 border border-red-200' :
+                        sub.major === 'DKV' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        sub.major === 'Animasi' ? 'bg-amber-50 text-amber-800 border border-amber-300' :
+                        'bg-gray-50 text-gray-700 border border-gray-200'
                       ]"
                     >
+                      <img
+                        v-if="sub.major && sub.major !== 'UMUM'"
+                        :src="sub.major === 'RPL' ? '/images/logo-rpl.png' : sub.major === 'DKV' ? '/images/logo-dkv.png' : '/images/logo-animasi.png'"
+                        :alt="sub.major"
+                        class="w-3 h-3 object-contain"
+                      />
                       {{ sub.major || 'UMUM' }}
                     </span>
                   </td>

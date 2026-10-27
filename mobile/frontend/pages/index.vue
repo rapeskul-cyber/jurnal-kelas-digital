@@ -113,57 +113,72 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          <!-- RPL -->
-          <div class="bg-slate-50 rounded-xl p-6 border border-slate-200 flex flex-col justify-between">
+          <!-- RPL (Merah) -->
+          <div class="bg-white rounded-2xl p-6 border-2 border-red-100 hover:border-red-300 transition-all shadow-xs flex flex-col justify-between">
             <div class="space-y-4">
-              <div class="w-12 h-12 bg-white rounded-lg p-2 border border-slate-200 shadow-2xs flex items-center justify-center">
-                <img src="/images/logo-rpl.png" alt="RPL" class="w-full h-full object-contain" />
+              <div class="flex items-center justify-between">
+                <div class="w-14 h-14 bg-red-50 rounded-xl p-2.5 border border-red-200 shadow-2xs flex items-center justify-center">
+                  <img src="/images/logo-rpl.png" alt="RPL" class="w-full h-full object-contain" />
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-red-50 text-red-700 border border-red-200">
+                  RPL • Merah
+                </span>
               </div>
               <div>
-                <h3 class="text-sm font-bold text-slate-900">Rekayasa Perangkat Lunak</h3>
+                <h3 class="text-base font-bold text-slate-900">Rekayasa Perangkat Lunak</h3>
                 <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                  Pemrograman web, mobile, manajemen basis data, dan rekayasa software skala industri.
+                  Pemrograman web, mobile, manajemen basis data, cloud computing, dan rekayasa software skala industri.
                 </p>
               </div>
             </div>
-            <div class="pt-4 border-t border-slate-200 mt-5 text-[11px] font-medium text-slate-500">
-              Rombel: Kelas X, XI, XII RPL
+            <div class="pt-4 border-t border-red-100 mt-5 text-[11px] font-semibold text-red-700">
+              Rombel: Kelas X, XI, XII RPL &amp; Kelas Industri
             </div>
           </div>
 
-          <!-- Animasi -->
-          <div class="bg-slate-50 rounded-xl p-6 border border-slate-200 flex flex-col justify-between">
+          <!-- DKV (Hijau) -->
+          <div class="bg-white rounded-2xl p-6 border-2 border-emerald-100 hover:border-emerald-300 transition-all shadow-xs flex flex-col justify-between">
             <div class="space-y-4">
-              <div class="w-12 h-12 bg-white rounded-lg p-2 border border-slate-200 shadow-2xs flex items-center justify-center">
-                <img src="/images/logo-animasi.png" alt="Animasi" class="w-full h-full object-contain" />
+              <div class="flex items-center justify-between">
+                <div class="w-14 h-14 bg-emerald-50 rounded-xl p-2.5 border border-emerald-200 shadow-2xs flex items-center justify-center">
+                  <img src="/images/logo-dkv.png" alt="DKV" class="w-full h-full object-contain" />
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  DKV • Hijau
+                </span>
               </div>
               <div>
-                <h3 class="text-sm font-bold text-slate-900">Animasi 2D &amp; 3D</h3>
+                <h3 class="text-base font-bold text-slate-900">Desain Komunikasi Visual</h3>
                 <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                  Pembuatan gerak visual, 3D modeling, visual effects, storyboard, dan produksi multimedia.
+                  Perancangan identitas visual, tipografi, fotografi, ilustrasi grafis, branding, dan media komunikasi digital.
                 </p>
               </div>
             </div>
-            <div class="pt-4 border-t border-slate-200 mt-5 text-[11px] font-medium text-slate-500">
-              Rombel: Kelas X, XI, XII Animasi
-            </div>
-          </div>
-
-          <!-- DKV -->
-          <div class="bg-slate-50 rounded-xl p-6 border border-slate-200 flex flex-col justify-between">
-            <div class="space-y-4">
-              <div class="w-12 h-12 bg-white rounded-lg p-2 border border-slate-200 shadow-2xs flex items-center justify-center">
-                <img src="/images/logo-dkv.png" alt="DKV" class="w-full h-full object-contain" />
-              </div>
-              <div>
-                <h3 class="text-sm font-bold text-slate-900">Desain Komunikasi Visual</h3>
-                <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                  Perancangan identitas visual, tipografi, fotografi, ilustrasi grafis, dan media komunikasi.
-                </p>
-              </div>
-            </div>
-            <div class="pt-4 border-t border-slate-200 mt-5 text-[11px] font-medium text-slate-500">
+            <div class="pt-4 border-t border-emerald-100 mt-5 text-[11px] font-semibold text-emerald-700">
               Rombel: Kelas X, XI, XII DKV
+            </div>
+          </div>
+
+          <!-- Animasi (Kuning) -->
+          <div class="bg-white rounded-2xl p-6 border-2 border-amber-100 hover:border-amber-300 transition-all shadow-xs flex flex-col justify-between">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="w-14 h-14 bg-amber-50 rounded-xl p-2.5 border border-amber-200 shadow-2xs flex items-center justify-center">
+                  <img src="/images/logo-animasi.png" alt="Animasi" class="w-full h-full object-contain" />
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-300">
+                  Animasi • Kuning
+                </span>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Animasi 2D &amp; 3D</h3>
+                <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                  Pembuatan gerak visual, 3D modeling, visual effects, character design, storyboard, dan produksi multimedia.
+                </p>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-amber-100 mt-5 text-[11px] font-semibold text-amber-800">
+              Rombel: Kelas X, XI, XII Animasi
             </div>
           </div>
 
