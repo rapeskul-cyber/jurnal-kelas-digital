@@ -38,18 +38,10 @@
             class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
           />
         </div>
-        <!-- Dropdown Filter Kelas (Terkunci jika Wali Kelas, Sekretaris, Siswa) -->
-        <div>
+        <!-- Dropdown Filter Kelas (Hanya untuk Superadmin/Guru Pengajar multi-kelas) -->
+        <div v-if="authStore.user?.role !== 'GURU_PEMBIMBING' && authStore.user?.role !== 'SEKRETARIS' && authStore.user?.role !== 'SISWA'">
           <label class="block text-[11px] font-semibold text-gray-500 mb-1">Kelas</label>
-          <div
-            v-if="authStore.user?.role === 'GURU_PEMBIMBING' || authStore.user?.role === 'SEKRETARIS' || authStore.user?.role === 'SISWA'"
-            class="px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-700 shadow-2xs flex items-center gap-1.5 whitespace-nowrap min-h-[38px]"
-          >
-            <span class="w-2 h-2 rounded-full bg-primary"></span>
-            <span>{{ authStore.user?.school_class?.name || (authStore.user as any)?.class_name || 'Kelas Industri RPL' }}</span>
-          </div>
           <select
-            v-else
             v-model="filterClass"
             @change="fetchRecap"
             class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer min-h-[38px]"

@@ -121,31 +121,39 @@ class AttendanceController extends Controller
             ->whereDate('end_date', '>=', $today)
             ->first();
 
-        if ($approvedLeave) {
-            return response()->json([
-                'message' => 'Status kehadiran Anda hari ini telah tercatat sebagai ' . $approvedLeave->type . ' sesuai persetujuan Wali Kelas.',
-                'status' => $approvedLeave->type,
-            ]);
-        }
+        // Jika siswa mengirimkan status eksplisit (misal mengubah Hadir atau Sakit secara mandiri)
+        // Kita izinkan siswa memilih statusnya sendiri
 
-        $session = AttendanceSession::firstOrCreate(
-            [
-                'class_id' => $classId,
-                'date' => $today,
-            ],
-            [
-                'status' => 'DRAFT',
-                'verification_status' => 'TERVERIFIKASI',
-                'school_hours' => '07:30 - 15:30',
-                'room' => 'Lab RPL Industri',
-            ]
-        );
+        $session = AttendanceSession::where('class_id', $classId)
+            ->whereDate('date', $today)
+            ->first();
+
+        if (!$session) {
+            $session = AttendanceSession::firstOrCreate(
+                [
+                    'class_id' => $classId,
+                    'date' => $today,
+                ],
+                [
+                    'status' => 'DRAFT',
+                    'verification_status' => 'TERVERIFIKASI',
+                    'school_hours' => '07:30 - 15:30',
+                    'room' => 'Lab RPL Industri',
+                ]
+            );
+        }
 
         $timeStr = Carbon::now()->format('H:i');
         $customNote = trim((string) $request->input('note', ''));
+        $chosenStatus = strtoupper(trim((string) $request->input('status', 'HADIR')));
+        if (!in_array($chosenStatus, ['HADIR', 'SAKIT', 'IZIN'])) {
+            $chosenStatus = 'HADIR';
+        }
+
+        $defaultLabel = $chosenStatus === 'HADIR' ? 'Hadir Tepat Waktu' : ($chosenStatus === 'SAKIT' ? 'Sakit (Konfirmasi Mandiri)' : 'Izin (Konfirmasi Mandiri)');
         $note = $customNote !== ''
-            ? "Presensi Mandiri ({$timeStr} WIB) - {$customNote}"
-            : "Presensi Mandiri Pukul {$timeStr} WIB";
+            ? "Presensi Mandiri [{$chosenStatus}] ({$timeStr} WIB) - {$customNote}"
+            : "Presensi Mandiri [{$chosenStatus}] Pukul {$timeStr} WIB - {$defaultLabel}";
 
         $record = AttendanceRecord::updateOrCreate(
             [
@@ -153,19 +161,19 @@ class AttendanceController extends Controller
                 'student_id' => $user->id,
             ],
             [
-                'status' => 'HADIR',
+                'status' => $chosenStatus,
                 'note' => $note,
             ]
         );
 
         AuditLog::create([
             'user_id' => $user->id,
-            'action' => "Melakukan Presensi Mandiri (HADIR) pukul {$timeStr} WIB",
+            'action' => "Melakukan Presensi Mandiri ({$chosenStatus}) pukul {$timeStr} WIB",
             'ip_address' => $request->ip(),
         ]);
 
         return response()->json([
-            'message' => "Presensi Mandiri berhasil! Kehadiran Anda tercatat pukul {$timeStr} WIB.",
+            'message' => "Presensi Mandiri ({$chosenStatus}) berhasil dicatat pukul {$timeStr} WIB.",
             'record' => [
                 'id' => $record->id,
                 'status' => $record->status,

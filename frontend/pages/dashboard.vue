@@ -15,7 +15,7 @@
       <!-- ROLE: SISWA (Presensi Mandiri & Jurnal Siswa)  -->
       <!-- ============================================== -->
       <template v-else-if="authStore.user?.role === 'SISWA'">
-        <!-- Kartu Presensi Mandiri Siswa Hari Ini (Tanpa Perlu Diabsen Sekretaris Satu-Satu) -->
+        <!-- Kartu Presensi Mandiri Siswa Hari Ini (Siswa Memilih: Hadir, Sakit, atau Izin) -->
         <div class="bg-white rounded-2xl border border-blue-200 p-5 sm:p-6 shadow-2xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div class="space-y-1.5">
             <div class="flex flex-wrap items-center gap-2">
@@ -37,39 +37,54 @@
                   'bg-gray-100 text-gray-700'
                 ]"
               >
-                {{ data?.today_attendance?.status === 'BELUM_PRESENSI' ? 'Belum Presensi' : (data?.today_attendance?.status || 'HADIR') }}
+                {{ data?.today_attendance?.status === 'BELUM_PRESENSI' ? 'Belum Presensi' : (data?.today_attendance?.status || 'Belum Presensi') }}
               </span>
             </h3>
             <p class="text-xs text-gray-500">
-              {{ checkInMessage || data?.today_attendance?.note || 'Klik tombol Konfirmasi Hadir di samping untuk mencatat kehadiran mandiri hari ini.' }}
+              {{ checkInMessage || data?.today_attendance?.note || 'Pilih status kehadiran Anda hari ini di samping (Hadir, Sakit, atau Izin).' }}
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <!-- Pilihan Status Hadir -->
             <button
               type="button"
-              @click="handleSelfCheckIn"
+              @click="handleSelfCheckIn('HADIR')"
               :disabled="isCheckingIn"
-              class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-2xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-2xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <CheckCircle2 class="w-4 h-4" />
-              <span>{{ isCheckingIn ? 'Menyimpan...' : 'Konfirmasi Hadir Mandiri' }}</span>
+              <span>Hadir</span>
+            </button>
+
+            <!-- Pilihan Status Sakit -->
+            <button
+              type="button"
+              @click="handleSelfCheckIn('SAKIT')"
+              :disabled="isCheckingIn"
+              class="px-3.5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-2xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <span class="w-2 h-2 rounded-full bg-white"></span>
+              <span>Sakit</span>
+            </button>
+
+            <!-- Pilihan Status Izin -->
+            <button
+              type="button"
+              @click="handleSelfCheckIn('IZIN')"
+              :disabled="isCheckingIn"
+              class="px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <span class="w-2 h-2 rounded-full bg-white"></span>
+              <span>Izin</span>
             </button>
 
             <NuxtLink
               to="/surat-izin"
-              class="px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-primary text-gray-700 hover:text-primary text-xs font-semibold transition flex items-center gap-1.5"
+              class="px-3 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-primary text-gray-700 hover:text-primary text-xs font-semibold transition flex items-center gap-1.5"
             >
               <Mail class="w-4 h-4 text-primary" />
-              <span>Ajukan Surat Izin</span>
-            </NuxtLink>
-
-            <NuxtLink
-              to="/jurnal-pelajaran"
-              class="px-3.5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition flex items-center gap-1.5"
-            >
-              <FileText class="w-4 h-4" />
-              <span>Isi Jurnal Kegiatan</span>
+              <span class="hidden sm:inline">Unggah Surat</span>
             </NuxtLink>
           </div>
         </div>
@@ -819,16 +834,16 @@ async function loadDashboard(silent = false) {
   }
 }
 
-async function handleSelfCheckIn() {
+async function handleSelfCheckIn(chosenStatus: string = 'HADIR') {
   isCheckingIn.value = true
   checkInMessage.value = ''
   try {
     const res: any = await $fetch(`${authStore.apiBase}/attendance/check-in`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${authStore.token}` },
-      body: {}
+      headers: { Authorization: 'Bearer ' + authStore.token },
+      body: { status: chosenStatus }
     })
-    checkInMessage.value = res?.message || 'Presensi Mandiri berhasil dicatat!'
+    checkInMessage.value = res?.message || `Presensi Mandiri (${chosenStatus}) berhasil dicatat!`
     await loadDashboard(true)
   } catch (e: any) {
     alert(e?.data?.message || 'Gagal melakukan presensi mandiri.')
