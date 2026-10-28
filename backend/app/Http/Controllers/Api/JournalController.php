@@ -23,8 +23,40 @@ class JournalController extends Controller
         $month = $request->input('month');
         $query = ClassJournal::with(['schoolClass', 'schedule.subject', 'createdBy', 'confirmedBy'])->latest('date')->latest('id');
 
-        if (in_array($user->role, ['SEKRETARIS', 'SISWA', 'ORANG_TUA'])) {
+        // Privacy Policy:
+        // - SISWA: Hanya melihat catatan/jurnal miliknya sendiri (tidak boleh melihat catatan siswa lain)
+        // - ORANG_TUA: Hanya melihat catatan/jurnal anak kandungnya sendiri
+        // - SEKRETARIS: Mengelola jurnal KBM rombel / hanya catatan miliknya jika kegiatan pribadi
+        // - GURU_PEMBIMBING / GURU_PENGAJAR / SUPERADMIN: Melihat jurnal untuk keperluan monitoring & verifikasi akademik
+        if ($user->role === 'SISWA') {
+            $query->where('created_by_id', $user->id);
+        } elseif ($user->role === 'ORANG_TUA') {
+            $child = User::where('nip_nis', $user->nip_nis)
+                ->where('class_id', $user->class_id)
+                ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                ->first();
+
+            // Jika ada lebih dari satu atau spesialisasi memuat nama, cocokkan nama
+            if ($user->specialization && preg_match('/Wali Murid:\s*(.+)$/i', $user->specialization, $m)) {
+                $matchedChild = User::where('name', 'like', '%' . trim($m[1]) . '%')
+                    ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                    ->first();
+                if ($matchedChild) {
+                    $child = $matchedChild;
+                }
+            }
+
+            if ($child) {
+                $query->where('created_by_id', $child->id);
+            } else {
+                $query->where('created_by_id', -1);
+            }
+        } elseif ($user->role === 'SEKRETARIS') {
+            // Sekretaris hanya melihat catatan miliknya sendiri di halaman kegiatan siswa
             $classId = $user->class_id ?: 1;
+            $query->where('class_id', $classId)->where('created_by_id', $user->id);
+        } elseif (in_array($user->role, ['GURU_PEMBIMBING'])) {
+            $classId = $user->class_id ?? SchoolClass::where('advisor_id', $user->id)->value('id') ?? 1;
             $query->where('class_id', $classId);
         } elseif ($classId) {
             $query->where('class_id', $classId);

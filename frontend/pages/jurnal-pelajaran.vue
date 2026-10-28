@@ -59,8 +59,12 @@
       <!-- BAGIAN 1: Laporan Jurnal Kegiatan Belajar Siswa di Sekolah (Core Aplikasi) -->
       <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-4">
         <div>
-          <h3 class="text-sm font-bold text-gray-900">Laporan Jurnal Kegiatan Belajar Siswa di Sekolah</h3>
-          <p class="text-xs text-gray-400">Catatan kegiatan belajar harian yang dilaporkan siswa dan dipantau oleh Guru, Wali Kelas, serta Orang Tua</p>
+          <h3 class="text-sm font-bold text-gray-900">
+            {{ authStore.user?.role === 'ORANG_TUA' ? 'Catatan Belajar Harian Putra/Putri Anda' : (authStore.user?.role === 'SISWA' ? 'Catatan Belajar Harian Pribadi Saya' : 'Laporan Jurnal Kegiatan Belajar Siswa di Sekolah') }}
+          </h3>
+          <p class="text-xs text-gray-400">
+            {{ authStore.user?.role === 'ORANG_TUA' ? 'Riwayat aktivitas belajar dan catatan harian anak Anda yang terpantau di sekolah' : (authStore.user?.role === 'SISWA' ? 'Catatan kegiatan belajar harian yang Anda laporkan (bersifat privat hanya untuk Anda dan Orang Tua)' : 'Catatan kegiatan belajar harian yang dilaporkan siswa dan dipantau oleh Guru & Wali Kelas') }}
+          </p>
         </div>
 
         <div v-if="filteredActivities.length === 0" class="py-8 text-center text-xs text-gray-400">

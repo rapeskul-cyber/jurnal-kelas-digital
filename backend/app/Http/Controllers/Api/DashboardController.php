@@ -146,8 +146,19 @@ class DashboardController extends Controller
     {
         $child = User::with('schoolClass.advisor')
             ->where('nip_nis', $user->nip_nis)
+            ->where('class_id', $user->class_id)
             ->whereIn('role', ['SISWA', 'SEKRETARIS'])
             ->first();
+
+        if ($user->specialization && preg_match('/Wali Murid:\s*(.+)$/i', $user->specialization, $m)) {
+            $matchedChild = User::with('schoolClass.advisor')
+                ->where('name', 'like', '%' . trim($m[1]) . '%')
+                ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                ->first();
+            if ($matchedChild) {
+                $child = $matchedChild;
+            }
+        }
 
         if (!$child && $user->class_id) {
             $child = User::with('schoolClass.advisor')
@@ -189,24 +200,27 @@ class DashboardController extends Controller
                 })
             : [];
 
-        $recentJournals = ClassJournal::with(['schedule.subject', 'createdBy', 'confirmedBy'])
-            ->where('class_id', $classId)
-            ->latest('date')
-            ->latest('id')
-            ->take(6)
-            ->get()
-            ->map(function ($j) {
-                return [
-                    'id' => $j->id,
-                    'date' => Carbon::parse($j->date)->translatedFormat('d M Y'),
-                    'subject' => $j->schedule->subject->name ?? 'Kegiatan Pembelajaran',
-                    'teacher' => $j->confirmedBy->name ?? ($j->schedule->teacher->name ?? 'Guru Pengajar'),
-                    'activity' => $j->activity,
-                    'notes' => $j->notes,
-                    'student_author' => $j->createdBy->name ?? 'Siswa',
-                    'status' => $j->verification_status,
-                ];
-            });
+        $recentJournals = $child
+            ? ClassJournal::with(['schedule.subject', 'createdBy', 'confirmedBy'])
+                ->where('class_id', $classId)
+                ->where('created_by_id', $child->id)
+                ->latest('date')
+                ->latest('id')
+                ->take(6)
+                ->get()
+                ->map(function ($j) {
+                    return [
+                        'id' => $j->id,
+                        'date' => Carbon::parse($j->date)->translatedFormat('d M Y'),
+                        'subject' => $j->schedule->subject->name ?? 'Kegiatan Pembelajaran',
+                        'teacher' => $j->confirmedBy->name ?? ($j->schedule->teacher->name ?? 'Guru Pengajar'),
+                        'activity' => $j->activity,
+                        'notes' => $j->notes,
+                        'student_author' => $j->createdBy->name ?? 'Siswa',
+                        'status' => $j->verification_status,
+                    ];
+                })
+            : collect();
 
         $recentLeaves = $child
             ? LeaveRequest::with('reviewer')
