@@ -66,9 +66,17 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:20',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
             'old_password' => 'nullable|string',
             'new_password' => 'nullable|string|min:8|confirmed',
         ]);
+
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('avatars', $filename, 'public');
+            $user->avatar_url = '/storage/avatars/' . $filename;
+        }
 
         if ($request->filled('old_password')) {
             if (!Hash::check($request->old_password, $user->password)) {
@@ -107,7 +115,7 @@ class AuthController extends Controller
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
             $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('public/avatars', $filename);
+            $file->storeAs('avatars', $filename, 'public');
 
             $user->avatar_url = '/storage/avatars/' . $filename;
             $user->save();
