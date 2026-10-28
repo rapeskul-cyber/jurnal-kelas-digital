@@ -62,7 +62,8 @@
               v-model="email"
               type="email"
               required
-              placeholder="sekretaris@gmail.com"
+              autocomplete="email"
+              placeholder="nama@sekolah.sch.id"
               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
@@ -206,7 +207,7 @@ definePageMeta({
 
 const authStore = useAuthStore()
 const currentStep = ref(1)
-const email = ref('rina.safitri@gmail.com')
+const email = ref('')
 const maskedEmail = ref('')
 const maskedPhone = ref('')
 const otp = ref('')
