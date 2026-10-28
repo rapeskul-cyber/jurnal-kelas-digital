@@ -175,13 +175,14 @@
 
             <!-- Action Buttons with Smooth Interactions -->
             <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
-              <NuxtLink
-                to="/login"
+              <button
+                type="button"
+                @click="scrollToSection('alur')"
                 class="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-[#0f47ad] hover:bg-[#0c398a] text-white text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer shadow-sm hover:shadow-md active:scale-95 group"
               >
-                <span>Buka Halaman Login</span>
+                <span>Pelajari Alur Presensi</span>
                 <ChevronRight class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-              </NuxtLink>
+              </button>
 
               <button
                 type="button"
@@ -620,8 +621,9 @@
           </div>
 
           <div class="flex-shrink-0">
-            <NuxtLink
-              to="/login"
+            <button
+              type="button"
+              @click="scrollToSection('peran')"
               class="px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-95 group shadow-sm"
               :class="[
                 isDark
@@ -629,9 +631,9 @@
                   : 'bg-white hover:bg-slate-100 text-[#0f47ad]'
               ]"
             >
-              <span>Buka Halaman Login</span>
+              <span>Lihat Panduan Hak Akses</span>
               <ChevronRight class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-            </NuxtLink>
+            </button>
           </div>
         </div>
       </div>
