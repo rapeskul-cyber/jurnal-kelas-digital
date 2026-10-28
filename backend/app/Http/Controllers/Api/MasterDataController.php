@@ -38,7 +38,19 @@ class MasterDataController extends Controller
             $query->where('major', 'RPL')->orderBy('name');
         }
 
-        return response()->json($query->get());
+        $classes = $query->get()->map(function ($cls) {
+            $sec = $cls->secretary;
+            if (!$sec) {
+                $sec = User::where('class_id', $cls->id)->where('role', 'SEKRETARIS')->first();
+                if ($sec && !$cls->secretary_id) {
+                    $cls->update(['secretary_id' => $sec->id]);
+                    $cls->setRelation('secretary', $sec);
+                }
+            }
+            return $cls;
+        });
+
+        return response()->json($classes);
     }
 
     public function storeClass(Request $request)

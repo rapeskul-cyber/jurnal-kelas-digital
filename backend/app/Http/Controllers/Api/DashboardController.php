@@ -463,12 +463,24 @@ class DashboardController extends Controller
             $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : round($totalStudents * 0.91);
             $pct = round(($presentCount / $totalStudents) * 100);
 
+            // Ambil sekretaris dari relasi atau fallback role SEKRETARIS di rombel tersebut
+            $secretaryName = $cls->secretary?->name;
+            if (!$secretaryName) {
+                $secUser = User::where('class_id', $cls->id)->where('role', 'SEKRETARIS')->first();
+                if ($secUser) {
+                    $secretaryName = $secUser->name;
+                    if (!$cls->secretary_id) {
+                        $cls->update(['secretary_id' => $secUser->id]);
+                    }
+                }
+            }
+
             return [
                 'id' => $cls->id,
                 'class' => $cls->name,
-                'secretary' => $cls->secretary->name ?? 'Sekretaris Kelas',
-                'journal_status' => $journal ? ($journal->verification_status === 'TERVERIFIKASI' ? 'Sudah Diisi' : 'Menunggu Konfirmasi Guru Pengajar') : 'Belum Diisi',
-                'attendance_percent' => "{$pct}% Kehadiran",
+                'secretary' => $secretaryName ?? 'Sekretaris Kelas',
+                'journal_status' => $journal ? ($journal->verification_status === 'TERVERIFIKASI' ? 'Terverifikasi' : 'Pending Guru') : 'Belum Diisi',
+                'attendance_percent' => "{$pct}%",
             ];
         });
 
@@ -538,12 +550,25 @@ class DashboardController extends Controller
             $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : round($stdCount * 0.94);
             $pct = round(($presentCount / $stdCount) * 100);
 
+            // Ambil sekretaris dari relasi secretary_id atau fallback cari user di kelas tersebut dengan role SEKRETARIS
+            $secretaryName = $cls->secretary?->name;
+            if (!$secretaryName) {
+                $secUser = User::where('class_id', $cls->id)->where('role', 'SEKRETARIS')->first();
+                if ($secUser) {
+                    $secretaryName = $secUser->name;
+                    // Sinkronisasi otomatis ke kolom secretary_id tabel classes jika belum terisi
+                    if (!$cls->secretary_id) {
+                        $cls->update(['secretary_id' => $secUser->id]);
+                    }
+                }
+            }
+
             return [
                 'id' => $cls->id,
                 'class_name' => $cls->name,
                 'major' => $cls->major ?? 'RPL',
                 'advisor_name' => $cls->advisor->name ?? 'Belum Ditentukan',
-                'secretary_name' => $cls->secretary->name ?? 'Belum Ditentukan',
+                'secretary_name' => $secretaryName ?? 'Belum Ditentukan',
                 'student_count' => $stdCount,
                 'session_status' => $session ? $session->status : 'BELUM_DIBUKA',
                 'session_date' => $today,
