@@ -68,10 +68,10 @@
             target="_blank"
             class="flex items-center gap-3 p-3 rounded-2xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-primary font-bold transition active:scale-98 cursor-pointer"
           >
-            <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-blue-600 text-white shadow-2xs">
-              💬
+            <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-blue-600 text-white shadow-2xs font-bold text-xs">
+              S
             </div>
-            <span class="truncate text-xs">Kritik & Saran</span>
+            <span class="truncate text-xs">Kritik dan Saran</span>
           </a>
 
           <NuxtLink
