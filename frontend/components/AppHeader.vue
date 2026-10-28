@@ -24,6 +24,16 @@
     <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
       <slot name="actions" />
 
+      <!-- Kritik & Saran Link -->
+      <a
+        href="https://saran.rapiuw.ai.id"
+        target="_blank"
+        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg md:rounded-xl bg-blue-50 border border-blue-200 text-primary hover:bg-blue-100 text-xs font-semibold transition shadow-2xs"
+        title="Kirim kritik dan saran portal"
+      >
+        <span>💬 Kritik & Saran</span>
+      </a>
+
       <!-- Notification Bell -->
       <NuxtLink
         v-if="!hideNotifications"
