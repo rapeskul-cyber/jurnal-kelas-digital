@@ -40,13 +40,19 @@
         </span>
       </NuxtLink>
 
-      <!-- Profile Link on Mobile -->
+      <!-- Profile Link on Mobile with Avatar -->
       <NuxtLink
         to="/profile"
-        class="md:hidden p-1.5 text-gray-600 rounded-lg hover:bg-gray-100 transition"
+        class="md:hidden flex items-center justify-center p-0.5 rounded-full ring-2 ring-gray-200 hover:ring-primary transition overflow-hidden w-8 h-8"
         title="Profil Saya"
       >
-        <User class="w-4 h-4" />
+        <img
+          v-if="(authStore.user as any)?.avatar_url"
+          :src="(authStore.user as any)?.avatar_url"
+          :alt="authStore.user?.name || 'User'"
+          class="w-full h-full object-cover"
+        />
+        <User v-else class="w-4 h-4 text-gray-600" />
       </NuxtLink>
 
       <!-- Logout Button -->

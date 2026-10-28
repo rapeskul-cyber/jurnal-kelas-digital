@@ -43,6 +43,25 @@
         </div>
 
         <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <!-- Quick Access to Profile inside More Sheet -->
+          <NuxtLink
+            to="/profile"
+            @click="showMore = false"
+            class="flex items-center gap-3 p-3 rounded-2xl border transition active:scale-98 cursor-pointer"
+            :class="isActive('/profile') ? 'bg-blue-50 border-blue-200 text-primary font-bold' : 'border-gray-150 bg-gray-50/70 hover:bg-gray-100 text-gray-700 font-medium'"
+          >
+            <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 ring-1 ring-gray-200" :class="isActive('/profile') ? 'bg-primary text-white' : 'bg-white text-primary'">
+              <img
+                v-if="(authStore.user as any)?.avatar_url"
+                :src="(authStore.user as any)?.avatar_url"
+                :alt="authStore.user?.name || 'User'"
+                class="w-full h-full object-cover"
+              />
+              <User v-else class="w-4 h-4" />
+            </div>
+            <span class="truncate text-xs">Profil Saya</span>
+          </NuxtLink>
+
           <NuxtLink
             v-for="item in secondaryMenus"
             :key="item.to"
