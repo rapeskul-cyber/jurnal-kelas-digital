@@ -97,6 +97,56 @@ class AuthController extends Controller
         ]);
     }
 
+    public function uploadAvatar(Request $request)
+    {
+        $user = $request->user();
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('public/avatars', $filename);
+
+            $user->avatar_url = '/storage/avatars/' . $filename;
+            $user->save();
+
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'Mengunggah foto profil baru',
+                'ip_address' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'message' => 'Foto profil berhasil diperbarui!',
+                'avatar_url' => $user->avatar_url,
+                'user' => $user->fresh()->load('schoolClass'),
+            ]);
+        }
+
+        return response()->json(['message' => 'Berkas gambar tidak ditemukan.'], 400);
+    }
+
+    public function deleteAvatar(Request $request)
+    {
+        $user = $request->user();
+        $user->avatar_url = null;
+        $user->save();
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'Menghapus foto profil',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Foto profil berhasil dihapus.',
+            'avatar_url' => null,
+            'user' => $user->fresh()->load('schoolClass'),
+        ]);
+    }
+
     public function sendProfileSmsOtp(Request $request)
     {
         $user = $request->user();

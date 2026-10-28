@@ -316,17 +316,10 @@
               </NuxtLink>
               <NuxtLink
                 to="/jurnal-kelas"
-                class="px-3 py-2 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
-              >
-                <FileText class="w-3.5 h-3.5 text-primary" />
-                <span class="hidden sm:inline">Isi Jurnal</span>
-              </NuxtLink>
-              <NuxtLink
-                to="/presensi"
                 class="px-3.5 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
               >
-                <ClipboardCheck class="w-4 h-4" />
-                <span>Pantau Presensi</span>
+                <FileText class="w-3.5 h-3.5" />
+                <span>Isi Jurnal Kelas</span>
               </NuxtLink>
             </div>
           </div>

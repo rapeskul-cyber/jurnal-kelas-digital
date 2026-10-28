@@ -13,7 +13,6 @@ const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
   SEKRETARIS: [
     '/dashboard',
     '/profile',
-    '/presensi',
     '/jurnal-kelas',
     '/surat-izin',
     '/laporan-jurnal',

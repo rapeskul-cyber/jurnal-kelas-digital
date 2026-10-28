@@ -8,9 +8,47 @@
     <main class="px-4 sm:px-8 pb-10 max-w-4xl space-y-5">
       <!-- Profile Overview Card -->
       <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs flex flex-col sm:flex-row items-center sm:items-start gap-6">
-        <div class="w-20 h-20 rounded-full bg-blue-100 text-primary font-black text-2xl flex items-center justify-center ring-4 ring-blue-50 flex-shrink-0">
-          {{ userInitial }}
+        <!-- Avatar Photo / Initials with Upload & Delete Controls -->
+        <div class="relative group flex flex-col items-center flex-shrink-0">
+          <div class="w-24 h-24 rounded-full overflow-hidden bg-blue-100 text-primary font-black text-2xl flex items-center justify-center ring-4 ring-blue-50 shadow-xs">
+            <img
+              v-if="avatarDisplayUrl"
+              :src="avatarDisplayUrl"
+              :alt="authStore.user?.name || 'Profil'"
+              class="w-full h-full object-cover"
+            />
+            <span v-else>{{ userInitial }}</span>
+          </div>
+
+          <!-- Action Buttons for Avatar -->
+          <div class="flex items-center gap-2 mt-3">
+            <label
+              class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-primary border border-blue-200 text-[11px] font-bold cursor-pointer transition flex items-center gap-1 shadow-2xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>{{ authStore.user?.avatar_url ? 'Ganti Foto' : 'Unggah Foto' }}</span>
+              <input
+                type="file"
+                accept="image/*"
+                class="hidden"
+                @change="handleAvatarUpload"
+              />
+            </label>
+
+            <button
+              v-if="authStore.user?.avatar_url"
+              type="button"
+              @click="handleAvatarDelete"
+              :disabled="uploadingAvatar"
+              class="p-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[11px] font-bold cursor-pointer transition shadow-2xs"
+              title="Hapus foto profil"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <p v-if="uploadingAvatar" class="text-[10px] text-primary animate-pulse font-semibold mt-1">Mengunggah...</p>
         </div>
+
         <div class="flex-1 text-center sm:text-left space-y-1">
           <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <h2 class="text-xl font-bold text-gray-900">{{ authStore.user?.name || 'Pengguna' }}</h2>
@@ -426,6 +464,79 @@ onUnmounted(() => {
 const userInitial = computed(() => {
   return authStore.user?.name ? authStore.user.name.charAt(0).toUpperCase() : 'U'
 })
+
+const uploadingAvatar = ref(false)
+
+const avatarDisplayUrl = computed(() => {
+  const u: any = authStore.user
+  if (!u?.avatar_url) return ''
+  return u.avatar_url
+})
+
+const handleAvatarUpload = async (event: any) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  if (file.size > 5 * 1024 * 1024) {
+    errorMsg.value = 'Ukuran berkas gambar maksimal 5 MB.'
+    return
+  }
+
+  uploadingAvatar.value = true
+  errorMsg.value = ''
+  successMsg.value = ''
+
+  try {
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    const res: any = await $fetch(`${authStore.apiBase}/auth/profile/avatar`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + authStore.token },
+      body: formData
+    })
+
+    if (res?.user) {
+      authStore.user = res.user
+      if (process.client) {
+        localStorage.setItem('user', JSON.stringify(res.user))
+      }
+    }
+    successMsg.value = res?.message || 'Foto profil berhasil diperbarui!'
+  } catch (e: any) {
+    errorMsg.value = e?.data?.message || 'Gagal mengunggah foto profil.'
+  } finally {
+    uploadingAvatar.value = false
+    event.target.value = ''
+  }
+}
+
+const handleAvatarDelete = async () => {
+  if (!confirm('Apakah Anda yakin ingin menghapus foto profil?')) return
+
+  uploadingAvatar.value = true
+  errorMsg.value = ''
+  successMsg.value = ''
+
+  try {
+    const res: any = await $fetch(`${authStore.apiBase}/auth/profile/avatar`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + authStore.token }
+    })
+
+    if (res?.user) {
+      authStore.user = res.user
+      if (process.client) {
+        localStorage.setItem('user', JSON.stringify(res.user))
+      }
+    }
+    successMsg.value = res?.message || 'Foto profil berhasil dihapus.'
+  } catch (e: any) {
+    errorMsg.value = e?.data?.message || 'Gagal menghapus foto profil.'
+  } finally {
+    uploadingAvatar.value = false
+  }
+}
 
 const roleLabel = computed(() => {
   const role = authStore.user?.role

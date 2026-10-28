@@ -19,8 +19,14 @@
         class="bg-gray-50 hover:bg-blue-50/60 border border-gray-100 hover:border-blue-100 rounded-2xl p-3 flex items-center gap-2.5 mb-6 transition group cursor-pointer"
         title="Buka Pengaturan Profil"
       >
-        <div class="w-9 h-9 rounded-full bg-blue-100 text-primary font-bold flex items-center justify-center text-xs flex-shrink-0 group-hover:ring-2 group-hover:ring-primary/20 transition">
-          {{ userInitial }}
+        <div class="w-9 h-9 rounded-full overflow-hidden bg-blue-100 text-primary font-bold flex items-center justify-center text-xs flex-shrink-0 group-hover:ring-2 group-hover:ring-primary/20 transition">
+          <img
+            v-if="(authStore.user as any)?.avatar_url"
+            :src="(authStore.user as any)?.avatar_url"
+            :alt="authStore.user?.name || 'User'"
+            class="w-full h-full object-cover"
+          />
+          <span v-else>{{ userInitial }}</span>
         </div>
         <div class="min-w-0 flex-1">
           <p class="text-xs font-bold text-gray-900 group-hover:text-primary transition truncate" :title="authStore.user?.name">{{ authStore.user?.name || 'Pengguna' }}</p>
