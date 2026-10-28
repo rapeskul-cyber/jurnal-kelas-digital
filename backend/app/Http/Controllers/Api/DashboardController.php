@@ -420,8 +420,17 @@ class DashboardController extends Controller
 
     private function pembimbingDashboard(User $user, $today)
     {
-        $allClasses = SchoolClass::with(['secretary'])->where('major', 'RPL')->get();
+        // Wali Kelas membimbing 1 kelas binaan secara eksklusif (Kelas Industri RPL)
+        $classId = $user->class_id ?? SchoolClass::where('advisor_id', $user->id)->value('id') ?? 1;
+        $allClasses = SchoolClass::with(['secretary'])->where('id', $classId)->get();
+        if ($allClasses->isEmpty()) {
+            $allClasses = SchoolClass::with(['secretary'])->where('name', 'like', '%Industri%')->get();
+        }
+
         $pendingLeaves = LeaveRequest::with(['student.schoolClass'])
+            ->whereHas('student', function ($q) use ($classId) {
+                $q->where('class_id', $classId);
+            })
             ->where('status', 'PENDING')
             ->latest()
             ->get();
@@ -443,7 +452,7 @@ class DashboardController extends Controller
             return [
                 'id' => $cls->id,
                 'class' => $cls->name,
-                'secretary' => $cls->secretary->name ?? 'Rina Safitri',
+                'secretary' => $cls->secretary->name ?? 'Sekretaris Kelas',
                 'journal_status' => $journal ? ($journal->verification_status === 'TERVERIFIKASI' ? 'Sudah Diisi' : 'Menunggu Konfirmasi Guru Pengajar') : 'Belum Diisi',
                 'attendance_percent' => "{$pct}% Kehadiran",
             ];
@@ -461,10 +470,13 @@ class DashboardController extends Controller
             ];
         });
 
+        $activeClassName = $allClasses->first()?->name ?? 'Kelas Industri RPL';
+
         return response()->json([
             'stats' => [
-                'total_kelas' => $allClasses->count() . ' Kelas',
-                'jurnal_terisi' => '4 / ' . $allClasses->count() . ' Kelas',
+                'total_kelas' => '1 Kelas',
+                'class_name' => $activeClassName,
+                'jurnal_terisi' => ($monitoredClasses->first()['journal_status'] ?? '') === 'Sudah Diisi' ? '1 / 1 Kelas' : '0 / 1 Kelas',
                 'surat_izin_pending' => $pendingLeaves->count() . ' Permohonan',
             ],
             'monitored_classes' => $monitoredClasses,

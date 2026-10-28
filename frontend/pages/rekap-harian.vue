@@ -38,12 +38,21 @@
             class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
           />
         </div>
+        <!-- Dropdown Filter Kelas (Terkunci jika Wali Kelas, Sekretaris, Siswa) -->
         <div>
-          <label class="block text-[11px] font-semibold text-gray-500 mb-1">Pilih Kelas</label>
+          <label class="block text-[11px] font-semibold text-gray-500 mb-1">Kelas</label>
+          <div
+            v-if="authStore.user?.role === 'GURU_PEMBIMBING' || authStore.user?.role === 'SEKRETARIS' || authStore.user?.role === 'SISWA'"
+            class="px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-700 shadow-2xs flex items-center gap-1.5 whitespace-nowrap min-h-[38px]"
+          >
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            <span>{{ authStore.user?.school_class?.name || (authStore.user as any)?.class_name || 'Kelas Industri RPL' }}</span>
+          </div>
           <select
+            v-else
             v-model="filterClass"
             @change="fetchRecap"
-            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
+            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer min-h-[38px]"
           >
             <option v-for="cls in classOptions" :key="cls.id" :value="String(cls.id)">
               {{ cls.name }}
@@ -257,10 +266,20 @@ const classOptions = ref<any[]>([
 const fetchClasses = async () => {
   try {
     const res: any = await $fetch(`${config.public.apiBase}/master/classes`, {
-      headers: { Authorization: `Bearer ${authStore.token}` }
+      headers: { Authorization: 'Bearer ' + authStore.token }
     })
     if (Array.isArray(res) && res.length > 0) {
       classOptions.value = res
+      
+      const u: any = authStore.user
+      if (u?.role === 'GURU_PEMBIMBING' || u?.role === 'SEKRETARIS' || u?.role === 'SISWA') {
+        const userClassId = u?.class_id || u?.school_class?.id
+        if (userClassId) {
+          filterClass.value = String(userClassId)
+          return
+        }
+      }
+
       if (!classOptions.value.some(c => String(c.id) === String(filterClass.value))) {
         filterClass.value = String(res[0].id)
       }

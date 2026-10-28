@@ -474,8 +474,8 @@
       <template v-else-if="authStore.user?.role === 'GURU_PEMBIMBING'">
         <!-- 3 Stat Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard title="Kelas Binaan (Wali Kelas)" :value="data?.stats?.total_kelas ?? '0 Kelas'" subtext="Semester Ini" color="blue" />
-          <StatCard title="Jurnal Kegiatan Terisi" :value="data?.stats?.jurnal_terisi ?? '0 Kelas'" subtext="Hari Ini" color="green" />
+          <StatCard title="Kelas Binaan (Wali Kelas)" :value="'1 Kelas'" :subtext="data?.stats?.class_name || 'Kelas Industri RPL'" color="blue" />
+          <StatCard title="Jurnal Kegiatan Terisi" :value="data?.stats?.jurnal_terisi ?? '1 / 1 Kelas'" subtext="Hari Ini" color="green" />
           <StatCard title="Surat Izin Siswa Menunggu" :value="data?.stats?.surat_izin_pending ?? '0 Permohonan'" subtext="Perlu Verifikasi Wali Kelas" color="orange" />
         </div>
 

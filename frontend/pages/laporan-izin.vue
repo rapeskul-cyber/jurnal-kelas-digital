@@ -35,15 +35,20 @@
         </div>
         <div>
           <label class="block text-[11px] font-semibold text-gray-500 mb-1">Pilih Kelas</label>
+          <div
+            v-if="authStore.user?.role === 'GURU_PEMBIMBING' || authStore.user?.role === 'SEKRETARIS' || authStore.user?.role === 'SISWA'"
+            class="px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-700 shadow-2xs flex items-center gap-1.5 whitespace-nowrap min-h-[38px]"
+          >
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            <span>{{ authStore.user?.school_class?.name || (authStore.user as any)?.class_name || 'Kelas Industri RPL' }}</span>
+          </div>
           <select
+            v-else
             v-model="classFilter"
-            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
+            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer min-h-[38px]"
           >
             <option value="Semua">Semua Kelas</option>
             <option value="1">Kelas Industri RPL</option>
-            <option value="2">XI RPL 2 (Kelas Industri)</option>
-            <option value="3">XII RPL 1 (Kelas Industri)</option>
-            <option value="4">XII RPL 2 (Kelas Industri)</option>
           </select>
         </div>
       </div>

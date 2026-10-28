@@ -27,10 +27,16 @@ class MasterDataController extends Controller
     public function getClasses(Request $request)
     {
         // Sistem dikhususkan secara eksklusif untuk Kelas Industri RPL
+        $user = $request->user();
         $query = SchoolClass::with(['advisor', 'secretary'])
-            ->withCount(['students', 'schedules'])
-            ->where('major', 'RPL')
-            ->orderBy('name');
+            ->withCount(['students', 'schedules']);
+
+        if ($user && $user->role === 'GURU_PEMBIMBING') {
+            $classId = $user->class_id ?? SchoolClass::where('advisor_id', $user->id)->value('id') ?? 1;
+            $query->where('id', $classId);
+        } else {
+            $query->where('major', 'RPL')->orderBy('name');
+        }
 
         return response()->json($query->get());
     }

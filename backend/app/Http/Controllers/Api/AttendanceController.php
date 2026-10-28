@@ -554,8 +554,8 @@ class AttendanceController extends Controller
     public function semesterRecap(Request $request)
     {
         $user = $request->user();
-        if ($user && in_array($user->role, ['SEKRETARIS', 'SISWA', 'ORANG_TUA'])) {
-            $classId = $user->class_id ?: 1;
+        if ($user && in_array($user->role, ['SEKRETARIS', 'SISWA', 'ORANG_TUA', 'GURU_PEMBIMBING'])) {
+            $classId = $user->class_id ?? SchoolClass::where('advisor_id', $user->id)->value('id') ?? 1;
         } else {
             $classId = $request->input('class_id', 1);
         }
