@@ -38,28 +38,18 @@
         </div>
       </div>
 
-      <!-- Action Bar: Tandai Semua Hadir, Refresh & Search -->
+      <!-- Action Bar: Refresh & Search -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <button
             type="button"
-            @click="markAllPresent"
-            :disabled="isLoading || students.length === 0"
-            class="px-4 py-2.5 bg-primary hover:bg-primary-hover active:scale-[0.99] disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-2xs flex items-center justify-center gap-2 cursor-pointer transition"
-          >
-            <Check class="w-4 h-4" />
-            <span>Tandai Semua Hadir</span>
-          </button>
-
-          <button
-            type="button"
             @click="() => loadAttendance(false)"
             :disabled="isRefreshing"
-            class="p-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            class="px-3.5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-2 shadow-2xs"
             title="Segarkan data presensi"
           >
             <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin text-primary': isRefreshing }" />
-            <span class="hidden sm:inline text-[11px] font-medium">{{ isRefreshing ? 'Menyinkronkan...' : 'Segarkan' }}</span>
+            <span>{{ isRefreshing ? 'Menyinkronkan...' : 'Segarkan Data' }}</span>
           </button>
         </div>
 
@@ -502,12 +492,6 @@ const filteredStudents = computed(() => {
 
 function setStudentStatus(student: any, status: string) {
   student.status = status
-}
-
-function markAllPresent() {
-  students.value.forEach(s => {
-    s.status = 'HADIR'
-  })
 }
 
 function getAuthToken(): string | null {

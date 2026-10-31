@@ -254,3 +254,44 @@
     border-color: #e5e7eb !important;
   }
 }
+
+/* ======================================================== */
+/* CALENDAR & DATE PICKER (WHITE & BLUE THEME)              */
+/* ======================================================== */
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"] {
+  color-scheme: light !important;
+  accent-color: #0f47ad !important;
+  background-color: #ffffff;
+  color: #1e293b;
+}
+
+/* Calendar Icon inside date input: Blue & Interactive */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px;
+  /* Hue-shift standard browser indicator to bright primary blue (#0f47ad) */
+  filter: invert(19%) sepia(87%) saturate(2853%) hue-rotate(215deg) brightness(91%) contrast(98%);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  background-color: #eff6ff;
+  transform: scale(1.08);
+}
+
+/* Date Field text segments highlight */
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background-color: #eff6ff;
+  color: #0f47ad;
+  border-radius: 4px;
+}
+

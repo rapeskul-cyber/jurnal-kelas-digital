@@ -4,13 +4,13 @@
     <button
       type="button"
       @click="isOpen = !isOpen"
-      class="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 hover:border-gray-300 rounded-xl text-xs font-semibold text-gray-700 shadow-2xs hover:bg-gray-50 transition cursor-pointer"
+      class="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 hover:border-primary/50 rounded-xl text-xs font-semibold text-gray-700 shadow-2xs hover:bg-blue-50/30 transition cursor-pointer"
       :class="{ 'ring-2 ring-primary/20 border-primary': isOpen }"
     >
-      <CalendarIcon class="w-4 h-4 text-gray-400" />
+      <CalendarIcon class="w-4 h-4 text-primary" />
       <span>{{ selectedLabel }}</span>
       <ChevronDownIcon
-        class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200"
+        class="w-3.5 h-3.5 text-primary/70 transition-transform duration-200"
         :class="{ 'rotate-180': isOpen }"
       />
     </button>
@@ -18,25 +18,25 @@
     <!-- Dropdown Popover -->
     <div
       v-if="isOpen"
-      class="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-150 p-4 z-50 animate-in fade-in zoom-in-95 duration-150"
+      class="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-blue-150 p-4 z-50 animate-in fade-in zoom-in-95 duration-150"
     >
       <!-- Year Header -->
-      <div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
+      <div class="flex items-center justify-between pb-3 mb-3 border-b border-blue-100 bg-blue-50/60 -mx-4 -mt-4 p-3.5 rounded-t-2xl">
         <button
           type="button"
           @click="currentYear--"
-          class="p-1 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition cursor-pointer"
+          class="p-1 rounded-lg bg-white border border-blue-200 hover:bg-blue-100 text-primary transition cursor-pointer shadow-2xs"
           title="Tahun Sebelumnya"
         >
           <ChevronLeftIcon class="w-4 h-4" />
         </button>
 
-        <span class="text-sm font-bold text-gray-900">{{ currentYear }}</span>
+        <span class="text-sm font-bold text-primary">{{ currentYear }}</span>
 
         <button
           type="button"
           @click="currentYear++"
-          class="p-1 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition cursor-pointer"
+          class="p-1 rounded-lg bg-white border border-blue-200 hover:bg-blue-100 text-primary transition cursor-pointer shadow-2xs"
           title="Tahun Berikutnya"
         >
           <ChevronRightIcon class="w-4 h-4" />
@@ -50,11 +50,11 @@
           :key="idx"
           type="button"
           @click="selectMonth(idx)"
-          class="py-2 text-xs font-medium rounded-xl transition cursor-pointer text-center"
+          class="py-2 text-xs rounded-xl transition cursor-pointer text-center font-semibold"
           :class="
             isSelected(idx)
               ? 'bg-primary text-white font-bold shadow-xs'
-              : 'text-gray-700 hover:bg-gray-100'
+              : 'text-gray-700 hover:bg-blue-50 hover:text-primary'
           "
         >
           {{ m.short }}
@@ -66,14 +66,14 @@
         <button
           type="button"
           @click="resetToCurrent"
-          class="text-primary font-semibold hover:underline cursor-pointer"
+          class="text-primary font-bold hover:underline cursor-pointer"
         >
           Bulan Ini
         </button>
         <button
           type="button"
           @click="isOpen = false"
-          class="text-gray-500 hover:text-gray-700 cursor-pointer"
+          class="text-gray-500 hover:text-gray-700 cursor-pointer font-medium"
         >
           Tutup
         </button>

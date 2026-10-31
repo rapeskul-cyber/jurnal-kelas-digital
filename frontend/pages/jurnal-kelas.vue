@@ -33,13 +33,13 @@
       <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
           <!-- Filter Tanggal -->
-          <div class="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-gray-200 text-xs font-medium text-gray-700 shadow-2xs">
-            <Calendar class="w-4 h-4 text-primary" />
+          <div class="flex items-center gap-2 px-3.5 py-2 bg-white rounded-xl border border-gray-200 hover:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary text-xs font-semibold text-gray-700 shadow-2xs transition">
+            <Calendar class="w-4 h-4 text-primary shrink-0" />
             <input
               v-model="filterDate"
               type="date"
               @change="fetchAgendaJournals"
-              class="border-none bg-transparent text-xs font-medium text-gray-800 focus:outline-none cursor-pointer"
+              class="border-none bg-transparent text-xs font-semibold text-gray-800 focus:outline-none cursor-pointer"
             />
           </div>
 
