@@ -153,8 +153,10 @@
                   <span class="text-xs font-bold uppercase tracking-wider text-[#0f47ad]">Lembar Jurnal KBM Harian</span>
                   <h3 class="text-base font-bold text-slate-900">Kelas XII RPL 1</h3>
                 </div>
-                <div class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 bg-slate-50">
-                  Jumat, 31 Okt 2026
+                <div class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 bg-slate-50 flex items-center gap-2 shadow-2xs">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  <span>{{ currentRealtimeDate }}</span>
+                  <span class="text-[#0f47ad] hidden sm:inline font-mono">• {{ currentRealtimeTime }} WIB</span>
                 </div>
               </div>
 
@@ -500,6 +502,30 @@ const authStore = useAuthStore()
 const isMobileMenuOpen = ref(false)
 const activeSection = ref('tentang')
 
+// Dynamic & Realtime Date-Time System
+function formatIndonesianDate(d: Date = new Date()) {
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+}
+
+function formatIndonesianTime(d: Date = new Date()) {
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${hh}:${mm}:${ss}`
+}
+
+const currentRealtimeDate = ref(formatIndonesianDate())
+const currentRealtimeTime = ref(formatIndonesianTime())
+let clockTimer: any = null
+
+function updateClock() {
+  const now = new Date()
+  currentRealtimeDate.value = formatIndonesianDate(now)
+  currentRealtimeTime.value = formatIndonesianTime(now)
+}
+
 const navLinks = [
   { id: 'tentang', name: 'Tentang' },
   { id: 'format-jurnal', name: 'Format Jurnal' },
@@ -535,6 +561,9 @@ function scrollToSection(id: string) {
 }
 
 onMounted(() => {
+  updateClock()
+  clockTimer = setInterval(updateClock, 1000)
+
   if (typeof window !== 'undefined') {
     const handleScroll = () => {
       if (window.scrollY < 80) {
@@ -558,6 +587,13 @@ onMounted(() => {
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     handleScroll()
+  }
+})
+
+onUnmounted(() => {
+  if (clockTimer) {
+    clearInterval(clockTimer)
+    clockTimer = null
   }
 })
 
