@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\OtpToken;
 use App\Models\AuditLog;
+use App\Models\Setting;
 use Carbon\Carbon;
 
 class AuthController extends Controller
@@ -71,17 +72,15 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:20',
-            'old_password' => 'nullable|string',
+            'old_password' => 'required_with:new_password|nullable|string',
             'new_password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        if ($request->filled('old_password')) {
-            if (!Hash::check($request->old_password, $user->password)) {
-                return response()->json(['message' => 'Kata sandi lama Anda tidak sesuai.'], 422);
+        if ($request->filled('new_password')) {
+            if (!$request->filled('old_password') || !Hash::check($request->old_password, $user->password)) {
+                return response()->json(['message' => 'Kata sandi saat ini tidak sesuai. Masukkan kata sandi lama dengan benar.'], 422);
             }
-            if ($request->filled('new_password')) {
-                $user->password = Hash::make($request->new_password);
-            }
+            $user->password = Hash::make($request->new_password);
         }
 
         $user->name = $request->name;
@@ -190,7 +189,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         if (!$user->phone) {
-            return response()->json(['message' => 'Nomor WhatsApp belum terdaftar di profil Anda. Silakan isi dan simpan nomor WhatsApp terlebih dahulu.'], 422);
+            return response()->json(['message' => 'Nomor WhatsApp belum terdaftar di profil Anda. Silakan isi nomor WhatsApp Anda pada formulir profil di atas lalu simpan terlebih dahulu.'], 422);
         }
 
         $otp = sprintf('%06d', mt_rand(100000, 999999));
@@ -204,7 +203,7 @@ class AuthController extends Controller
             'attempts' => 0,
         ]);
 
-        $message = "🔒 *KODE OTP JURNAL KELAS SMKN 71 JAKARTA*\n\n"
+        $message = "🔒 *KODE OTP JURNAL KELAS DIGITAL*\n\n"
             . "Halo *{$user->name}*,\n"
             . "Kode verifikasi OTP untuk penggantian kata sandi akun Anda adalah:\n\n"
             . "👉 *{$otp}* 👈\n\n"
@@ -224,19 +223,33 @@ class AuthController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        if (!$waResult['status']) {
+        $isDemo = Setting::where('key', 'enable_demo_login')->value('value') === '1';
+        $isDebug = config('app.debug');
+
+        if ($waResult['status']) {
             return response()->json([
-                'message' => 'Gagal mengirim kode OTP ke WhatsApp: ' . $waResult['message'],
-            ], 500);
+                'message' => 'Kode OTP WhatsApp berhasil dikirimkan ke nomor WhatsApp Anda.',
+                'masked_phone' => $this->maskPhone($user->phone),
+                'cooldown' => 60,
+                'otp_preview' => ($isDebug || $isDemo) ? $otp : null,
+                'wa_sent' => true,
+            ]);
+        }
+
+        // Jika gateway belum terhubung atau nomor simulasi, sediakan mode fallback saat demo/debug
+        if ($isDebug || $isDemo) {
+            return response()->json([
+                'message' => 'WhatsApp Gateway belum terhubung ke perangkat. Mode Simulasi: Kode OTP verifikasi Anda adalah ' . $otp,
+                'masked_phone' => $this->maskPhone($user->phone),
+                'cooldown' => 60,
+                'otp_preview' => $otp,
+                'wa_sent' => false,
+            ]);
         }
 
         return response()->json([
-            'message' => 'Kode OTP WhatsApp berhasil dikirimkan ke nomor WhatsApp Anda.',
-            'masked_phone' => $this->maskPhone($user->phone),
-            'cooldown' => 60,
-            'otp_preview' => config('app.debug') ? $otp : null,
-            'wa_sent' => true,
-        ]);
+            'message' => 'Layanan WhatsApp Gateway sekolah saat ini sedang belum terhubung ke perangkat. Silakan hubungi Administrator atau gunakan kata sandi lama Anda untuk mengubah sandi.',
+        ], 422);
     }
 
     public function verifyProfileSmsOtp(Request $request)

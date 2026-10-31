@@ -270,13 +270,21 @@
             <p class="text-xs text-gray-600 leading-relaxed">
               Jika Anda lupa kata sandi lama, kami akan mengirimkan 6 digit kode OTP verifikasi resmi langsung ke WhatsApp Anda:
             </p>
-            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-800 font-mono font-medium flex items-center justify-between">
-              <span>Nomor WhatsApp:</span>
-              <span class="font-bold text-gray-900">{{ authStore.user?.phone || form.phone || '089621371972' }}</span>
+            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-800 font-medium flex items-center justify-between">
+              <span>Nomor WhatsApp Akun:</span>
+              <span v-if="authStore.user?.phone || form.phone" class="font-bold font-mono text-gray-900">
+                {{ authStore.user?.phone || form.phone }}
+              </span>
+              <span v-else class="text-rose-600 font-bold text-xs">
+                Belum Terdaftar di Profil
+              </span>
             </div>
+            <p v-if="!authStore.user?.phone && !form.phone" class="text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+              Perhatian: Anda belum mengisi nomor WhatsApp. Silakan tutup jendela ini, isi nomor WhatsApp Anda pada formulir profil di atas, dan klik Simpan Perubahan terlebih dahulu.
+            </p>
             <button
               type="button"
-              :disabled="smsLoading"
+              :disabled="smsLoading || (!authStore.user?.phone && !form.phone)"
               @click="requestSmsOtp"
               class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
             >
@@ -289,6 +297,10 @@
           <div v-else-if="smsStep === 2" class="space-y-4">
             <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 leading-relaxed">
               Pesan verifikasi telah dikirim ke nomor WhatsApp <strong>{{ smsMaskedPhone }}</strong>. Buka aplikasi WhatsApp Anda untuk melihat 6 digit kode OTP.
+            </div>
+            <div v-if="smsOtpPreview" class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between">
+              <span>Mode Simulasi (OTP): <strong>{{ smsOtpPreview }}</strong></span>
+              <button type="button" @click="smsOtpInput = smsOtpPreview" class="text-primary font-bold hover:underline cursor-pointer">Gunakan</button>
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-700 mb-1">Kode OTP WhatsApp (6 Digit)</label>
@@ -659,6 +671,21 @@ const roleLabel = computed(() => {
 })
 
 async function saveProfile() {
+  if (form.value.new_password) {
+    if (!form.value.old_password) {
+      errorMsg.value = 'Silakan masukkan kata sandi saat ini untuk mengubah kata sandi.'
+      return
+    }
+    if (form.value.new_password.length < 8) {
+      errorMsg.value = 'Kata sandi baru minimal 8 karakter.'
+      return
+    }
+    if (form.value.new_password !== form.value.new_password_confirmation) {
+      errorMsg.value = 'Konfirmasi kata sandi baru tidak cocok.'
+      return
+    }
+  }
+
   saving.value = true
   successMsg.value = ''
   errorMsg.value = ''

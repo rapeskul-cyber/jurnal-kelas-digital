@@ -62,7 +62,7 @@
               v-model="email"
               type="email"
               required
-              placeholder="sekretaris@gmail.com"
+              placeholder="nama@sekolah.sch.id atau email Anda"
               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
@@ -96,6 +96,11 @@
         <div class="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs space-y-1">
           <p class="text-gray-500">Akun Email: <span class="font-semibold text-gray-800">{{ maskedEmail }}</span></p>
           <p class="text-gray-500">WhatsApp Tujuan: <span class="font-semibold text-gray-800">{{ maskedPhone }}</span></p>
+        </div>
+
+        <div v-if="otpPreview" class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between">
+          <span>Mode Simulasi (OTP): <strong>{{ otpPreview }}</strong></span>
+          <button type="button" @click="otp = otpPreview" class="text-primary font-bold hover:underline cursor-pointer">Gunakan</button>
         </div>
 
         <div>
@@ -220,11 +225,13 @@ const turnstileContainer = ref<HTMLElement | null>(null)
 const turnstileToken = ref<string>('')
 const turnstileWidgetId = ref<string | null>(null)
 
+const route = useRoute()
 const currentStep = ref(1)
-const email = ref('rina.safitri@gmail.com')
+const email = ref((route.query.email as string) || '')
 const maskedEmail = ref('')
 const maskedPhone = ref('')
 const otp = ref('')
+const otpPreview = ref('')
 const newPassword = ref('')
 const newPasswordConfirmation = ref('')
 const cooldown = ref(0)
@@ -309,6 +316,7 @@ async function handleStep1() {
     })
     maskedEmail.value = res.masked_email
     maskedPhone.value = res.masked_phone
+    otpPreview.value = res.otp_preview || ''
     startCooldown(res.cooldown || 60)
     currentStep.value = 2
   } catch (e: any) {
