@@ -1,5 +1,6 @@
 // ========================================================
-// Real Baileys WhatsApp Gateway Service (Fonte Standard)
+// Real Baileys WhatsApp Gateway Service (Production Ready v2.0)
+// Integrated with Jurnal Kelas Digital
 // Port: 3000
 // ========================================================
 
@@ -10,9 +11,11 @@ const {
   default: makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
+  fetchLatestWaWebVersion,
+  fetchLatestBaileysVersion,
+  makeCacheableSignalKeyStore,
   Browsers,
   delay,
-  makeCacheableSignalKeyStore,
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 
@@ -44,108 +47,165 @@ function formatPhoneNumber(phone) {
 }
 
 let sock = null;
-let pendingPhone = null;
 let isStarting = false;
+let pairingInFlight = false;
+let pendingPhone = null;
+let reconnectTimer = null;
+let cachedWaVersion = null;
 
-// CRITICAL:
-// - connected HANYA boleh true jika connection: 'open' & sock.user.id valid.
-// - Saat request pairing dibuat, status adalah 'connecting', connected adalah false.
+async function getWaVersion() {
+  if (cachedWaVersion) return cachedWaVersion;
+  try {
+    const waWeb = await fetchLatestWaWebVersion();
+    cachedWaVersion = waWeb.version;
+    console.log('[BAILEYS] Menggunakan WA Web version terbaru:', cachedWaVersion);
+  } catch (e) {
+    try {
+      const fallback = await fetchLatestBaileysVersion();
+      cachedWaVersion = fallback.version;
+      console.log('[BAILEYS] Fallback Baileys version:', cachedWaVersion);
+    } catch {
+      cachedWaVersion = [2, 3000, 1015901307];
+    }
+  }
+  return cachedWaVersion;
+}
+
+// State perangkat (Status connected HANYA true jika connection === 'open' & sock.user.id valid)
 let deviceState = {
   connected: false,
-  status: 'disconnected',
+  status: 'disconnected', // 'disconnected' | 'connecting' | 'connected'
   phone: null,
   user: null,
   pairingCode: null,
+  pairingCodeAt: 0,
   pairedAt: null,
 };
+
+const PAIRING_TTL_MS = 3 * 60 * 1000; // 3 menit TTL
 
 async function startBaileys() {
   if (isStarting) return;
   isStarting = true;
 
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
+  if (sock) {
+    try { sock.ev.removeAllListeners(); } catch (e) {}
+    try { sock.ws?.close(); } catch (e) {}
+    try { sock.end(undefined); } catch (e) {}
+    sock = null;
+  }
+  await delay(200);
+
   try {
     const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
     const logger = pino({ level: 'silent' });
+    const version = await getWaVersion();
 
-    sock = makeWASocket({
+    const current = makeWASocket({
+      version,
+      logger,
+      printQRInTerminal: false,
       auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(state.keys, logger),
       },
-      printQRInTerminal: false,
-      logger: logger,
       browser: Browsers.ubuntu('Chrome'),
       connectTimeoutMs: 60000,
       defaultQueryTimeoutMs: 0,
-      keepAliveIntervalMs: 10000,
+      keepAliveIntervalMs: 15000,
       emitOwnEvents: true,
       fireInitQueries: true,
       syncFullHistory: false,
       markOnlineOnConnect: true,
+      ...(pairingInFlight ? { qrTimeout: 300000 } : {}),
     });
+    sock = current;
 
-    sock.ev.on('creds.update', saveCreds);
+    current.ev.process(async (events) => {
+      // 1. Simpan update kredensial
+      if (events['creds.update']) {
+        await saveCreds();
+      }
 
-    sock.ev.on('connection.update', async (update) => {
-      const { connection, lastDisconnect } = update;
+      // 2. Lifecycle koneksi
+      if (events['connection.update']) {
+        if (sock !== current) return; // Abaikan event socket lama
 
-      if (connection === 'connecting') {
-        if (!deviceState.connected) {
-          deviceState.status = deviceState.pairingCode ? 'connecting' : 'disconnected';
+        const update = events['connection.update'];
+        const { connection, lastDisconnect } = update;
+
+        if (connection === 'connecting') {
+          if (!deviceState.connected) {
+            deviceState.status = deviceState.pairingCode ? 'connecting' : 'disconnected';
+          }
+          console.log('[BAILEYS] Menghubungkan ke WebSocket server WhatsApp Meta...');
         }
-        console.log('[BAILEYS] Menghubungkan ke server WhatsApp WebSocket...');
-      }
 
-      if (connection === 'open') {
-        const rawId = sock.user?.id ? sock.user.id.split(':')[0] : (pendingPhone || 'Unknown');
-        const userId = rawId.replace(/[^0-9]/g, '');
-        console.log(`[BAILEYS] >>> WHATSAPP BERHASIL TERHUBUNG VALID (Meta Handshake Success)! Phone: ${userId}`);
+        if (connection === 'open') {
+          const rawId = current.user?.id ? current.user.id.split(':')[0] : (pendingPhone || 'Unknown');
+          const userId = rawId.replace(/[^0-9]/g, '');
+          console.log(`[BAILEYS] >>> WHATSAPP BERHASIL TERHUBUNG VALID! Nomor: ${userId}`);
 
-        deviceState.connected = true;
-        deviceState.status = 'connected';
-        deviceState.phone = userId;
-        deviceState.user = {
-          id: sock.user?.id || `${userId}@s.whatsapp.net`,
-          name: sock.user?.name || 'Bot Jurnal Kelas',
-        };
-        deviceState.pairedAt = new Date().toISOString();
-        deviceState.pairingCode = null;
-        pendingPhone = null;
-      }
-
-      if (connection === 'close') {
-        const rawCode = lastDisconnect?.error?.output?.statusCode ?? lastDisconnect?.error?.statusCode;
-        const statusCode = typeof rawCode === 'number' ? rawCode : parseInt(rawCode, 10);
-        console.log(`[BAILEYS] Koneksi terputus (Status Code: ${statusCode})`);
-
-        // Wajib set connected = false setiap kali socket close
-        deviceState.connected = false;
-
-        // 1. Meta Handshake Restart (Error 515 / restartRequired)
-        // Meta menutup koneksi sesaat setelah pairing code dikonfirmasi di HP
-        // agar client me-restart socket dengan auth keys baru yang tersimpan di SESSION_DIR.
-        // DILARANG menghapus session_auth! Langsung sambungkan kembali.
-        if (statusCode === DisconnectReason.restartRequired || statusCode === 515) {
-          console.log('[BAILEYS] >>> Handshake Meta restart diperlukan (Error 515). Reconnect instan dengan credentials tersimpan...');
-          deviceState.status = deviceState.pairingCode ? 'connecting' : 'disconnected';
-          isStarting = false;
-          await delay(1000);
-          startBaileys();
-        } else if (statusCode === DisconnectReason.loggedOut || statusCode === 401 || statusCode === 403) {
-          console.log('[BAILEYS] Sesi dikeluarkan / Logged out oleh WhatsApp. Reset session...');
-          deviceState.status = 'disconnected';
-          deviceState.phone = null;
-          deviceState.user = null;
+          deviceState.connected = true;
+          deviceState.status = 'connected';
+          deviceState.phone = userId;
+          deviceState.user = {
+            id: current.user?.id || `${userId}@s.whatsapp.net`,
+            name: current.user?.name || 'Bot Jurnal Kelas Digital',
+          };
+          deviceState.pairedAt = new Date().toISOString();
           deviceState.pairingCode = null;
-          clearSession();
-          isStarting = false;
-        } else {
-          console.log(`[BAILEYS] Koneksi terputus (${statusCode}). Mencoba menghubungkan kembali dalam 3 detik...`);
-          deviceState.status = deviceState.pairingCode ? 'connecting' : 'disconnected';
-          setTimeout(() => {
+          deviceState.pairingCodeAt = 0;
+          pairingInFlight = false;
+          pendingPhone = null;
+        }
+
+        if (connection === 'close') {
+          const rawCode = lastDisconnect?.error?.output?.statusCode ?? lastDisconnect?.error?.statusCode;
+          const statusCode = typeof rawCode === 'number' ? rawCode : parseInt(rawCode, 10);
+          console.log(`[BAILEYS] Koneksi tertutup (Status Code: ${statusCode})`);
+
+          deviceState.connected = false;
+
+          // 515 = restartRequired: Pairing berhasil di HP!
+          // WhatsApp meminta reconnect instan agar auth keys baru aktif.
+          if (statusCode === DisconnectReason.restartRequired || statusCode === 515) {
+            console.log('[BAILEYS] >>> Status 515 (restartRequired) terdeteksi. Fast-handoff reconnect...');
+            deviceState.status = 'connecting';
+            pairingInFlight = false;
+            pendingPhone = null;
             isStarting = false;
-            startBaileys();
-          }, 3000);
+            setImmediate(() => {
+              startBaileys();
+            });
+            return;
+          }
+
+          if (statusCode === DisconnectReason.loggedOut || statusCode === 401 || statusCode === 403) {
+            console.log('[BAILEYS] Sesi telah logout / dicabut di HP. Mereset sesi...');
+            deviceState.status = 'disconnected';
+            deviceState.phone = null;
+            deviceState.user = null;
+            deviceState.pairingCode = null;
+            pairingInFlight = false;
+            pendingPhone = null;
+            clearSession();
+            isStarting = false;
+          } else {
+            // Reconnect bertahap untuk menjaga stabilitas
+            deviceState.status = deviceState.pairingCode ? 'connecting' : 'disconnected';
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(() => {
+              reconnectTimer = null;
+              isStarting = false;
+              startBaileys();
+            }, 3000);
+          }
         }
       }
     });
@@ -157,10 +217,10 @@ async function startBaileys() {
   }
 }
 
-// Inisialisasi awal saat server dijalankan
+// Inisialisasi awal saat server berjalan
 startBaileys();
 
-// HTTP API Server
+// HTTP REST API Server
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -195,8 +255,27 @@ const server = http.createServer((req, res) => {
 
     console.log(`[WA-GATEWAY API] ${req.method} ${pathname}`);
 
-    // 1. Device Status
-    // STATUS 'connected' HANYA BOLEH bernilai true jika Baileys connection === 'open' & sock.user.id valid
+    // Cek TTL pairing code
+    if (deviceState.pairingCode && deviceState.pairingCodeAt && (Date.now() - deviceState.pairingCodeAt > PAIRING_TTL_MS)) {
+      deviceState.pairingCode = null;
+      deviceState.pairingCodeAt = 0;
+      if (deviceState.status === 'connecting' && !deviceState.connected) {
+        deviceState.status = 'disconnected';
+      }
+    }
+
+    // 1. Health / Root
+    if (pathname === '/' || pathname === '/api/health') {
+      return sendJson(200, {
+        status: true,
+        service: 'WhatsApp Gateway Baileys Engine',
+        version: '2.0.0',
+        device_status: deviceState.status,
+        connected: deviceState.connected,
+      });
+    }
+
+    // 2. Device Status
     if (pathname === '/api/device/status' && req.method === 'GET') {
       if (deviceState.connected && deviceState.user && sock?.user?.id) {
         return sendJson(200, {
@@ -222,9 +301,9 @@ const server = http.createServer((req, res) => {
       }
     }
 
-    // 2. Request Pairing Code (REAL BAILEYS / META)
+    // 3. Request Pairing Code (REAL BAILEYS / META)
     if (pathname === '/api/device/pairing-code' && req.method === 'POST') {
-      const rawPhone = body.phone || '';
+      const rawPhone = body.phone || body.number || '';
       const formattedPhone = formatPhoneNumber(rawPhone);
 
       if (!formattedPhone || formattedPhone.length < 8) {
@@ -237,7 +316,6 @@ const server = http.createServer((req, res) => {
       pendingPhone = formattedPhone;
 
       try {
-        // Jika sudah tersambung valid, beritahukan user
         if (deviceState.connected && sock?.user?.id) {
           return sendJson(200, {
             status: true,
@@ -247,12 +325,10 @@ const server = http.createServer((req, res) => {
           });
         }
 
-        // Jika socket belum dibuat atau ditutup, mulai socket baru
-        if (!sock || sock.ws?.isClosed || sock.ws?.isClosing) {
-          await startBaileys();
-        }
+        pairingInFlight = true;
+        clearSession();
+        await startBaileys();
 
-        // Tunggu socket WebSocket Baileys terbuka dan siap kirim paket ke Meta
         if (sock && typeof sock.waitForSocketOpen === 'function') {
           try {
             await sock.waitForSocketOpen();
@@ -261,44 +337,57 @@ const server = http.createServer((req, res) => {
           }
         }
 
-        await delay(1500);
+        await delay(1200);
 
-        console.log(`[BAILEYS] Meminta kode pairing resmi dari server WhatsApp Meta untuk nomor: ${formattedPhone}...`);
-        const rawCode = await sock.requestPairingCode(formattedPhone);
+        console.log(`[BAILEYS] Meminta kode pairing Meta untuk nomor: ${formattedPhone}...`);
+        
+        let customCode = body.custom_code || null;
+        if (customCode) {
+          customCode = String(customCode).toUpperCase().replace(/[^A-Z0-9]/g, '');
+          if (customCode.length !== 8) customCode = null;
+        }
 
-        // Format kode 8-digit dengan hyphen jika belum ada: ABCD-EFGH
+        const rawCode = customCode
+          ? await sock.requestPairingCode(formattedPhone, customCode)
+          : await sock.requestPairingCode(formattedPhone);
+
         const formattedCode = (rawCode && rawCode.length === 8 && !rawCode.includes('-'))
           ? `${rawCode.slice(0, 4)}-${rawCode.slice(4)}`
           : rawCode;
 
-        // PENTING: Status connected WAJIB false! Tidak boleh 'halu' terhubung sebelum di-confirm di HP.
         deviceState.pairingCode = formattedCode;
+        deviceState.pairingCodeAt = Date.now();
         deviceState.connected = false;
         deviceState.status = 'connecting';
 
-        console.log(`[BAILEYS] KODE PAIRING RESMI META DITERIMA: ${formattedCode}`);
+        console.log(`[BAILEYS] >>> KODE PAIRING RESMI DITERIMA: ${formattedCode}`);
 
         return sendJson(200, {
           status: true,
           code: formattedCode,
           phone: formattedPhone,
-          message: 'Kode pairing WhatsApp resmi berhasil dibuat. Silakan masukkan di WhatsApp HP (Perangkat Tertaut).',
+          message: 'Kode pairing berhasil dibuat. Buka WhatsApp di HP > Perangkat Tertaut > Tautkan dengan nomor telepon.',
           data: {
             code: formattedCode,
             phone: formattedPhone,
-            expires_in: 300,
+            expires_in: 180,
           },
         });
       } catch (err) {
         console.error('[BAILEYS] Gagal meminta kode pairing:', err);
+        pairingInFlight = false;
+        let msg = err.message || 'Gagal meminta kode pairing dari WhatsApp Meta';
+        if (err.message?.includes('rate-overlimit') || err.data?.attrs?.text === 'rate-overlimit' || (err.message && String(err.message).includes('429'))) {
+          msg = 'Nomor ini sedang terkena rate-limit dari server WhatsApp Meta. Tunggu jeda 10-15 menit untuk cooldown atau gunakan nomor lain.';
+        }
         return sendJson(500, {
           status: false,
-          message: 'Gagal meminta kode pairing dari WhatsApp Meta: ' + (err.message || 'Timeout / Socket belum siap. Coba klik lagi dalam 5 detik.'),
+          message: msg,
         });
       }
     }
 
-    // 3. Logout
+    // 4. Logout
     if (pathname === '/api/device/logout' && req.method === 'POST') {
       try {
         if (sock) {
@@ -312,6 +401,9 @@ const server = http.createServer((req, res) => {
       deviceState.phone = null;
       deviceState.user = null;
       deviceState.pairingCode = null;
+      deviceState.pairingCodeAt = 0;
+      pairingInFlight = false;
+      pendingPhone = null;
 
       setTimeout(() => {
         startBaileys();
@@ -324,7 +416,7 @@ const server = http.createServer((req, res) => {
       });
     }
 
-    // 4. Send Message / OTP
+    // 5. Send Message / OTP
     if ((pathname === '/api/send' || pathname === '/api/send-message') && req.method === 'POST') {
       const rawTarget = body.target || body.phone || body.number || body.to || '';
       const message = body.message || body.text || '';
@@ -345,14 +437,24 @@ const server = http.createServer((req, res) => {
       }
 
       try {
-        const jid = `${formattedTarget}@s.whatsapp.net`;
-        await sock.sendMessage(jid, { text: message });
-        console.log(`[BAILEYS] Pesan terkirim ke ${jid}:\n${message}`);
+        const checkResults = await sock.onWhatsApp(formattedTarget);
+        const onWa = Array.isArray(checkResults) ? checkResults.find(r => r.exists) : null;
+        if (!onWa || !onWa.exists) {
+          return sendJson(400, {
+            status: false,
+            message: `Nomor ${rawTarget} tidak terdaftar di WhatsApp aktif.`,
+          });
+        }
+
+        const jid = onWa.jid || `${formattedTarget}@s.whatsapp.net`;
+        const result = await sock.sendMessage(jid, { text: message });
+        console.log(`[BAILEYS] Pesan terkirim ke ${jid} (ID: ${result?.key?.id}):\n${message}`);
 
         return sendJson(200, {
           status: true,
           target: formattedTarget,
           phone: formattedTarget,
+          messageId: result?.key?.id || null,
           message: 'Pesan WhatsApp berhasil dikirim.',
         });
       } catch (err) {
@@ -367,14 +469,14 @@ const server = http.createServer((req, res) => {
     // Default 404
     sendJson(404, {
       status: false,
-      message: `Endpoint ${pathname} tidak ditemukan.`,
+      message: `Endpoint ${pathname} tidak ditemukan pada WhatsApp Gateway Service.`,
     });
   });
 });
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`=======================================================`);
-  console.log(` WhatsApp Gateway (Real Baileys) running on:`);
+  console.log(` WhatsApp Gateway (Real Baileys v2.0) running on:`);
   console.log(` http://127.0.0.1:${PORT}`);
   console.log(`=======================================================`);
 });
