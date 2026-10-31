@@ -12,9 +12,9 @@
           <div>
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Wali Kelas</p>
             <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ stats.walas }} Guru</h3>
-            <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Membimbing Rombel Kelas</p>
+            <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Membimbing Kelas</p>
           </div>
-          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 text-primary border border-blue-100 flex items-center justify-center font-bold">
             <Users class="w-6 h-6" />
           </div>
         </div>
@@ -36,7 +36,7 @@
             <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ stats.totalActive }} Akun</h3>
             <p class="text-[11px] text-purple-600 font-medium mt-0.5">Terdaftar di Sistem</p>
           </div>
-          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 text-primary border border-blue-100 flex items-center justify-center font-bold">
             <UserCheck class="w-6 h-6" />
           </div>
         </div>
@@ -48,7 +48,7 @@
           <CheckCircle2 class="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span>{{ successMsg }}</span>
         </div>
-        <button @click="successMsg = ''" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="successMsg = ''" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <div v-if="errorMsg" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between shadow-2xs">
@@ -56,7 +56,7 @@
           <AlertCircle class="w-4 h-4 text-rose-600 flex-shrink-0" />
           <span>{{ errorMsg }}</span>
         </div>
-        <button @click="errorMsg = ''" class="text-rose-700 hover:text-rose-900 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="errorMsg = ''" class="text-rose-700 hover:text-rose-900 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <!-- Action & Filter Bar -->
@@ -80,7 +80,7 @@
               type="button"
               @click="setRoleFilter('ALL')"
               class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5"
-              :class="selectedRoleFilter === 'ALL' ? 'bg-white text-gray-900 shadow-2xs font-bold' : 'text-gray-500 hover:text-gray-900'"
+              :class="selectedRoleFilter === 'ALL' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
             >
               <span>Semua Guru</span>
               <span
@@ -94,12 +94,12 @@
               type="button"
               @click="setRoleFilter('GURU_PEMBIMBING')"
               class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5"
-              :class="selectedRoleFilter === 'GURU_PEMBIMBING' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-gray-500 hover:text-emerald-700'"
+              :class="selectedRoleFilter === 'GURU_PEMBIMBING' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
             >
               <span>Wali Kelas</span>
               <span
                 class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
-                :class="selectedRoleFilter === 'GURU_PEMBIMBING' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'"
+                :class="selectedRoleFilter === 'GURU_PEMBIMBING' ? 'bg-blue-100 text-primary font-bold' : 'bg-gray-200 text-gray-600'"
               >
                 {{ stats.walas }}
               </span>
@@ -108,12 +108,12 @@
               type="button"
               @click="setRoleFilter('GURU_PENGAJAR')"
               class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5"
-              :class="selectedRoleFilter === 'GURU_PENGAJAR' ? 'bg-primary text-white font-bold shadow-2xs' : 'text-gray-500 hover:text-primary'"
+              :class="selectedRoleFilter === 'GURU_PENGAJAR' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
             >
               <span>Guru Pengajar</span>
               <span
                 class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
-                :class="selectedRoleFilter === 'GURU_PENGAJAR' ? 'bg-white/20 text-white' : 'bg-blue-50 text-primary border border-blue-200'"
+                :class="selectedRoleFilter === 'GURU_PENGAJAR' ? 'bg-blue-100 text-primary' : 'bg-gray-200 text-gray-600'"
               >
                 {{ stats.pengajar }}
               </span>
@@ -122,12 +122,12 @@
               type="button"
               @click="setRoleFilter('SUPERADMIN')"
               class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5"
-              :class="selectedRoleFilter === 'SUPERADMIN' ? 'bg-purple-600 text-white font-bold shadow-2xs' : 'text-gray-500 hover:text-purple-700'"
+              :class="selectedRoleFilter === 'SUPERADMIN' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
             >
               <span>Super Administrator</span>
               <span
                 class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
-                :class="selectedRoleFilter === 'SUPERADMIN' ? 'bg-white/20 text-white' : 'bg-purple-50 text-purple-700 border border-purple-200'"
+                :class="selectedRoleFilter === 'SUPERADMIN' ? 'bg-blue-100 text-primary font-bold' : 'bg-gray-200 text-gray-600'"
               >
                 {{ stats.superadmin }}
               </span>
@@ -168,7 +168,124 @@
           Tidak ada data guru yang sesuai dengan filter pencarian.
         </div>
 
-        <div v-else class="overflow-x-auto">
+        <div v-else>
+        <!-- Mobile Card List View -->
+        <div class="block md:hidden space-y-3.5 p-4">
+          <div
+            v-for="(t, idx) in teachers"
+            :key="t.id"
+            class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs space-y-3"
+          >
+            <!-- Header: Nama, No, Status -->
+            <div class="flex items-start justify-between gap-2">
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-gray-400">#{{ idx + 1 }}</span>
+                  <span class="font-bold text-gray-900 text-sm">{{ t.name }}</span>
+                </div>
+                <div class="text-[11px] text-gray-500 font-mono">NIP: {{ t.nip_nis || '-' }}</div>
+              </div>
+
+              <!-- Status Toggle Pill -->
+              <button
+                type="button"
+                @click="handleToggleActive(t)"
+                class="px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer shrink-0"
+                :class="t.is_active ? 'bg-blue-50 text-primary border border-blue-200' : 'bg-gray-100 text-gray-500 border border-gray-200'"
+              >
+                {{ t.is_active ? '● Aktif' : '○ Nonaktif' }}
+              </button>
+            </div>
+
+            <!-- Role & Penugasan -->
+            <div class="p-3 bg-gray-50/70 rounded-xl space-y-2 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-[11px]">Peran:</span>
+                <div>
+                  <span v-if="t.role === 'GURU_PEMBIMBING'" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-primary border border-blue-200">
+                    Wali Kelas
+                  </span>
+                  <span v-else-if="t.role === 'GURU_PENGAJAR'" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    Guru Pengajar
+                  </span>
+                  <span v-else-if="t.role === 'SUPERADMIN'" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-primary border border-blue-200">
+                    Super Administrator
+                  </span>
+                  <span v-else class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                    {{ t.role }}
+                  </span>
+                </div>
+              </div>
+
+              <div v-if="t.role === 'GURU_PEMBIMBING'" class="flex items-center justify-between">
+                <span class="text-gray-400 text-[11px]">Kelas Binaan:</span>
+                <span class="font-bold text-gray-900">{{ t.guided_class?.name || t.school_class?.name || 'Belum Ditugaskan' }}</span>
+              </div>
+
+              <div v-else-if="t.role === 'GURU_PENGAJAR'" class="flex items-center justify-between">
+                <span class="text-gray-400 text-[11px]">Mapel Utama:</span>
+                <span class="font-bold text-gray-900">{{ t.specialization || (t.taught_subjects?.[0]?.name) || 'Belum Diatur' }}</span>
+              </div>
+
+              <div class="pt-1.5 border-t border-gray-200/60 space-y-1">
+                <div class="flex items-center justify-between text-gray-700">
+                  <span class="text-gray-400 text-[11px]">Email:</span>
+                  <span class="font-medium truncate max-w-[200px]">{{ t.email }}</span>
+                </div>
+                <div class="flex items-center justify-between text-gray-700">
+                  <span class="text-gray-400 text-[11px]">No HP:</span>
+                  <span class="font-medium">{{ t.phone ? `WA: ${t.phone}` : '-' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons: Impersonate + CRUD (44px min touch target) -->
+            <div class="flex items-center gap-2 pt-1 border-t border-gray-100">
+              <button
+                type="button"
+                @click="handleImpersonate(t)"
+                class="flex-1 min-h-[44px] px-3 py-2 bg-gray-100 hover:bg-primary hover:text-white text-gray-700 rounded-xl text-xs font-semibold transition cursor-pointer shadow-2xs"
+              >
+                Login As
+              </button>
+
+              <div class="flex items-center gap-1">
+                <!-- Edit -->
+                <button
+                  type="button"
+                  @click="openEditModal(t)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-gray-100 rounded-xl text-gray-600 transition cursor-pointer"
+                  title="Edit Data Guru"
+                >
+                  <Edit3 class="w-4 h-4" />
+                </button>
+
+                <!-- Reset Password -->
+                <button
+                  type="button"
+                  @click="handleResetPassword(t)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-amber-50 rounded-xl text-amber-600 transition cursor-pointer"
+                  title="Reset Kata Sandi"
+                >
+                  <KeyRound class="w-4 h-4" />
+                </button>
+
+                <!-- Delete -->
+                <button
+                  type="button"
+                  @click="handleDelete(t)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-rose-50 rounded-xl text-rose-600 transition cursor-pointer"
+                  title="Hapus Akun Guru"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="bg-gray-50/70 border-b border-gray-150 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
@@ -193,7 +310,7 @@
                 </td>
                 <td class="py-3.5 px-4 whitespace-nowrap">
                   <div v-if="t.role === 'GURU_PEMBIMBING'" class="space-y-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-primary border border-blue-200 whitespace-nowrap">
                       Wali Kelas
                     </span>
                     <p class="text-[11px] text-gray-600 font-medium">
@@ -209,7 +326,7 @@
                     </p>
                   </div>
                   <div v-else-if="t.role === 'SUPERADMIN'" class="space-y-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-primary border border-blue-200 whitespace-nowrap">
                       Super Administrator
                     </span>
                     <p class="text-[11px] text-gray-500">Pusat Tata Kelola Sistem</p>
@@ -225,7 +342,7 @@
                     type="button"
                     @click="handleToggleActive(t)"
                     class="px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer whitespace-nowrap"
-                    :class="t.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'"
+                    :class="t.is_active ? 'bg-blue-50 text-primary border border-blue-200 hover:bg-emerald-100' : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'"
                   >
                     {{ t.is_active ? '● Aktif' : '○ Nonaktif' }}
                   </button>
@@ -276,21 +393,23 @@
             </tbody>
           </table>
         </div>
+        </div>
       </div>
     </main>
 
     <!-- MODAL TAMBAH / EDIT GURU -->
     <div
       v-if="showModal"
-      class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
-      <div class="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden border border-gray-150 animate-in fade-in duration-150">
+      <div class="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-lg shadow-xl overflow-hidden border border-gray-150 animate-in fade-in duration-150 max-h-[90vh] flex flex-col pb-safe">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-2 sm:hidden shrink-0"></div>
         <div class="p-5 border-b border-gray-150 flex items-center justify-between">
           <div>
             <h3 class="text-base font-bold text-gray-900">
               {{ isEditing ? 'Edit Data Akun Guru' : 'Tambah Akun Guru Baru' }}
             </h3>
-            <p class="text-xs text-gray-400 mt-0.5">Kelola tipe guru, NIP, penugasan rombel atau mapel</p>
+            <p class="text-xs text-gray-400 mt-0.5">Kelola tipe guru, NIP, penugasan kelas atau mapel</p>
           </div>
           <button @click="closeModal" class="p-1 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer">
             <X class="w-5 h-5" />
@@ -306,17 +425,17 @@
                 type="button"
                 @click="form.role = 'GURU_PEMBIMBING'"
                 class="p-3 rounded-xl border text-left transition cursor-pointer"
-                :class="form.role === 'GURU_PEMBIMBING' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
+                :class="form.role === 'GURU_PEMBIMBING' ? 'border-primary ring-2 ring-primary/20 bg-white text-primary font-bold shadow-2xs' : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700'"
               >
                 <div class="font-bold">Wali Kelas</div>
-                <div class="text-[10px] text-gray-500 mt-0.5">Wali kelas & rombel</div>
+                <div class="text-[10px] text-gray-500 mt-0.5">Wali kelas & kelas binaan</div>
               </button>
 
               <button
                 type="button"
                 @click="form.role = 'GURU_PENGAJAR'"
                 class="p-3 rounded-xl border text-left transition cursor-pointer"
-                :class="form.role === 'GURU_PENGAJAR' ? 'border-blue-500 bg-blue-50 text-blue-800 font-bold' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
+                :class="form.role === 'GURU_PENGAJAR' ? 'border-primary ring-2 ring-primary/20 bg-white text-primary font-bold shadow-2xs' : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700'"
               >
                 <div class="font-bold">Guru Pengajar</div>
                 <div class="text-[10px] text-gray-500 mt-0.5">Guru mapel KBM</div>
@@ -326,7 +445,7 @@
                 type="button"
                 @click="form.role = 'SUPERADMIN'"
                 class="p-3 rounded-xl border text-left transition cursor-pointer"
-                :class="form.role === 'SUPERADMIN' ? 'border-purple-500 bg-purple-50 text-purple-800 font-bold' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
+                :class="form.role === 'SUPERADMIN' ? 'border-primary ring-2 ring-primary/20 bg-white text-primary font-bold shadow-2xs' : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700'"
               >
                 <div class="font-bold">Super Admin</div>
                 <div class="text-[10px] text-gray-500 mt-0.5">Admin sistem</div>
@@ -335,7 +454,7 @@
           </div>
 
           <!-- Informasi Khusus Superadmin -->
-          <div v-if="form.role === 'SUPERADMIN'" class="p-3 bg-purple-50 text-purple-800 rounded-xl border border-purple-200">
+          <div v-if="form.role === 'SUPERADMIN'" class="p-3 bg-white text-gray-800 rounded-xl border border-gray-200 shadow-2xs">
             <p class="font-bold">Akses Super Administrator</p>
             <p class="text-[11px] mt-0.5 text-purple-700">Akun ini memiliki hak akses penuh untuk mengelola master data, pengaturan sistem, WA Gateway, dan seluruh pengguna.</p>
           </div>
@@ -386,14 +505,14 @@
             />
           </div>
 
-          <!-- Penugasan Khusus: Wali Kelas (Pilih Rombel / Kelas Binaan) -->
+          <!-- Penugasan Khusus: Wali Kelas (Pilih Kelas Binaan) -->
           <div v-if="form.role === 'GURU_PEMBIMBING'">
             <label class="block font-bold text-gray-700 mb-1">Kelas Binaan (Wali Kelas) *</label>
             <select
               v-model="form.class_id"
               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
             >
-              <option :value="null">-- Pilih Rombel Kelas --</option>
+              <option :value="null">-- Pilih Kelas --</option>
               <option v-for="cls in classes" :key="cls.id" :value="cls.id">
                 {{ cls.name }} (Jurusan {{ cls.major }})
               </option>
@@ -450,9 +569,10 @@
     <!-- Modal Impor Guru & Staf Massal (JSON) -->
     <div
       v-if="showImportModal"
-      class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
-      <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto pb-safe">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 sm:hidden shrink-0"></div>
         <div class="flex items-center justify-between border-b border-gray-150 pb-3">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center font-bold">
@@ -538,7 +658,7 @@
             <div class="flex items-center justify-between mb-1.5">
               <label class="font-bold text-gray-700">Atau Tempel / Edit Kode JSON di Sini</label>
               <span v-if="detectedTeacherCount > 0" class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                ✓ {{ detectedTeacherCount }} Akun Guru Terdeteksi
+                Terdeteksi {{ detectedTeacherCount }} Akun Guru
               </span>
             </div>
             <textarea
@@ -560,7 +680,7 @@
           <!-- Alert jika ada error parse / server error -->
           <div v-if="importError" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center justify-between">
             <span>{{ importError }}</span>
-            <button @click="importError = ''" class="font-bold cursor-pointer">✕</button>
+            <button @click="importError = ''" class="font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
           </div>
 
           <!-- Modal Actions -->
@@ -804,7 +924,14 @@ async function handleToggleActive(teacher: any) {
 }
 
 async function handleResetPassword(teacher: any) {
-  if (!confirm(`Reset kata sandi ${teacher.name} menjadi "password123"?`)) return
+  const ok = await confirmDialog({
+    title: 'Reset Sandi Guru?',
+    message: `Reset kata sandi guru ${teacher.name} menjadi default ("password123")?`,
+    confirmText: 'Ya, Reset Sandi',
+    cancelText: 'Batal',
+    type: 'warning',
+  })
+  if (!ok) return
   try {
     const res = await $fetch<any>(`${authStore.apiBase}/users/${teacher.id}/reset-password`, {
       method: 'POST',
@@ -817,7 +944,14 @@ async function handleResetPassword(teacher: any) {
 }
 
 async function handleImpersonate(teacher: any) {
-  if (!confirm(`Masuk sebagai "${teacher.name}" (${teacher.role})? Anda akan diarahkan ke dashboard peran terkait.`)) return
+  const ok = await confirmDialog({
+    title: 'Masuk Sebagai Guru?',
+    message: `Masuk sebagai "${teacher.name}" (${teacher.role})? Anda akan diarahkan ke dashboard peran terkait.`,
+    confirmText: 'Ya, Masuk Sebagai Guru',
+    cancelText: 'Batal',
+    type: 'primary',
+  })
+  if (!ok) return
   try {
     const res = await $fetch<any>(`${authStore.apiBase}/users/${teacher.id}/impersonate`, {
       method: 'POST',
@@ -834,7 +968,14 @@ async function handleImpersonate(teacher: any) {
 }
 
 async function handleDelete(teacher: any) {
-  if (!confirm(`Hapus akun guru "${teacher.name}" dari sistem?`)) return
+  const ok = await confirmDialog({
+    title: 'Hapus Akun Guru?',
+    message: `Hapus akun guru "${teacher.name}" dari sistem? Tindakan ini tidak dapat dibatalkan.`,
+    confirmText: 'Ya, Hapus Akun Guru',
+    cancelText: 'Batal',
+    type: 'danger',
+  })
+  if (!ok) return
   try {
     await $fetch(`${authStore.apiBase}/users/${teacher.id}`, {
       method: 'DELETE',

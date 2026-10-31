@@ -1,12 +1,13 @@
 <template>
   <!-- Floating Centered Modal Card Container -->
   <div
-    class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 md:p-6"
+    class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-5 md:p-6"
     @click.self="handleClose"
   >
     <div
-      class="max-w-2xl w-full bg-white rounded-3xl shadow-2xl border border-gray-150 flex flex-col max-h-[90vh] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150"
+      class="max-w-2xl w-full bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-gray-150 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden my-0 sm:my-auto animate-in fade-in zoom-in-95 duration-150 pb-safe"
     >
+      <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-2 sm:hidden shrink-0"></div>
       <!-- Modal Header -->
       <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3 bg-white sticky top-0 z-10">
         <div class="flex items-center gap-3 min-w-0">
@@ -223,23 +224,41 @@
             Belum ada log audit aktivitas pengguna.
           </div>
 
-          <div v-else class="border border-gray-150 rounded-xl overflow-hidden max-h-48 overflow-y-auto text-xs">
-            <table class="w-full text-left">
-              <thead class="bg-gray-50 border-b border-gray-150 text-[10px] text-gray-500 uppercase">
-                <tr>
-                  <th class="py-2 px-3">Waktu</th>
-                  <th class="py-2 px-3">Pengguna</th>
-                  <th class="py-2 px-3">Aktivitas</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                <tr v-for="log in auditLogs" :key="log.id" class="hover:bg-gray-50/50">
-                  <td class="py-2 px-3 text-gray-400 text-[11px] whitespace-nowrap">{{ log.time }}</td>
-                  <td class="py-2 px-3 font-semibold text-gray-900 whitespace-nowrap">{{ log.user }}</td>
-                  <td class="py-2 px-3 text-gray-600">{{ log.action }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div v-else class="space-y-2">
+            <!-- Mobile Card View -->
+            <div class="block md:hidden space-y-2 max-h-48 overflow-y-auto">
+              <div
+                v-for="log in auditLogs"
+                :key="log.id"
+                class="p-2.5 bg-gray-50/70 border border-gray-150 rounded-xl space-y-1 text-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-gray-900">{{ log.user }}</span>
+                  <span class="text-[10px] text-gray-400 font-mono">{{ log.time }}</span>
+                </div>
+                <p class="text-gray-600 text-[11px]">{{ log.action }}</p>
+              </div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <div class="hidden md:block border border-gray-150 rounded-xl overflow-hidden max-h-48 overflow-y-auto text-xs">
+              <table class="w-full text-left">
+                <thead class="bg-gray-50 border-b border-gray-150 text-[10px] text-gray-500 uppercase">
+                  <tr>
+                    <th class="py-2 px-3">Waktu</th>
+                    <th class="py-2 px-3">Pengguna</th>
+                    <th class="py-2 px-3">Aktivitas</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-for="log in auditLogs" :key="log.id" class="hover:bg-gray-50/50">
+                    <td class="py-2 px-3 text-gray-400 text-[11px] whitespace-nowrap">{{ log.time }}</td>
+                    <td class="py-2 px-3 font-semibold text-gray-900 whitespace-nowrap">{{ log.user }}</td>
+                    <td class="py-2 px-3 text-gray-600">{{ log.action }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -270,7 +289,7 @@ import {
   CheckCircle2 as CheckCircle2Icon,
   UserPlus as UserPlusIcon,
   RefreshCw as RefreshCwIcon,
-  X as XIcon
+  X as XIcon,
 } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 

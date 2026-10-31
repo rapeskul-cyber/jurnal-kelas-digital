@@ -35,7 +35,7 @@
           <CheckCircle2Icon class="w-4 h-4 text-emerald-600" />
           <span>{{ checkInMsg }}</span>
         </div>
-        <button @click="checkInMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="checkInMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <!-- 4 Stat Cards -->
@@ -47,7 +47,7 @@
       </div>
 
       <!-- Diagram Kehadiran Card -->
-      <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-4">
+      <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-4">
         <div>
           <h3 class="text-sm font-bold text-gray-900">Diagram Kehadiran</h3>
           <p class="text-xs text-gray-400 mt-0.5">
@@ -104,7 +104,7 @@
             </div>
           </div>
 
-          <!-- Weekly Bar Chart -->
+          <!-- Weekly Bar Chart (Dihitung Real-time dari Database) -->
           <div class="flex flex-col justify-between">
             <h4 class="text-xs font-bold text-gray-700 mb-4">Kehadiran per Minggu</h4>
             <div class="flex-1 flex items-end justify-around gap-4 pt-6 pb-2 border-b border-gray-100 min-h-[180px]">
@@ -113,7 +113,7 @@
                 <div class="w-7 bg-gray-100 rounded-t-lg h-36 flex items-end overflow-hidden">
                   <div class="w-full bg-emerald-600 rounded-t-lg transition-all duration-500" :style="{ height: w.height + '%' }"></div>
                 </div>
-                <span class="text-[11px] font-bold text-gray-700">5 hr</span>
+                <span class="text-[11px] font-bold text-gray-700">{{ w.count }} hr</span>
               </div>
             </div>
           </div>
@@ -121,7 +121,7 @@
       </div>
 
       <!-- Riwayat Kehadiran Terperinci Table -->
-      <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-4">
+      <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 class="text-sm font-bold text-gray-900">Riwayat Kehadiran Terperinci</h3>
@@ -137,12 +137,47 @@
               <option value="HADIR">Hadir</option>
               <option value="SAKIT">Sakit</option>
               <option value="IZIN">Izin</option>
-              <option value="ALPHA">ALFA</option>
+              <option value="ALPHA">ALFA / Belum Presensi</option>
             </select>
           </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <!-- Mobile Card List View -->
+        <div class="block md:hidden space-y-3 p-4">
+          <div
+            v-for="item in filteredDetails"
+            :key="item.id"
+            class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs space-y-2.5"
+          >
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-gray-900">{{ item.day_date }}</span>
+              <StatusBadge :status="item.status" />
+            </div>
+
+            <div class="p-3 bg-gray-50/70 rounded-xl space-y-1.5 text-xs text-gray-600">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400">Mapel:</span>
+                <span class="font-bold text-gray-800">{{ item.subject }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400">Ruangan:</span>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700">{{ item.room }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400">Jam Sekolah:</span>
+                <span class="font-mono text-gray-500">{{ item.hours }}</span>
+              </div>
+            </div>
+
+            <p v-if="item.note" class="text-xs text-gray-500 italic">{{ item.note }}</p>
+          </div>
+          <div v-if="filteredDetails.length === 0" class="py-8 text-center text-gray-400 text-xs">
+            Tidak ada catatan presensi untuk filter ini.
+          </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left text-xs">
             <thead>
               <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100 bg-gray-50/50">
@@ -181,12 +216,19 @@
 </template>
 
 <script setup lang="ts">
-import { Download as DownloadIcon, CheckCircle2 as CheckCircle2Icon } from 'lucide-vue-next'
+import {
+  Download as DownloadIcon,
+  CheckCircle2 as CheckCircle2Icon,
+  X,
+} from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
+import { useToastStore } from '~/stores/toast'
 
 const authStore = useAuthStore()
+const toast = useToastStore()
 const summary = ref<any>(null)
 const details = ref<any[]>([])
+const weeklyRaw = ref<any[]>([])
 const now = new Date()
 const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 const selectedMonth = ref(currentYearMonth)
@@ -211,12 +253,21 @@ const filteredDetails = computed(() => {
   return details.value.filter(d => d.status === statusFilter.value)
 })
 
-const weeklyData = [
-  { week: 'Minggu 1', height: 95 },
-  { week: 'Minggu 2', height: 90 },
-  { week: 'Minggu 3', height: 90 },
-  { week: 'Minggu 4', height: 85 },
-]
+const weeklyData = computed(() => {
+  if (!weeklyRaw.value || weeklyRaw.value.length === 0) {
+    return [
+      { week: 'Minggu 1', height: 0, count: 0 },
+      { week: 'Minggu 2', height: 0, count: 0 },
+      { week: 'Minggu 3', height: 0, count: 0 },
+      { week: 'Minggu 4', height: 0, count: 0 },
+    ]
+  }
+  return weeklyRaw.value.map(w => ({
+    week: w.week,
+    count: w.count ?? 0,
+    height: Math.min(100, Math.round(((w.count ?? 0) / 5) * 100))
+  }))
+})
 
 const fetchHistory = async () => {
   try {
@@ -225,6 +276,7 @@ const fetchHistory = async () => {
     })
     summary.value = res.summary
     details.value = res.details || []
+    weeklyRaw.value = res.weekly || []
   } catch (e) {
     console.error(e)
   }
@@ -242,7 +294,7 @@ const handleSelfCheckIn = async () => {
     checkInMsg.value = res?.message || 'Presensi Mandiri berhasil dicatat!'
     await fetchHistory()
   } catch (e: any) {
-    alert(e?.data?.message || 'Gagal melakukan presensi mandiri.')
+    toast.error(e?.data?.message || 'Gagal melakukan presensi mandiri.')
   } finally {
     isCheckingIn.value = false
   }
@@ -250,7 +302,7 @@ const handleSelfCheckIn = async () => {
 
 const exportCsv = () => {
   if (!filteredDetails.value || filteredDetails.value.length === 0) {
-    alert('Tidak ada data riwayat presensi untuk diekspor pada bulan ini.')
+    toast.warning('Tidak ada data riwayat presensi untuk diekspor pada bulan ini.')
     return
   }
 

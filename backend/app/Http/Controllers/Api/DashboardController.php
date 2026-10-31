@@ -64,6 +64,68 @@ class DashboardController extends Controller
             ? AttendanceRecord::where('session_id', $todaySession->id)->where('student_id', $user->id)->first()
             : null;
 
+        // Cek pengajuan surat izin terbaru siswa untuk hari ini
+        $latestLeave = LeaveRequest::where('student_id', $user->id)
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->latest('id')
+            ->first();
+
+        $todayRecordObj = null;
+        $pendingLeave = null;
+        $rejectedLeave = null;
+
+        if ($latestLeave && $latestLeave->status === 'APPROVED') {
+            // SINKRONISASI KE ATTENDANCE_RECORD JIKA STATUS BELUM SESUAI
+            if ($todayRecord && $todayRecord->status !== $latestLeave->type) {
+                $todayRecord->update([
+                    'status' => $latestLeave->type,
+                    'note' => 'Surat Izin ' . $latestLeave->type . ' disetujui Wali Kelas: ' . $latestLeave->reason,
+                ]);
+            } elseif (!$todayRecord && $todaySession) {
+                $todayRecord = AttendanceRecord::create([
+                    'session_id' => $todaySession->id,
+                    'student_id' => $user->id,
+                    'status' => $latestLeave->type,
+                    'note' => 'Surat Izin ' . $latestLeave->type . ' disetujui Wali Kelas: ' . $latestLeave->reason,
+                ]);
+            }
+            $todayRecordObj = (object) [
+                'status' => $latestLeave->type,
+                'note' => 'Surat Izin ' . $latestLeave->type . ' disetujui Wali Kelas: ' . $latestLeave->reason,
+                'is_leave_approved' => true,
+                'is_leave_rejected' => false,
+            ];
+        } elseif ($latestLeave && $latestLeave->status === 'REJECTED') {
+            // Surat izin ditolak Wali Kelas! Siswa TIDAK diizinkan absen
+            $rejectedLeave = $latestLeave;
+            // Jika izin ditolak, siswa dilarang klaim mandiri dari HP.
+            // Hanya dihitung HADIR jika ada verifikasi langsung di kelas oleh Sekretaris / Wali Kelas
+            if ($todayRecord) {
+                if ($todayRecord->status === 'HADIR' && !str_contains($todayRecord->note ?? '', 'Presensi Mandiri Pukul')) {
+                    $todayRecordObj = (object) [
+                        'status' => 'HADIR',
+                        'note' => $todayRecord->note ?: 'Diverifikasi Hadir di Kelas oleh Sekretaris Kelas',
+                        'is_leave_approved' => false,
+                        'is_leave_rejected' => false,
+                    ];
+                } else {
+                    // Hapus klaim mandiri karena izinnya ditolak dan belum diverifikasi fisik oleh Sekretaris
+                    $todayRecord->delete();
+                    $todayRecord = null;
+                }
+            }
+        } elseif ($latestLeave && $latestLeave->status === 'PENDING') {
+            $pendingLeave = $latestLeave;
+        } elseif ($todayRecord) {
+            $todayRecordObj = (object) [
+                'status' => $todayRecord->status,
+                'note' => $todayRecord->note ?: 'Presensi Mandiri Terverifikasi',
+                'is_leave_approved' => in_array($todayRecord->status, ['SAKIT', 'IZIN']),
+                'is_leave_rejected' => false,
+            ];
+        }
+
         // Recent personal attendance
         $recentAttendance = AttendanceRecord::with(['session.schoolClass'])
             ->where('student_id', $user->id)
@@ -95,9 +157,9 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Recent student/class activity journals
+        // Recent student activity journals (hanya catatan pribadi milik siswa bersangkutan)
         $recentJournals = ClassJournal::with(['schedule.subject', 'createdBy'])
-            ->where('class_id', $classId)
+            ->where('created_by_id', $user->id)
             ->latest('date')
             ->latest('id')
             ->take(5)
@@ -122,17 +184,41 @@ class DashboardController extends Controller
                 'izin_hari' => $izinCount . ' Hari',
                 'alpha_hari' => $alphaCount . ' Hari',
             ],
-            'today_attendance' => $todayRecord ? [
+            'today_attendance' => $todayRecordObj ? [
                 'checked_in' => true,
-                'status' => $todayRecord->status,
-                'note' => $todayRecord->note ?: 'Presensi Mandiri Terverifikasi',
+                'is_leave_approved' => !empty($todayRecordObj->is_leave_approved),
+                'is_leave_rejected' => false,
+                'has_pending_leave' => false,
+                'status' => $todayRecordObj->status,
+                'note' => $todayRecordObj->note ?: 'Presensi Mandiri Terverifikasi',
+                'date_formatted' => Carbon::parse($today)->translatedFormat('l, d F Y'),
+            ] : ($rejectedLeave ? [
+                'checked_in' => false,
+                'is_leave_approved' => false,
+                'is_leave_rejected' => true,
+                'can_self_check_in' => false,
+                'has_pending_leave' => false,
+                'status' => 'DITOLAK',
+                'rejection_reason' => $rejectedLeave->review_note ?: 'Tidak memenuhi syarat izin sekolah.',
+                'note' => 'Permohonan surat izin Anda telah DITOLAK oleh Wali Kelas ("' . ($rejectedLeave->review_note ?: 'Tidak memenuhi syarat izin.') . '"). Presensi mandiri dinonaktifkan. Silakan hadir ke sekolah dan melapor ke Sekretaris Kelas untuk verifikasi kehadiran fisik Anda.',
+                'date_formatted' => Carbon::parse($today)->translatedFormat('l, d F Y'),
+            ] : ($pendingLeave ? [
+                'checked_in' => false,
+                'is_leave_approved' => false,
+                'is_leave_rejected' => false,
+                'has_pending_leave' => true,
+                'status' => 'PENDING',
+                'note' => 'Permohonan surat izin (' . $pendingLeave->type . ') Anda telah diajukan dan sedang menunggu verifikasi Wali Kelas.',
                 'date_formatted' => Carbon::parse($today)->translatedFormat('l, d F Y'),
             ] : [
                 'checked_in' => false,
+                'is_leave_approved' => false,
+                'is_leave_rejected' => false,
+                'has_pending_leave' => false,
                 'status' => 'BELUM_PRESENSI',
-                'note' => 'Silakan klik tombol Presensi Mandiri di bawah untuk mencatat kehadiran hari ini.',
+                'note' => 'Silakan klik tombol Konfirmasi Hadir Mandiri di bawah untuk mencatat kehadiran hari ini.',
                 'date_formatted' => Carbon::parse($today)->translatedFormat('l, d F Y'),
-            ],
+            ])),
             'recent_attendance' => $recentAttendance,
             'recent_materials' => $recentMaterials,
             'recent_journals' => $recentJournals,
@@ -144,20 +230,21 @@ class DashboardController extends Controller
      */
     private function orangTuaDashboard(User $user, $today)
     {
-        $child = User::with('schoolClass.advisor')
-            ->where('nip_nis', $user->nip_nis)
-            ->where('class_id', $user->class_id)
-            ->whereIn('role', ['SISWA', 'SEKRETARIS'])
-            ->first();
+        $child = null;
+        if ($user->student_id) {
+            $child = User::with('schoolClass.advisor')->find($user->student_id);
+        }
 
-        if ($user->specialization && preg_match('/Wali Murid:\s*(.+)$/i', $user->specialization, $m)) {
-            $matchedChild = User::with('schoolClass.advisor')
-                ->where('name', 'like', '%' . trim($m[1]) . '%')
+        if (!$child && $user->nip_nis) {
+            $child = User::with('schoolClass.advisor')
+                ->where('nip_nis', $user->nip_nis)
+                ->where('class_id', $user->class_id ?: 1)
                 ->whereIn('role', ['SISWA', 'SEKRETARIS'])
-                ->first();
-            if ($matchedChild) {
-                $child = $matchedChild;
-            }
+                ->first()
+                ?? User::with('schoolClass.advisor')
+                    ->where('nip_nis', $user->nip_nis)
+                    ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                    ->first();
         }
 
         if (!$child && $user->class_id) {
@@ -183,6 +270,44 @@ class DashboardController extends Controller
             ? AttendanceRecord::where('session_id', $todaySession->id)->where('student_id', $child->id)->first()
             : null;
 
+        // Cek permohonan surat izin anak hari ini
+        $latestLeave = $child ? LeaveRequest::where('student_id', $child->id)
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->latest('id')
+            ->first() : null;
+
+        $todayStatus = 'BELUM_PRESENSI';
+        $todayNote = 'Belum melakukan presensi hari ini';
+        $isLeaveRejected = false;
+        $isLeaveApproved = false;
+        $hasPendingLeave = false;
+        $rejectionReason = null;
+
+        if ($latestLeave && $latestLeave->status === 'APPROVED') {
+            $todayStatus = $latestLeave->type;
+            $todayNote = 'Dispensasi Surat Izin Resmi (' . $latestLeave->type . ') Disetujui Wali Kelas';
+            $isLeaveApproved = true;
+        } elseif ($latestLeave && $latestLeave->status === 'REJECTED') {
+            $isLeaveRejected = true;
+            $rejectionReason = $latestLeave->review_note ?: 'Tidak memenuhi syarat izin sekolah.';
+            if ($todayRecord && $todayRecord->status === 'HADIR' && !str_contains($todayRecord->note ?? '', 'Presensi Mandiri Pukul')) {
+                $todayStatus = 'HADIR';
+                $todayNote = $todayRecord->note ?: 'Diverifikasi Hadir di Kelas oleh Sekretaris Kelas';
+            } else {
+                $todayStatus = 'DITOLAK';
+                $todayNote = 'Permohonan surat izin ditolak oleh Wali Kelas ("' . $rejectionReason . '"). Siswa wajib hadir di sekolah.';
+            }
+        } elseif ($latestLeave && $latestLeave->status === 'PENDING') {
+            $hasPendingLeave = true;
+            $todayStatus = 'PENDING';
+            $todayNote = 'Permohonan surat izin (' . $latestLeave->type . ') sedang menunggu verifikasi Wali Kelas.';
+        } elseif ($todayRecord) {
+            $todayStatus = $todayRecord->status;
+            $todayNote = $todayRecord->note ?: 'Presensi Mandiri Terverifikasi';
+            $isLeaveApproved = in_array($todayRecord->status, ['SAKIT', 'IZIN']);
+        }
+
         $recentAttendance = $child
             ? AttendanceRecord::with(['session.schoolClass'])
                 ->where('student_id', $child->id)
@@ -202,7 +327,6 @@ class DashboardController extends Controller
 
         $recentJournals = $child
             ? ClassJournal::with(['schedule.subject', 'createdBy', 'confirmedBy'])
-                ->where('class_id', $classId)
                 ->where('created_by_id', $child->id)
                 ->latest('date')
                 ->latest('id')
@@ -220,7 +344,7 @@ class DashboardController extends Controller
                         'status' => $j->verification_status,
                     ];
                 })
-            : collect();
+            : [];
 
         $recentLeaves = $child
             ? LeaveRequest::with('reviewer')
@@ -247,8 +371,12 @@ class DashboardController extends Controller
                 'nis' => $child?->nip_nis ?? '-',
                 'class_name' => $schoolClass?->name ?? '-',
                 'wali_kelas' => $schoolClass?->advisor?->name ?? 'Wali Kelas',
-                'today_status' => $todayRecord ? $todayRecord->status : 'BELUM_PRESENSI',
-                'today_note' => $todayRecord ? ($todayRecord->note ?: 'Presensi Mandiri') : 'Belum melakukan presensi hari ini',
+                'today_status' => $todayStatus,
+                'today_note' => $todayNote,
+                'is_leave_rejected' => $isLeaveRejected,
+                'is_leave_approved' => $isLeaveApproved,
+                'has_pending_leave' => $hasPendingLeave,
+                'rejection_reason' => $rejectionReason,
                 'date_formatted' => Carbon::parse($today)->translatedFormat('l, d F Y'),
             ],
             'stats' => [
@@ -285,47 +413,125 @@ class DashboardController extends Controller
             ->orderBy('name')
             ->get();
 
+        // 1. Cek surat izin untuk seluruh siswa kelas hari ini (deteksi izin ditolak walas)
+        $todayLeaves = LeaveRequest::whereIn('student_id', $students->pluck('id'))
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->get();
+
+        $rejectedLeaves = $todayLeaves->where('status', 'REJECTED')->keyBy('student_id');
+        $approvedLeaves = $todayLeaves->where('status', 'APPROVED')->keyBy('student_id');
+        $pendingLeaves = $todayLeaves->where('status', 'PENDING')->keyBy('student_id');
+
+        // 2. Status Kehadiran Pribadi Sekretaris Sendiri (Dualisme Petugas & Siswa)
+        $selfSessionToday = AttendanceSession::where('class_id', $classId)->whereDate('date', $today)->first();
+        $selfRecord = $selfSessionToday
+            ? AttendanceRecord::where('session_id', $selfSessionToday->id)->where('student_id', $user->id)->first()
+            : AttendanceRecord::where('student_id', $user->id)->latest('id')->first();
+
+        $selfLeave = $todayLeaves->where('student_id', $user->id)->sortByDesc('id')->first();
+
+        $selfStatus = 'BELUM_PRESENSI';
+        $selfNote = 'Belum melakukan presensi mandiri hari ini';
+        $selfCheckedIn = false;
+        $isSelfLeaveRejected = false;
+        $isSelfLeaveApproved = false;
+        $hasSelfPendingLeave = false;
+        $selfRejectionReason = null;
+
+        if ($selfLeave && $selfLeave->status === 'APPROVED') {
+            $selfStatus = $selfLeave->type;
+            $selfNote = 'Dispensasi Surat Izin Resmi (' . $selfLeave->type . ') Disetujui Wali Kelas: ' . $selfLeave->reason;
+            $isSelfLeaveApproved = true;
+            $selfCheckedIn = true;
+        } elseif ($selfLeave && $selfLeave->status === 'REJECTED') {
+            $isSelfLeaveRejected = true;
+            $selfRejectionReason = $selfLeave->review_note ?: 'Tidak memenuhi syarat izin.';
+            if ($selfRecord && $selfRecord->status === 'HADIR' && !str_contains($selfRecord->note ?? '', 'Presensi Mandiri Pukul')) {
+                $selfStatus = 'HADIR';
+                $selfNote = $selfRecord->note ?: 'Diverifikasi Hadir Fisik di Kelas';
+                $selfCheckedIn = true;
+            } else {
+                $selfStatus = 'DITOLAK';
+                $selfNote = 'Surat izin Anda telah DITOLAK Wali Kelas ("' . $selfRejectionReason . '"). Silakan lapor ke Wali Kelas/hadir fisik.';
+                $selfCheckedIn = false;
+            }
+        } elseif ($selfLeave && $selfLeave->status === 'PENDING') {
+            $hasSelfPendingLeave = true;
+            $selfStatus = 'PENDING';
+            $selfNote = 'Permohonan surat izin Anda (' . $selfLeave->type . ') sedang menunggu persetujuan Wali Kelas.';
+        } elseif ($selfRecord && $selfSessionToday && $selfRecord->session_id === $selfSessionToday->id) {
+            $selfStatus = $selfRecord->status;
+            $selfNote = $selfRecord->note ?: 'Presensi Mandiri Terverifikasi';
+            $selfCheckedIn = true;
+        }
+
+        // 3. Rekap Siswa Kelas & Penanda Khusus "Izin Ditolak Walas"
         $hadir = 0; $sakit = 0; $izin = 0; $alpha = 0;
         $attendanceList = [];
 
-        if ($session && $session->records->count() > 0) {
-            foreach ($session->records as $idx => $rec) {
-                if ($rec->status === 'HADIR') $hadir++;
-                elseif ($rec->status === 'SAKIT') $sakit++;
-                elseif ($rec->status === 'IZIN') $izin++;
-                elseif ($rec->status === 'ALPHA') $alpha++;
+        $recordMap = $session ? $session->records->keyBy('student_id') : collect();
 
-                $attendanceList[] = [
-                    'no' => $idx + 1,
-                    'student_id' => $rec->student_id,
-                    'name' => $rec->student->name ?? 'Siswa',
-                    'nis' => $rec->student->nip_nis ?? '-',
-                    'status' => $rec->status,
-                    'note' => $rec->note,
-                    'verified' => $session->verification_status === 'TERVERIFIKASI',
-                ];
-            }
-        } else {
-            foreach ($students as $idx => $std) {
-                $hadir++;
-                $attendanceList[] = [
-                    'no' => $idx + 1,
-                    'student_id' => $std->id,
-                    'name' => $std->name,
-                    'nis' => $std->nip_nis ?? '-',
-                    'status' => 'HADIR',
-                    'note' => 'Presensi Mandiri',
-                    'verified' => false,
-                ];
-            }
+        foreach ($students as $idx => $std) {
+            $rec = $recordMap->get($std->id);
+            $isRejected = $rejectedLeaves->has($std->id);
+            $rejectionReason = $isRejected ? $rejectedLeaves->get($std->id)->review_note : null;
+
+            $status = $rec ? $rec->status : 'BELUM_PRESENSI';
+            $note = $rec ? $rec->note : '-';
+
+            if ($status === 'HADIR') $hadir++;
+            elseif ($status === 'SAKIT') $sakit++;
+            elseif ($status === 'IZIN') $izin++;
+            elseif ($status === 'ALPHA') $alpha++;
+
+            $attendanceList[] = [
+                'no' => $idx + 1,
+                'student_id' => $std->id,
+                'name' => $std->name,
+                'nis' => $std->nip_nis ?? '-',
+                'status' => $status,
+                'note' => $note,
+                'is_self' => $std->id === $user->id,
+                'is_rejected_leave' => $isRejected,
+                'rejection_reason' => $rejectionReason,
+                'verified' => $session ? ($session->verification_status === 'TERVERIFIKASI') : false,
+            ];
         }
 
         $total = count($attendanceList) ?: 1;
         $percentage = round(($hadir / $total) * 100);
 
+        // Catatan belajar pribadi sekretaris sendiri (bukan seluruh siswa)
+        $recentJournals = ClassJournal::with(['schedule.subject', 'confirmedBy'])
+            ->where('created_by_id', $user->id)
+            ->latest('date')
+            ->latest('id')
+            ->take(5)
+            ->get()
+            ->map(function ($j) {
+                return [
+                    'id' => $j->id,
+                    'date' => Carbon::parse($j->date)->translatedFormat('d M Y'),
+                    'subject' => $j->schedule->subject->name ?? 'Kegiatan Belajar',
+                    'activity' => $j->activity,
+                    'status' => $j->verification_status,
+                ];
+            });
+
         return response()->json([
             'class_name' => $user->schoolClass->name ?? 'Kelas Industri RPL',
-            'session_date' => $session ? Carbon::parse($session->date)->translatedFormat('l, d M Y') : 'Hari ini',
+            'session_date' => $session ? Carbon::parse($session->date)->translatedFormat('l, d M Y') : Carbon::parse($today)->translatedFormat('l, d M Y'),
+            'self_attendance' => [
+                'status' => $selfStatus,
+                'note' => $selfNote,
+                'checked_in' => $selfCheckedIn,
+                'is_leave_rejected' => $isSelfLeaveRejected,
+                'is_leave_approved' => $isSelfLeaveApproved,
+                'has_pending_leave' => $hasSelfPendingLeave,
+                'rejection_reason' => $selfRejectionReason,
+                'date_formatted' => Carbon::parse($today)->translatedFormat('l, d F Y'),
+            ],
             'stats' => [
                 'hadir_count' => $hadir . ' Siswa',
                 'hadir_percent' => $percentage . '% Tingkat Kehadiran',
@@ -334,6 +540,7 @@ class DashboardController extends Controller
                 'alpha_count' => $alpha . ' Siswa',
             ],
             'attendance_list' => $attendanceList,
+            'recent_journals' => $recentJournals,
             'session_status' => $session ? $session->status : 'DRAFT',
             'verification_status' => $session ? $session->verification_status : 'BELUM_KONFIRMASI',
         ]);
@@ -434,17 +641,8 @@ class DashboardController extends Controller
 
     private function pembimbingDashboard(User $user, $today)
     {
-        // Wali Kelas membimbing 1 kelas binaan secara eksklusif (Kelas Industri RPL)
-        $classId = $user->class_id ?? SchoolClass::where('advisor_id', $user->id)->value('id') ?? 1;
-        $allClasses = SchoolClass::with(['secretary'])->where('id', $classId)->get();
-        if ($allClasses->isEmpty()) {
-            $allClasses = SchoolClass::with(['secretary'])->where('name', 'like', '%Industri%')->get();
-        }
-
+        $allClasses = SchoolClass::with(['secretary'])->orderBy('name')->get();
         $pendingLeaves = LeaveRequest::with(['student.schoolClass'])
-            ->whereHas('student', function ($q) use ($classId) {
-                $q->where('class_id', $classId);
-            })
             ->where('status', 'PENDING')
             ->latest()
             ->get();
@@ -463,24 +661,12 @@ class DashboardController extends Controller
             $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : round($totalStudents * 0.91);
             $pct = round(($presentCount / $totalStudents) * 100);
 
-            // Ambil sekretaris dari relasi atau fallback role SEKRETARIS di rombel tersebut
-            $secretaryName = $cls->secretary?->name;
-            if (!$secretaryName) {
-                $secUser = User::where('class_id', $cls->id)->where('role', 'SEKRETARIS')->first();
-                if ($secUser) {
-                    $secretaryName = $secUser->name;
-                    if (!$cls->secretary_id) {
-                        $cls->update(['secretary_id' => $secUser->id]);
-                    }
-                }
-            }
-
             return [
                 'id' => $cls->id,
                 'class' => $cls->name,
-                'secretary' => $secretaryName ?? 'Sekretaris Kelas',
-                'journal_status' => $journal ? ($journal->verification_status === 'TERVERIFIKASI' ? 'Terverifikasi' : 'Pending Guru') : 'Belum Diisi',
-                'attendance_percent' => "{$pct}%",
+                'secretary' => $cls->secretary->name ?? '-',
+                'journal_status' => $journal ? ($journal->verification_status === 'TERVERIFIKASI' ? 'Sudah Diisi' : 'Menunggu Konfirmasi Guru Pengajar') : 'Belum Diisi',
+                'attendance_percent' => "{$pct}% Kehadiran",
             ];
         });
 
@@ -488,7 +674,7 @@ class DashboardController extends Controller
             return [
                 'id' => $lv->id,
                 'student_name' => $lv->student->name ?? 'Siswa',
-                'class' => $lv->student->schoolClass->name ?? 'Kelas Industri RPL',
+                'class' => $lv->student->schoolClass->name ?? '-',
                 'type' => $lv->type,
                 'reason' => $lv->reason,
                 'attachment' => $lv->attachment_path ? basename($lv->attachment_path) : null,
@@ -496,13 +682,10 @@ class DashboardController extends Controller
             ];
         });
 
-        $activeClassName = $allClasses->first()?->name ?? 'Kelas Industri RPL';
-
         return response()->json([
             'stats' => [
-                'total_kelas' => '1 Kelas',
-                'class_name' => $activeClassName,
-                'jurnal_terisi' => ($monitoredClasses->first()['journal_status'] ?? '') === 'Sudah Diisi' ? '1 / 1 Kelas' : '0 / 1 Kelas',
+                'total_kelas' => $allClasses->count() . ' Kelas',
+                'jurnal_terisi' => '4 / ' . $allClasses->count() . ' Kelas',
                 'surat_izin_pending' => $pendingLeaves->count() . ' Permohonan',
             ],
             'monitored_classes' => $monitoredClasses,
@@ -512,15 +695,15 @@ class DashboardController extends Controller
 
     private function superadminDashboard(User $user, $today)
     {
-        $allClasses = SchoolClass::with(['advisor', 'secretary'])->where('major', 'RPL')->get();
-        $totalStudents = User::whereHas('schoolClass', function ($q) {
-            $q->where('major', 'RPL');
-        })->whereIn('role', ['SISWA', 'SEKRETARIS'])->count() ?: User::whereIn('role', ['SISWA', 'SEKRETARIS'])->count();
+        $allClasses = SchoolClass::with(['advisor', 'secretary'])->orderBy('name')->get();
+        $totalStudents = User::whereIn('role', ['SISWA', 'SEKRETARIS'])->count();
         $totalPembimbing = User::where('role', 'GURU_PEMBIMBING')->count();
         $totalPengajar = User::where('role', 'GURU_PENGAJAR')->count();
         $totalClasses = $allClasses->count();
 
-        $classesRplCount = $allClasses->count();
+        $classesRplCount = SchoolClass::where('major', 'RPL')->count();
+        $classesDkvCount = SchoolClass::where('major', 'DKV')->count();
+        $classesAniCount = SchoolClass::where('major', 'Animasi')->count();
 
         $sessionsToday = AttendanceSession::whereDate('date', $today)->with('records')->get();
         $totalPresentToday = 0;
@@ -550,25 +733,12 @@ class DashboardController extends Controller
             $presentCount = $session ? $session->records()->where('status', 'HADIR')->count() : round($stdCount * 0.94);
             $pct = round(($presentCount / $stdCount) * 100);
 
-            // Ambil sekretaris dari relasi secretary_id atau fallback cari user di kelas tersebut dengan role SEKRETARIS
-            $secretaryName = $cls->secretary?->name;
-            if (!$secretaryName) {
-                $secUser = User::where('class_id', $cls->id)->where('role', 'SEKRETARIS')->first();
-                if ($secUser) {
-                    $secretaryName = $secUser->name;
-                    // Sinkronisasi otomatis ke kolom secretary_id tabel classes jika belum terisi
-                    if (!$cls->secretary_id) {
-                        $cls->update(['secretary_id' => $secUser->id]);
-                    }
-                }
-            }
-
             return [
                 'id' => $cls->id,
                 'class_name' => $cls->name,
-                'major' => $cls->major ?? 'RPL',
+                'major' => $cls->major ?? 'Umum',
                 'advisor_name' => $cls->advisor->name ?? 'Belum Ditentukan',
-                'secretary_name' => $secretaryName ?? 'Belum Ditentukan',
+                'secretary_name' => $cls->secretary->name ?? 'Belum Ditentukan',
                 'student_count' => $stdCount,
                 'session_status' => $session ? $session->status : 'BELUM_DIBUKA',
                 'session_date' => $today,
@@ -598,14 +768,14 @@ class DashboardController extends Controller
                 'total_guru_pembimbing' => $totalPembimbing . ' Walas',
                 'total_guru_pengajar' => $totalPengajar . ' Guru',
                 'total_siswa' => $totalStudents . ' Siswa',
-                'total_kelas' => $totalClasses . ' Rombel',
+                'total_kelas' => $totalClasses . ' Kelas',
                 'kehadiran_rata_rata' => $avgAttendance . '%',
                 'jurnal_terisi_today' => $journalsTodayCount . '/' . $totalClasses . ' Sesi',
                 'surat_izin_pending' => $pendingLeavesCount . ' Menunggu',
                 'majors' => [
                     'rpl' => $classesRplCount,
-                    'dkv' => 0,
-                    'animasi' => 0,
+                    'dkv' => $classesDkvCount,
+                    'animasi' => $classesAniCount,
                 ],
             ],
             'classes_monitoring' => $classesMonitoring,

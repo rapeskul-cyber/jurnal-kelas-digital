@@ -24,7 +24,7 @@ class UserController extends Controller
         $role = $request->input('role');
         $category = $request->input('category'); // e.g. GURU, SISWA
 
-        $query = User::with(['schoolClass', 'guidedClass', 'taughtSubjects'])->orderBy('name');
+        $query = User::with(['schoolClass', 'guidedClass', 'taughtSubjects', 'student.schoolClass', 'parentUser'])->orderBy('name');
 
         // GURU_PEMBIMBING: ONLY see students in their own guided class!
         if ($currentUser->role === 'GURU_PEMBIMBING') {
@@ -75,7 +75,30 @@ class UserController extends Controller
                 'email' => 'required|email|unique:users,email',
                 'phone' => 'nullable|string',
                 'nip_nis' => 'nullable|string',
+                'parent_name' => 'nullable|string|max:255',
+                'parent_phone' => 'nullable|string|max:30',
+                'parent_email' => 'nullable|email',
             ]);
+
+            // Validasi Kuota Sekretaris (Maksimal 2 orang per kelas)
+            if ($request->role === 'SEKRETARIS') {
+                $secCount = User::where('class_id', $classId)->where('role', 'SEKRETARIS')->count();
+                if ($secCount >= 2 && !$request->filled('replace_secretary_id')) {
+                    $existingSecs = User::where('class_id', $classId)->where('role', 'SEKRETARIS')->get(['id', 'name']);
+                    return response()->json([
+                        'message' => 'Kuota sekretaris kelas sudah penuh (maksimal 2 orang). Pilih salah satu sekretaris lama untuk digantikan.',
+                        'secretaries' => $existingSecs,
+                        'requires_replacement' => true
+                    ], 422);
+                }
+
+                if ($request->filled('replace_secretary_id')) {
+                    User::where('id', $request->replace_secretary_id)
+                        ->where('class_id', $classId)
+                        ->where('role', 'SEKRETARIS')
+                        ->update(['role' => 'SISWA']);
+                }
+            }
 
             $user = User::create([
                 'name' => $request->name,
@@ -92,6 +115,26 @@ class UserController extends Controller
                 SchoolClass::where('id', $classId)->update(['secretary_id' => $user->id]);
             }
 
+            // Integrasi Akun Orang Tua oleh Wali Kelas (Dibuat otomatis jika data ortu diisi)
+            if ($request->filled('parent_name') || $request->filled('parent_phone') || $request->filled('parent_email')) {
+                $cleanName = preg_replace('/[^a-zA-Z0-9]/', '', $user->name);
+                $defaultParentEmail = 'ortu.' . strtolower($cleanName ?: 'siswa' . $user->id) . '@sekolah.sch.id';
+                $parentEmail = $request->input('parent_email') ?: $defaultParentEmail;
+
+                User::create([
+                    'name' => $request->input('parent_name') ?: 'Bapak/Ibu ' . $user->name,
+                    'email' => $parentEmail,
+                    'phone' => $request->input('parent_phone'),
+                    'password' => Hash::make('password123'),
+                    'role' => 'ORANG_TUA',
+                    'student_id' => $user->id,
+                    'class_id' => $classId,
+                    'nip_nis' => $user->nip_nis,
+                    'specialization' => 'Wali Murid: ' . $user->name,
+                    'is_active' => true,
+                ]);
+            }
+
             AuditLog::create([
                 'user_id' => $currentUser->id,
                 'action' => "Menambahkan murid kelas: {$user->name} ({$user->role})",
@@ -99,8 +142,8 @@ class UserController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Murid kelas baru berhasil ditambahkan',
-                'user' => $user->load('schoolClass'),
+                'message' => 'Murid kelas baru berhasil ditambahkan beserta akun Orang Tua',
+                'user' => $user->load(['schoolClass', 'parentUser']),
             ]);
         }
 
@@ -112,20 +155,36 @@ class UserController extends Controller
             'phone' => 'nullable|string',
             'nip_nis' => 'nullable|string',
             'class_id' => 'nullable|exists:classes,id',
+            'student_id' => 'nullable|exists:users,id',
             'specialization' => 'nullable|string|max:100',
             'subject_id' => 'nullable|exists:subjects,id',
         ]);
 
         $defaultPassword = 'password123';
 
+        $studentId = $request->input('student_id');
+        $classId = $request->input('class_id');
+        $nipNis = $request->input('nip_nis');
+        $spec = $request->input('specialization');
+
+        if ($request->role === 'ORANG_TUA' && $studentId) {
+            $student = User::find($studentId);
+            if ($student) {
+                $classId = $student->class_id ?: $classId;
+                $nipNis = $nipNis ?: $student->nip_nis;
+                $spec = $spec ?: "Wali Murid: {$student->name}";
+            }
+        }
+
         $user = User::create([
             'name' => $request->name,
             'role' => $request->role,
             'email' => $request->email,
             'phone' => $request->phone,
-            'nip_nis' => $request->nip_nis,
-            'class_id' => $request->class_id,
-            'specialization' => $request->specialization,
+            'nip_nis' => $nipNis,
+            'class_id' => $classId,
+            'student_id' => $studentId,
+            'specialization' => $spec,
             'password' => Hash::make($defaultPassword),
             'is_active' => true,
         ]);
@@ -248,29 +307,123 @@ class UserController extends Controller
                 'phone' => 'nullable|string',
                 'nip_nis' => 'nullable|string',
                 'role' => 'sometimes|required|in:SISWA,SEKRETARIS',
+                'parent_name' => 'nullable|string|max:255',
+                'parent_phone' => 'nullable|string|max:30',
+                'parent_email' => 'nullable|email',
+                'parent_password' => 'nullable|string|min:6',
+                'replace_secretary_id' => 'nullable|exists:users,id',
             ]);
 
             $oldRole = $user->role;
+
+            // 1. Validasi Aturan Kuota Sekretaris (Maksimal 2 orang, Minimal 1 orang)
+            if ($request->has('role')) {
+                $newRole = $request->role;
+
+                if ($newRole === 'SEKRETARIS' && $oldRole !== 'SEKRETARIS') {
+                    // Cek jumlah sekretaris yang sedang aktif di kelas ini selain siswa ini
+                    $activeSecs = User::where('class_id', $classId)
+                        ->where('role', 'SEKRETARIS')
+                        ->where('id', '!=', $user->id)
+                        ->get();
+
+                    if ($activeSecs->count() >= 2 && !$request->filled('replace_secretary_id')) {
+                        return response()->json([
+                            'message' => 'Kuota sekretaris kelas sudah penuh (maksimal 2 orang). Pilih salah satu sekretaris lama yang akan digantikan menjadi Siswa Biasa.',
+                            'secretaries' => $activeSecs->map(fn($s) => ['id' => $s->id, 'name' => $s->name]),
+                            'requires_replacement' => true,
+                        ], 422);
+                    }
+
+                    if ($request->filled('replace_secretary_id')) {
+                        // Turunkan sekretaris lama yang dipilih menjadi Siswa Biasa
+                        User::where('id', $request->replace_secretary_id)
+                            ->where('class_id', $classId)
+                            ->where('role', 'SEKRETARIS')
+                            ->update(['role' => 'SISWA']);
+                    }
+                } elseif ($newRole === 'SISWA' && $oldRole === 'SEKRETARIS') {
+                    // Cek apakah ini satu-satunya sekretaris di kelas
+                    $remainingSecs = User::where('class_id', $classId)
+                        ->where('role', 'SEKRETARIS')
+                        ->where('id', '!=', $user->id)
+                        ->count();
+
+                    if ($remainingSecs < 1 && !$request->boolean('force_demote')) {
+                        return response()->json([
+                            'message' => 'Tidak dapat mengubah sekretaris menjadi siswa biasa. Kelas wajib memiliki minimal 1 orang sekretaris aktif untuk operasional presensi & agenda KBM! Silakan tunjuk sekretaris pengganti terlebih dahulu.',
+                            'min_secretaries_violation' => true,
+                        ], 422);
+                    }
+                }
+            }
+
             $user->update($request->only(['name', 'email', 'phone', 'nip_nis', 'role']));
 
-            // Update secretary assignment on class
+            // Update penanggung jawab sekretaris di data tabel kelas
             if ($request->has('role')) {
                 if ($request->role === 'SEKRETARIS') {
                     SchoolClass::where('id', $classId)->update(['secretary_id' => $user->id]);
                 } elseif ($oldRole === 'SEKRETARIS' && $request->role === 'SISWA') {
-                    SchoolClass::where('id', $classId)->where('secretary_id', $user->id)->update(['secretary_id' => null]);
+                    $otherSec = User::where('class_id', $classId)->where('role', 'SEKRETARIS')->where('id', '!=', $user->id)->first();
+                    SchoolClass::where('id', $classId)->update(['secretary_id' => $otherSec?->id]);
+                }
+            }
+
+            // 2. Integrasi & Pembaruan Akun Orang Tua oleh Wali Kelas
+            if ($request->filled('parent_name') || $request->filled('parent_phone') || $request->filled('parent_email') || $request->filled('parent_password')) {
+                $parent = User::where('role', 'ORANG_TUA')
+                    ->where(function($q) use ($user) {
+                        $q->where('student_id', $user->id)
+                          ->orWhere('nip_nis', $user->nip_nis);
+                    })
+                    ->first();
+
+                $cleanName = preg_replace('/[^a-zA-Z0-9]/', '', $user->name);
+                $defaultParentEmail = 'ortu.' . strtolower($cleanName ?: 'siswa' . $user->id) . '@sekolah.sch.id';
+                $parentEmail = $request->input('parent_email') ?: ($parent ? $parent->email : $defaultParentEmail);
+
+                if (!$parent) {
+                    $parent = User::create([
+                        'name' => $request->input('parent_name') ?: 'Bapak/Ibu ' . $user->name,
+                        'email' => $parentEmail,
+                        'phone' => $request->input('parent_phone'),
+                        'password' => Hash::make($request->input('parent_password', 'password123')),
+                        'role' => 'ORANG_TUA',
+                        'student_id' => $user->id,
+                        'class_id' => $classId,
+                        'nip_nis' => $user->nip_nis,
+                        'specialization' => 'Wali Murid: ' . $user->name,
+                        'is_active' => true,
+                    ]);
+                } else {
+                    $parentData = [
+                        'name' => $request->input('parent_name') ?: $parent->name,
+                        'phone' => $request->input('parent_phone') !== null ? $request->input('parent_phone') : $parent->phone,
+                        'student_id' => $user->id,
+                        'class_id' => $classId,
+                        'nip_nis' => $user->nip_nis,
+                        'specialization' => 'Wali Murid: ' . $user->name,
+                    ];
+                    if ($request->filled('parent_email') && $request->parent_email !== $parent->email) {
+                        $parentData['email'] = $request->parent_email;
+                    }
+                    if ($request->filled('parent_password')) {
+                        $parentData['password'] = Hash::make($request->parent_password);
+                    }
+                    $parent->update($parentData);
                 }
             }
 
             AuditLog::create([
                 'user_id' => $currentUser->id,
-                'action' => "Memperbarui data murid kelas: {$user->name} ({$user->role})",
+                'action' => "Memperbarui data murid & akun orang tua: {$user->name} ({$user->role})",
                 'ip_address' => $request->ip(),
             ]);
 
             return response()->json([
-                'message' => 'Data murid kelas berhasil diperbarui',
-                'user' => $user->load('schoolClass'),
+                'message' => 'Data murid kelas dan akun orang tua berhasil diperbarui',
+                'user' => $user->load(['schoolClass', 'parentUser']),
             ]);
         }
 
@@ -281,12 +434,25 @@ class UserController extends Controller
             'phone' => 'nullable|string',
             'nip_nis' => 'nullable|string',
             'class_id' => 'nullable|exists:classes,id',
+            'student_id' => 'nullable|exists:users,id',
             'specialization' => 'nullable|string|max:100',
             'subject_id' => 'nullable|exists:subjects,id',
             'role' => 'sometimes|required|in:SISWA,SEKRETARIS,GURU_PENGAJAR,GURU_PEMBIMBING,ORANG_TUA,SUPERADMIN',
         ]);
 
-        $user->update($request->only(['name', 'email', 'phone', 'nip_nis', 'class_id', 'specialization', 'role']));
+        $updateData = $request->only(['name', 'email', 'phone', 'nip_nis', 'class_id', 'student_id', 'specialization', 'role']);
+        
+        $targetRole = $request->input('role', $user->role);
+        if ($targetRole === 'ORANG_TUA' && $request->has('student_id')) {
+            $student = $request->student_id ? User::find($request->student_id) : null;
+            if ($student) {
+                $updateData['class_id'] = $student->class_id ?: $user->class_id;
+                $updateData['nip_nis'] = $student->nip_nis ?: $user->nip_nis;
+                $updateData['specialization'] = "Wali Murid: {$student->name}";
+            }
+        }
+
+        $user->update($updateData);
 
         if ($user->role === 'GURU_PEMBIMBING' && $request->filled('class_id')) {
             SchoolClass::where('id', $request->class_id)->update(['advisor_id' => $user->id]);
@@ -304,7 +470,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Data pengguna berhasil diperbarui',
-            'user' => $user->load(['schoolClass', 'guidedClass', 'taughtSubjects']),
+            'user' => $user->load(['schoolClass', 'guidedClass', 'taughtSubjects', 'student']),
         ]);
     }
 

@@ -22,6 +22,30 @@ class SystemController extends Controller
     }
 
     // ==========================================
+    // 0. PUBLIC APP INFO (SaaS White-labeling)
+    // ==========================================
+
+    public function getPublicInfo()
+    {
+        $activeTerm = \App\Models\Term::where('is_active', true)->first();
+        $majors = \App\Models\SchoolClass::whereNotNull('major')
+            ->distinct()
+            ->pluck('major')
+            ->values();
+
+        return response()->json([
+            'school_name' => Setting::get('school_name', 'SMK Digital Terpadu'),
+            'school_npsn' => Setting::get('school_npsn', ''),
+            'school_address' => Setting::get('school_address', ''),
+            'school_logo_url' => Setting::get('school_logo_url', '/images/logo-smkn71.png'),
+            'headmaster_name' => Setting::get('headmaster_name', ''),
+            'active_term' => $activeTerm ? $activeTerm->name : '2026/2027 • Semester Ganjil',
+            'majors' => $majors->isNotEmpty() ? $majors : ['RPL'],
+            'enable_demo_login' => Setting::get('enable_demo_login', 'true') === 'true',
+        ]);
+    }
+
+    // ==========================================
     // 1. SETTINGS
     // ==========================================
 
@@ -69,10 +93,14 @@ class SystemController extends Controller
         $waDetails = null;
 
         try {
-            $resp = Http::timeout(3)->withHeaders(['Authorization' => "Bearer {$token}"])->get("{$baseUrl}/api/device/status");
+            $resp = Http::timeout(3)->withHeaders([
+                'Authorization' => "Bearer {$token}",
+                'x-admin-token' => $token,
+            ])->get("{$baseUrl}/api/device/status");
             if ($resp->successful()) {
                 $json = $resp->json();
-                $waStatus = ($json['connected'] ?? false) ? 'connected' : 'disconnected';
+                $data = $json['data'] ?? $json;
+                $waStatus = (($data['status'] ?? '') === 'connected' || ($json['connected'] ?? false) === true) ? 'connected' : 'disconnected';
                 $waDetails = $json;
             }
         } catch (\Exception $e) {

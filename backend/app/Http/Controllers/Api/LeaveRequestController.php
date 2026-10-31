@@ -10,6 +10,7 @@ use App\Models\AttendanceRecord;
 use App\Models\Notification;
 use App\Models\AuditLog;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class LeaveRequestController extends Controller
@@ -26,7 +27,8 @@ class LeaveRequestController extends Controller
         if ($user && $user->role === 'SISWA') {
             $query->where('student_id', $user->id);
         } elseif ($user && $user->role === 'ORANG_TUA') {
-            $child = User::where('nip_nis', $user->nip_nis)->where('role', 'SISWA')->first()
+            $child = ($user->student_id ? User::find($user->student_id) : null)
+                ?? User::where('nip_nis', $user->nip_nis)->where('role', 'SISWA')->first()
                 ?? User::where('class_id', $user->class_id)->where('role', 'SISWA')->first();
             if ($child) {
                 $query->where('student_id', $child->id);
@@ -77,14 +79,42 @@ class LeaveRequestController extends Controller
             'end_date' => 'required|date',
             'reason' => 'required|string',
             'signature' => 'nullable|string',
+            'file' => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png|mimetypes:application/pdf,image/jpeg,image/png',
         ]);
 
         // Siswa langsung mengajukan izin atas namanya sendiri tanpa lewat Sekretaris
         $studentId = ($user->role === 'SISWA') ? $user->id : ($request->student_id ?: $user->id);
 
+        // Validasi: Cegah permohonan ganda jika sudah ada surat izin yang DISETUJUI atau PENDING yang tumpang tindih
+        $overlapping = LeaveRequest::where('student_id', $studentId)
+            ->whereIn('status', ['APPROVED', 'PENDING'])
+            ->where(function ($q) use ($request) {
+                $start = $request->start_date;
+                $end = $request->end_date;
+                $q->where(function ($sub) use ($start, $end) {
+                    $sub->whereBetween('start_date', [$start, $end])
+                        ->orWhereBetween('end_date', [$start, $end]);
+                })->orWhere(function ($sub) use ($start, $end) {
+                    $sub->where('start_date', '<=', $start)
+                        ->where('end_date', '>=', $end);
+                });
+            })
+            ->first();
+
+        if ($overlapping) {
+            $isApproved = ($overlapping->status === 'APPROVED');
+            $statusText = $isApproved ? 'TELAH DISETUJUI' : 'MENUNGGU KONFIRMASI (PENDING)';
+            return response()->json([
+                'message' => 'Anda sudah memiliki permohonan surat izin yang ' . $statusText . ' untuk tanggal ' . Carbon::parse($overlapping->start_date)->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($overlapping->end_date)->translatedFormat('d M Y') . '. Tidak dapat mengirimkan surat izin ganda pada rentang waktu yang sama.',
+            ], 422);
+        }
+
         $path = null;
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('leave_attachments', 'public');
+            $uploaded = $request->file('file');
+            $ext = strtolower($uploaded->guessExtension() ?: $uploaded->getClientOriginalExtension());
+            $safeName = Str::uuid()->toString() . '.' . $ext;
+            $path = $uploaded->storeAs('leave_attachments', $safeName, 'public');
         }
 
         $leave = LeaveRequest::create([
@@ -99,6 +129,20 @@ class LeaveRequestController extends Controller
             'signature' => $request->signature,
             'status' => 'PENDING',
         ]);
+
+        // Hapus presensi mandiri (HADIR) yang mungkin sempat tercatat sebelumnya untuk rentang tanggal pengajuan
+        $start = Carbon::parse($request->start_date);
+        $end = Carbon::parse($request->end_date);
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $sess = AttendanceSession::where('class_id', $student ? ($student->class_id ?? 1) : 1)
+                ->whereDate('date', $date->toDateString())
+                ->first();
+            if ($sess) {
+                AttendanceRecord::where('session_id', $sess->id)
+                    ->where('student_id', $studentId)
+                    ->delete();
+            }
+        }
 
         // Notify Wali Kelas (Advisor)
         $student = $leave->student;
@@ -173,17 +217,48 @@ class LeaveRequestController extends Controller
 
                 AttendanceRecord::updateOrCreate(
                     ['session_id' => $session->id, 'student_id' => $leave->student_id],
-                    ['status' => $statusToRecord, 'note' => 'Sesuai surat izin siswa yang disetujui Wali Kelas']
+                    ['status' => $statusToRecord, 'note' => 'Surat Izin ' . $leave->type . ' disetujui Wali Kelas: ' . $leave->reason]
                 );
+            }
+        } elseif ($request->status === 'REJECTED') {
+            // Jika DITOLAK: Batalkan izin approved lain yang tumpang tindih untuk siswa ini
+            LeaveRequest::where('student_id', $leave->student_id)
+                ->where('id', '!=', $leave->id)
+                ->where('status', 'APPROVED')
+                ->where(function ($q) use ($leave) {
+                    $q->whereBetween('start_date', [$leave->start_date, $leave->end_date])
+                      ->orWhereBetween('end_date', [$leave->start_date, $leave->end_date]);
+                })
+                ->update([
+                    'status' => 'REJECTED',
+                    'review_note' => 'Dibatalkan karena izin ditolak oleh Wali Kelas: ' . ($request->review_note ?: 'Tidak memenuhi syarat izin.')
+                ]);
+
+            // Hapus/batalkan seluruh attendance record siswa untuk tanggal tersebut (baik HADIR lama, SAKIT, maupun IZIN)
+            // agar siswa tidak tercatat hadir/izin tanpa verifikasi pasca penolakan
+            $start = Carbon::parse($leave->start_date);
+            $end = Carbon::parse($leave->end_date);
+            for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                $session = AttendanceSession::where('class_id', $leave->student->class_id ?? 1)
+                    ->whereDate('date', $date->toDateString())
+                    ->first();
+                if ($session) {
+                    AttendanceRecord::where('session_id', $session->id)
+                        ->where('student_id', $leave->student_id)
+                        ->delete();
+                }
             }
         }
 
-        // Notify student
+        // Notify student with exact reason
+        $reasonText = $request->review_note ? ' Alasan: ' . $request->review_note : '';
         Notification::create([
             'user_id' => $leave->student_id,
             'type' => 'SURAT_IZIN',
             'title' => 'Surat Izin ' . ($request->status === 'APPROVED' ? 'Disetujui Wali Kelas' : 'Ditolak Wali Kelas'),
-            'body' => 'Permohonan izin Anda telah ' . ($request->status === 'APPROVED' ? 'disetujui' : 'ditolak') . ' oleh Wali Kelas (' . $user->name . ').',
+            'body' => ($request->status === 'APPROVED')
+                ? 'Permohonan izin Anda telah disetujui oleh Wali Kelas (' . $user->name . ').'
+                : 'Permohonan izin Anda telah ditolak oleh Wali Kelas (' . $user->name . ').' . $reasonText,
         ]);
 
         if ($leave->submitted_by_id && $leave->submitted_by_id !== $leave->student_id) {
@@ -240,10 +315,28 @@ class LeaveRequestController extends Controller
         if (!file_exists($path)) {
             $altPath = storage_path('app/public/' . $cleanFilename);
             if (file_exists($altPath)) {
-                return response()->file($altPath);
+                $path = $altPath;
+            } else {
+                return response()->json(['message' => 'Berkas lampiran surat izin tidak ditemukan.'], 404);
             }
-            return response()->json(['message' => 'Berkas lampiran surat izin tidak ditemukan.'], 404);
         }
-        return response()->file($path);
+
+        // Point 7: Access Control Policy (IDOR Protection) untuk berkas surat izin
+        $user = $request->user();
+        $leave = LeaveRequest::where('attachment_path', 'like', "%{$cleanFilename}")->first();
+        if ($leave && $user) {
+            $canAccess = in_array($user->role, ['SUPERADMIN', 'GURU_PEMBIMBING', 'GURU_PENGAJAR'])
+                || $leave->student_id === $user->id
+                || $leave->submitted_by_id === $user->id
+                || ($user->role === 'ORANG_TUA' && $user->student_id === $leave->student_id);
+            if (!$canAccess) {
+                return response()->json(['message' => 'Akses ditolak: Anda tidak memiliki wewenang untuk mengunduh lampiran surat izin ini.'], 403);
+            }
+        }
+
+        return response()->file($path, [
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ]);
     }
 }

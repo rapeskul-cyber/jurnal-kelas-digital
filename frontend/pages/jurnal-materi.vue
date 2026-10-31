@@ -12,73 +12,97 @@
           <CheckCircle2Icon class="w-4 h-4 text-green-600" />
           {{ successMsg }}
         </div>
-        <button @click="successMsg = ''" class="text-green-600 hover:text-green-800 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="successMsg = ''" class="text-green-600 hover:text-green-800 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <!-- Top 3 Stat Cards (Matching media_1791815124237.png) -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <!-- Total Kelas Diampu -->
         <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-card flex items-start justify-between">
-          <div>
+          <div class="min-w-0 flex-1 pr-2">
             <span class="text-xs font-semibold text-gray-500">Total Kelas Diampu</span>
-            <div class="text-2xl font-bold text-gray-900 mt-1">4 Kelas</div>
-            <p class="text-[11px] text-gray-400 mt-1">Kelas Industri RPL, XI RPL 2, XII RPL 1, XII RPL 2</p>
+            <div class="text-2xl font-bold text-gray-900 mt-1">{{ taughtClassesList.length }} Kelas</div>
+            <p class="text-[11px] text-gray-400 mt-1 truncate" :title="taughtClassesList.join(', ')">
+              {{ taughtClassesList.length > 0 ? taughtClassesList.join(', ') : 'Belum ada kelas yang diampu' }}
+            </p>
           </div>
-          <div class="w-8 h-1 rounded-full bg-blue-500 mt-1"></div>
+          <div class="w-8 h-1 rounded-full bg-blue-500 mt-1 shrink-0"></div>
         </div>
 
         <!-- Jurnal Hari Ini -->
         <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-card flex items-start justify-between">
-          <div>
+          <div class="min-w-0 flex-1 pr-2">
             <span class="text-xs font-semibold text-gray-500">Jurnal Hari Ini</span>
             <div class="text-2xl font-bold text-gray-900 mt-1">{{ filledCount }} / {{ scheduleItems.length }} Terisi</div>
-            <p class="text-[11px] text-gray-400 mt-1">{{ Math.round((filledCount / Math.max(1, scheduleItems.length)) * 100) }}% Kegiatan Belajar Terdata</p>
+            <p class="text-[11px] text-gray-400 mt-1">
+              {{ scheduleItems.length > 0 ? Math.round((filledCount / scheduleItems.length) * 100) : 0 }}% Kegiatan Belajar Terdata
+            </p>
           </div>
-          <div class="w-8 h-1 rounded-full bg-amber-500 mt-1"></div>
+          <div class="w-8 h-1 rounded-full bg-amber-500 mt-1 shrink-0"></div>
         </div>
 
         <!-- Menunggu Verifikasi -->
         <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-card flex items-start justify-between">
-          <div>
+          <div class="min-w-0 flex-1 pr-2">
             <span class="text-xs font-semibold text-gray-500">Menunggu Verifikasi</span>
             <div class="text-2xl font-bold text-gray-900 mt-1">{{ pendingCount }} Jurnal</div>
-            <p class="text-[11px] text-gray-400 mt-1">Perlu Tanda Tangan Anda</p>
+            <p class="text-[11px] text-gray-400 mt-1">Perlu Konfirmasi / Paraf Guru</p>
           </div>
-          <div class="w-8 h-1 rounded-full bg-primary mt-1"></div>
+          <div class="w-8 h-1 rounded-full bg-primary mt-1 shrink-0"></div>
         </div>
       </div>
 
-      <!-- Main 2-Column Layout (Matching media_1791815124237.png) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        <!-- Kolom Kiri: Jadwal Mengajar & Status Jurnal Hari Ini -->
-        <div class="lg:col-span-7 bg-white rounded-2xl border border-gray-100 shadow-card p-5 md:p-6 space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-gray-100 gap-2.5">
-            <div>
-              <h2 class="text-sm sm:text-base font-bold text-gray-900 tracking-tight leading-snug">Jadwal Mengajar & Status Jurnal</h2>
-              <p class="text-[11px] text-gray-400 mt-0.5">Daftar kelas aktif dan status verifikasi hari ini</p>
-            </div>
-            <div class="flex items-center gap-2 self-start sm:self-auto">
-              <button
-                type="button"
-                @click="openAddScheduleModal = true"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 hover:border-primary bg-white hover:bg-primary/5 text-gray-700 hover:text-primary text-xs font-semibold shadow-2xs transition cursor-pointer whitespace-nowrap"
-              >
-                <PlusIcon class="w-3.5 h-3.5 text-primary" />
-                <span>Tambah Jadwal</span>
-              </button>
-              <NuxtLink
-                to="/laporan-jurnal"
-                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-gray-500 hover:text-primary hover:bg-gray-50 transition whitespace-nowrap"
-              >
-                <span>Laporan Jurnal</span>
-                <span class="text-primary">→</span>
-              </NuxtLink>
-            </div>
+      <!-- Main Content: Jadwal Mengajar & Status Jurnal -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-5 md:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-gray-100 gap-2.5">
+          <div>
+            <h2 class="text-sm sm:text-base font-bold text-gray-900 tracking-tight leading-snug">Jadwal Mengajar & Status Jurnal</h2>
+            <p class="text-[11px] text-gray-400 mt-0.5">Daftar kelas aktif dan status verifikasi hari ini</p>
+          </div>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              @click="openAddScheduleModal = true"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 hover:border-primary bg-white hover:bg-primary/5 text-gray-700 hover:text-primary text-xs font-semibold shadow-2xs transition cursor-pointer whitespace-nowrap"
+            >
+              <PlusIcon class="w-3.5 h-3.5 text-primary" />
+              <span>Tambah Jadwal</span>
+            </button>
+          </div>
+        </div>
+
+          <!-- Filter Hari Pembelajaran -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <span class="text-[11px] font-semibold text-gray-400 mr-1 shrink-0">Filter Hari:</span>
+            <button
+              v-for="day in ['Hari Ini', 'Semua', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat']"
+              :key="day"
+              type="button"
+              @click="setDayFilter(day)"
+              class="px-2.5 py-1 rounded-lg font-medium transition shrink-0 cursor-pointer text-xs"
+              :class="activeDayFilter === day ? 'bg-primary text-white shadow-2xs font-semibold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+            >
+              {{ day }}
+            </button>
           </div>
 
           <div class="space-y-3.5">
+            <!-- Empty State jika tidak ada jadwal -->
             <div
+              v-if="scheduleItems.length === 0"
+              class="py-12 px-4 text-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 space-y-2"
+            >
+              <div class="w-10 h-10 mx-auto rounded-full bg-blue-50 text-primary flex items-center justify-center">
+                <CalendarIcon class="w-5 h-5" />
+              </div>
+              <p class="text-xs font-bold text-gray-700">Tidak Ada Jadwal Mengajar</p>
+              <p class="text-[11px] text-gray-400 max-w-xs mx-auto">
+                {{ activeDayFilter === 'Hari Ini' ? 'Anda tidak memiliki jadwal KBM yang aktif untuk hari ini (' + currentDayName + ').' : 'Belum ada jadwal KBM yang terdaftar untuk filter ini.' }}
+              </p>
+            </div>
+
+            <div
+              v-else
               v-for="item in scheduleItems"
               :key="item.id"
               class="p-4 sm:p-5 rounded-2xl border border-gray-150/90 bg-white hover:border-gray-300 hover:shadow-xs transition duration-150 space-y-3"
@@ -184,173 +208,24 @@
             </div>
           </div>
         </div>
-
-        <!-- Kolom Kanan: LMS / Bahan Ajar Digital untuk Siswa -->
-        <div class="lg:col-span-5 bg-white rounded-2xl border border-gray-100 shadow-card p-5 md:p-6 space-y-4">
-          <div class="border-b border-gray-100 pb-3">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">LMS Siswa</span>
-              <h2 class="text-base font-bold text-gray-800">Unggah Materi & Modul Belajar</h2>
-            </div>
-            <p class="text-xs text-gray-400">
-              Modul digital, silabus, dan tugas yang dapat diakses & diunduh siswa di kelas.
-            </p>
-          </div>
-
-          <form @submit.prevent="submitMaterial" class="space-y-4">
-            <!-- Mata Pelajaran & Kelas -->
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-                Mata Pelajaran & Kelas Tujuan
-              </label>
-              <select
-                v-model="materialForm.schedule_id"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
-                required
-              >
-                <option value="" disabled>Pilih Mapel & Kelas</option>
-                <option value="1">XI RPL 2 - Basis Data</option>
-                <option value="2">Kelas Industri RPL - Pemrograman Web</option>
-                <option value="3">XII RPL 1 - Proyek Perangkat Lunak</option>
-                <option value="4">Kelas Industri RPL - PKL / Industri</option>
-              </select>
-            </div>
-
-            <!-- Pokok Bahasan / KD -->
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-                Pokok Bahasan / KD
-              </label>
-              <input
-                v-model="materialForm.topic"
-                type="text"
-                placeholder="Contoh: Optimasi Query Relasional"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
-                required
-              />
-            </div>
-
-            <!-- Catatan / Tugas Mandiri -->
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-                Catatan / Tugas Mandiri
-              </label>
-              <textarea
-                v-model="materialForm.assignment"
-                rows="3"
-                placeholder="Siswa ditugaskan membuat rancangan ERD lanjutan..."
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red resize-none"
-              ></textarea>
-            </div>
-
-            <!-- Dokumentasi / Upload File Materi (Berkas) -->
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-                Dokumentasi & Berkas Materi
-              </label>
-              
-              <!-- File Dropzone -->
-              <div
-                @dragover.prevent="isDragging = true"
-                @dragleave.prevent="isDragging = false"
-                @drop.prevent="handleFileDrop"
-                class="border-2 border-dashed rounded-2xl p-5 text-center transition cursor-pointer"
-                :class="isDragging ? 'border-brand-red bg-blue-50/30' : 'border-gray-200 hover:border-gray-300 bg-gray-50/30'"
-                @click="triggerFileInput"
-              >
-                <input
-                  ref="fileInputRef"
-                  type="file"
-                  class="hidden"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.zip"
-                  @change="handleFileSelect"
-                />
-
-                <div v-if="!selectedFile" class="space-y-1.5">
-                  <div class="w-10 h-10 rounded-full bg-blue-50 text-brand-red flex items-center justify-center mx-auto">
-                    <UploadCloudIcon class="w-5 h-5" />
-                  </div>
-                  <p class="text-xs font-semibold text-brand-red">
-                    Pilih File atau Seret Kemari
-                  </p>
-                  <p class="text-[10px] text-gray-400">
-                    Maksimal ukuran file: 10MB (Format PDF, DOCX, PPTX, JPG)
-                  </p>
-                </div>
-
-                <!-- File Selected State -->
-                <div v-else class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-200 text-left">
-                  <div class="flex items-center gap-2.5 min-w-0">
-                    <FileTextIcon class="w-6 h-6 text-brand-red shrink-0" />
-                    <div class="min-w-0">
-                      <p class="text-xs font-bold text-gray-800 truncate">{{ selectedFile.name }}</p>
-                      <p class="text-[10px] text-gray-400">{{ (selectedFile.size / 1024).toFixed(1) }} KB</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    @click.stop="removeFile"
-                    class="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer"
-                  >
-                    <XIcon class="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Submit Button (Red Button Full Width) -->
-            <div class="pt-2">
-              <button
-                type="submit"
-                :disabled="submitting"
-                class="w-full py-2.5 px-4 rounded-xl bg-brand-red hover:bg-brand-red-dark text-white font-semibold text-xs transition shadow-sm hover:shadow flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-              >
-                <span>{{ submitting ? 'Mengunggah...' : 'Publikasikan Materi ke Siswa' }}</span>
-              </button>
-            </div>
-          </form>
-
-          <!-- Daftar Modul Aktif LMS Siswa -->
-          <div class="pt-4 border-t border-gray-100 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-gray-700 uppercase tracking-wider">Modul Ajar Tersedia di Siswa</span>
-              <span class="text-[10px] text-gray-400">Dapat diunduh siswa</span>
-            </div>
-            <div class="space-y-2">
-              <div
-                v-for="pub in publishedModules"
-                :key="pub.id"
-                class="p-2.5 rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-between text-xs"
-              >
-                <div class="min-w-0 flex items-center gap-2">
-                  <FileTextIcon class="w-4 h-4 text-brand-red shrink-0" />
-                  <div class="truncate">
-                    <p class="font-bold text-gray-800 truncate text-[11px]">{{ pub.title }}</p>
-                    <p class="text-[10px] text-gray-400">{{ pub.class }} • {{ pub.filename }}</p>
-                  </div>
-                </div>
-                <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">Aktif</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </main>
 
     <!-- Modal Konfirmasi / Detail Jurnal Siswa -->
     <div
       v-if="activeModalItem"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-xs"
     >
-      <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto pb-8 sm:pb-7 pb-safe">
+        <!-- Mobile drag handle -->
+        <div class="sm:hidden w-10 h-1 bg-gray-300 rounded-full mx-auto -mt-2 mb-3"></div>
         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
           <div>
-            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-brand-red">
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-primary">
               {{ activeModalItem.subject }}
             </span>
             <h3 class="text-base font-bold text-gray-900 mt-1">Detail Jurnal Realisasi KBM</h3>
           </div>
-          <button @click="activeModalItem = null" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer">✕</button>
+          <button @click="activeModalItem = null" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"><X class="w-3.5 h-3.5" /></button>
         </div>
 
         <div class="space-y-3.5 text-xs text-gray-700">
@@ -438,15 +313,17 @@
     <!-- Modal Tambah Jadwal Mengajar Baru -->
     <div
       v-if="openAddScheduleModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-xs"
     >
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 sm:p-7 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto pb-8 sm:pb-7 pb-safe">
+        <!-- Mobile drag handle -->
+        <div class="sm:hidden w-10 h-1 bg-gray-300 rounded-full mx-auto -mt-2 mb-3"></div>
         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
           <div>
             <h3 class="text-base font-bold text-gray-900">Tambah Jadwal Mengajar Baru</h3>
             <p class="text-xs text-gray-400 mt-0.5">Input jadwal KBM pengajar semester ini</p>
           </div>
-          <button @click="openAddScheduleModal = false" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer">✕</button>
+          <button @click="openAddScheduleModal = false" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"><X class="w-3.5 h-3.5" /></button>
         </div>
 
         <form @submit.prevent="submitNewSchedule" class="space-y-3.5 text-xs">
@@ -456,7 +333,7 @@
               v-model="newScheduleForm.subject_name"
               type="text"
               placeholder="Contoh: Pemrograman Mobile / Flutter"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               required
             />
           </div>
@@ -466,12 +343,11 @@
               <label class="block font-semibold text-gray-700 mb-1">Kelas</label>
               <select
                 v-model="newScheduleForm.class_id"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
               >
-                <option value="1">Kelas Industri RPL</option>
-                <option value="2">XI RPL 2</option>
-                <option value="3">XII RPL 1</option>
-                <option value="4">XII RPL 2</option>
+                <option v-for="cls in availableClasses" :key="cls.id" :value="String(cls.id)">
+                  {{ cls.name }}
+                </option>
               </select>
             </div>
 
@@ -479,7 +355,7 @@
               <label class="block font-semibold text-gray-700 mb-1">Hari</label>
               <select
                 v-model="newScheduleForm.day"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red bg-white cursor-pointer"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
               >
                 <option value="Senin">Senin</option>
                 <option value="Selasa">Selasa</option>
@@ -496,7 +372,7 @@
               <input
                 v-model="newScheduleForm.start_time"
                 type="time"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 required
               />
             </div>
@@ -505,7 +381,7 @@
               <input
                 v-model="newScheduleForm.end_time"
                 type="time"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 required
               />
             </div>
@@ -517,7 +393,7 @@
               v-model="newScheduleForm.room"
               type="text"
               placeholder="Contoh: Lab. Komputer 2"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
@@ -532,7 +408,7 @@
             <button
               type="submit"
               :disabled="savingSchedule"
-              class="px-4 py-2 rounded-xl bg-brand-red hover:bg-brand-red-dark text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
+              class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
             >
               {{ savingSchedule ? 'Menyimpan...' : 'Simpan Jadwal' }}
             </button>
@@ -544,9 +420,11 @@
     <!-- Modal Isi Jurnal KBM Hari Ini -->
     <div
       v-if="fillModalItem"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-xs"
     >
-      <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto pb-8 sm:pb-7 pb-safe">
+        <!-- Mobile drag handle -->
+        <div class="sm:hidden w-10 h-1 bg-gray-300 rounded-full mx-auto -mt-2 mb-3"></div>
         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
           <div>
             <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800">
@@ -557,7 +435,7 @@
             </h3>
             <p class="text-xs text-gray-400">Jadwal: {{ fillModalItem.time }}</p>
           </div>
-          <button @click="fillModalItem = null" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer">✕</button>
+          <button @click="fillModalItem = null" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"><X class="w-3.5 h-3.5" /></button>
         </div>
 
         <form @submit.prevent="submitFillJournal" class="space-y-3.5 text-xs">
@@ -567,7 +445,7 @@
               v-model="fillJournalForm.topic"
               type="text"
               placeholder="Contoh: Implementasi State Management Pinia"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               required
             />
           </div>
@@ -578,7 +456,7 @@
               v-model="fillJournalForm.activity"
               rows="3"
               placeholder="Jelaskan ringkasan materi, praktikum, dan ketercapaian kelas hari ini..."
-              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red resize-none"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
               required
             ></textarea>
           </div>
@@ -589,7 +467,7 @@
               v-model="fillJournalForm.notes"
               type="text"
               placeholder="Contoh: Praktikum tuntas 100%, 2 siswa izin sakit"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
@@ -604,7 +482,7 @@
             <button
               type="submit"
               :disabled="savingFillJournal"
-              class="px-4 py-2 rounded-xl bg-brand-red hover:bg-brand-red-dark text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
+              class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
             >
               {{ savingFillJournal ? 'Menyimpan...' : (fillModalItem.status === 'Menunggu' ? 'Simpan Perubahan' : 'Simpan & Kirim Jurnal') }}
             </button>
@@ -627,7 +505,8 @@ import {
   Edit2 as Edit2Icon,
   Clock as ClockIcon,
   Eye as EyeIcon,
-  Check as CheckIcon
+  Check as CheckIcon,
+  Calendar as CalendarIcon,
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
@@ -640,10 +519,40 @@ const isDragging = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
 
-const pendingCount = ref(3)
-const filledCount = ref(2)
+const pendingCount = ref(0)
+const filledCount = ref(0)
 
 const publishedModules = ref<any[]>([])
+const allTeacherSchedules = ref<any[]>([])
+const allTeacherJournals = ref<any[]>([])
+const availableClasses = ref<any[]>([])
+
+const daysList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+const currentDayName = computed(() => daysList[new Date().getDay()])
+const activeDayFilter = ref('Hari Ini')
+
+const taughtClassesList = computed(() => {
+  const set = new Set<string>()
+  allTeacherSchedules.value.forEach((sch: any) => {
+    const name = sch.school_class?.name || sch.class_name
+    if (name) set.add(name)
+  })
+  return Array.from(set)
+})
+
+const fetchAvailableClasses = async () => {
+  try {
+    const res = await $fetch<any>(`${config.public.apiBase}/classes`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    availableClasses.value = Array.isArray(res) ? res : []
+    if (availableClasses.value.length > 0 && !newScheduleForm.value.class_id) {
+      newScheduleForm.value.class_id = String(availableClasses.value[0].id)
+    }
+  } catch (err) {
+    console.warn('Fetch classes warning:', err)
+  }
+}
 
 const fetchPublishedModules = async () => {
   try {
@@ -668,7 +577,7 @@ const openAddScheduleModal = ref(false)
 const savingSchedule = ref(false)
 const newScheduleForm = ref({
   subject_name: '',
-  class_id: '1',
+  class_id: '',
   day: 'Senin',
   start_time: '07:30',
   end_time: '09:00',
@@ -685,6 +594,51 @@ const fillJournalForm = ref({
 
 const scheduleItems = ref<any[]>([])
 
+const applyScheduleFilter = () => {
+  const todayStr = new Date().toISOString().slice(0, 10)
+  let filtered = allTeacherSchedules.value
+
+  if (activeDayFilter.value === 'Hari Ini') {
+    filtered = allTeacherSchedules.value.filter((sch: any) => !sch.day || sch.day === currentDayName.value)
+  } else if (activeDayFilter.value !== 'Semua') {
+    filtered = allTeacherSchedules.value.filter((sch: any) => sch.day === activeDayFilter.value)
+  }
+
+  scheduleItems.value = filtered.map((sch: any) => {
+    const match = allTeacherJournals.value.find((j: any) =>
+      (j.schedule_id === sch.id || (j.class === sch.school_class?.name && j.subject === sch.subject?.name)) &&
+      (!j.date || j.date === todayStr)
+    ) || allTeacherJournals.value.find((j: any) => j.schedule_id === sch.id)
+
+    let status = 'Belum Diisi'
+    if (match) {
+      status = match.status === 'TERVERIFIKASI' ? 'Terverifikasi' : 'Menunggu Konfirmasi'
+    }
+
+    return {
+      id: sch.id,
+      journal_id: match ? match.id : null,
+      day: sch.day || '-',
+      time: `${sch.start_time?.slice(0, 5) || '07:30'} - ${sch.end_time?.slice(0, 5) || '09:00'}`,
+      subject: `${sch.subject?.name || 'Mata Pelajaran'} (${sch.school_class?.name || '-'})`,
+      status,
+      topic: match ? match.topic : '',
+      activity: match ? match.activity : '',
+      notes: match ? match.notes : '',
+      created_by: match ? match.created_by : 'Sekretaris'
+    }
+  })
+
+  // Update stat cards dynamically
+  filledCount.value = scheduleItems.value.filter(s => s.status !== 'Belum Diisi').length
+  pendingCount.value = scheduleItems.value.filter(s => s.status.includes('Menunggu')).length
+}
+
+const setDayFilter = (day: string) => {
+  activeDayFilter.value = day
+  applyScheduleFilter()
+}
+
 const fetchTeacherSchedulesAndJournals = async () => {
   try {
     const [schedulesRes, journalsRes] = await Promise.all([
@@ -697,67 +651,24 @@ const fetchTeacherSchedulesAndJournals = async () => {
     ])
 
     const scheduleList = Array.isArray(schedulesRes) ? schedulesRes : []
-    const journalList = journalsRes?.data || (Array.isArray(journalsRes) ? journalsRes : [])
-    const todayStr = new Date().toISOString().slice(0, 10)
+    allTeacherSchedules.value = scheduleList
+    allTeacherJournals.value = journalsRes?.data || (Array.isArray(journalsRes) ? journalsRes : [])
 
-    if (scheduleList.length > 0) {
-      scheduleItems.value = scheduleList.map((sch: any) => {
-        // Find matching journal for today by schedule_id or class/subject
-        const match = journalList.find((j: any) =>
-          (j.schedule_id === sch.id || (j.class === sch.school_class?.name && j.subject === sch.subject?.name)) &&
-          (!j.date || j.date === todayStr)
-        ) || journalList.find((j: any) => j.schedule_id === sch.id)
-
-        let status = 'Belum Diisi'
-        if (match) {
-          status = match.status === 'TERVERIFIKASI' ? 'Terverifikasi' : 'Menunggu Konfirmasi'
-        }
-
-        return {
-          id: sch.id,
-          journal_id: match ? match.id : null,
-          time: `${sch.start_time?.slice(0, 5) || '07:30'} - ${sch.end_time?.slice(0, 5) || '09:00'}`,
-          subject: `${sch.subject?.name || 'Mata Pelajaran'} (${sch.school_class?.name || '-'})`,
-          status,
-          topic: match ? match.topic : '',
-          activity: match ? match.activity : '',
-          notes: match ? match.notes : '',
-          created_by: match ? match.created_by : 'Sekretaris'
-        }
-      })
-    } else {
-      scheduleItems.value = [
-        {
-          id: 1,
-          journal_id: null,
-          time: '07:30 - 09:00',
-          subject: 'Pemrograman Web (Kelas Industri RPL)',
-          status: 'Terverifikasi',
-          topic: 'Optimasi query dan routing Vue/Nuxt',
-          notes: 'Praktikum berjalan lancar di Lab 1'
-        },
-        {
-          id: 2,
-          journal_id: null,
-          time: '09:15 - 11:45',
-          subject: 'Basis Data (Kelas Industri RPL)',
-          status: 'Menunggu Konfirmasi',
-          topic: 'Normalisasi Database 3NF dan perbaikan skema relasi',
-          notes: 'Menunggu pengesahan dari guru pengajar'
-        }
-      ]
+    if (allTeacherSchedules.value.length > 0 && !materialForm.value.schedule_id) {
+      materialForm.value.schedule_id = String(allTeacherSchedules.value[0].id)
     }
 
-    // Update stat cards
-    filledCount.value = scheduleItems.value.filter(s => s.status !== 'Belum Diisi').length
-    pendingCount.value = scheduleItems.value.filter(s => s.status.includes('Menunggu')).length
+    applyScheduleFilter()
   } catch (e) {
     console.error('Error fetching schedules/journals:', e)
+    scheduleItems.value = []
+    filledCount.value = 0
+    pendingCount.value = 0
   }
 }
 
 const materialForm = ref({
-  schedule_id: '1',
+  schedule_id: '',
   topic: '',
   assignment: ''
 })
@@ -958,7 +869,7 @@ const submitFillJournal = async () => {
   }
 }
 onMounted(() => {
+  fetchAvailableClasses()
   fetchTeacherSchedulesAndJournals()
-  fetchPublishedModules()
 })
 </script>

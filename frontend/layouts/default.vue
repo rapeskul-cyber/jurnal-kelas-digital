@@ -9,9 +9,12 @@
     <MobileNav />
 
     <!-- Main Content Area -->
-    <div class="flex-1 md:pl-64 pb-28 md:pb-8 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+    <div class="flex-1 md:pl-64 pb-20 md:pb-8 flex flex-col min-w-0 max-w-full overflow-x-hidden">
       <slot />
     </div>
+
+    <!-- Global Toast Notifications -->
+    <AppToast />
   </div>
 </template>
 

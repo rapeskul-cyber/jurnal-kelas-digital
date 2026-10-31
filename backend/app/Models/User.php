@@ -21,6 +21,8 @@ class User extends Authenticatable
         'specialization',
         'is_active',
         'class_id',
+        'student_id',
+        'avatar',
         'avatar_url',
     ];
 
@@ -76,5 +78,15 @@ class User extends Authenticatable
     public function leaveRequests()
     {
         return $this->hasMany(LeaveRequest::class, 'student_id');
+    }
+
+    public function student()
+    {
+        return $this->belongsTo(User::class, 'student_id');
+    }
+
+    public function parentUser()
+    {
+        return $this->hasOne(User::class, 'student_id');
     }
 }

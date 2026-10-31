@@ -11,15 +11,17 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\SystemController;
 
-// Public Auth routes
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/forgot-password/step-1', [AuthController::class, 'forgotPasswordStep1']);
+// Public Auth routes (Rate Limiter: Maksimal 5 percobaan per menit per IP)
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/auth/forgot-password/step-1', [AuthController::class, 'forgotPasswordStep1'])->middleware('throttle:3,10');
 Route::post('/auth/forgot-password/step-2', [AuthController::class, 'forgotPasswordStep2']);
 Route::post('/auth/forgot-password/step-3', [AuthController::class, 'forgotPasswordStep3']);
+Route::get('/app/info', [SystemController::class, 'getPublicInfo']);
 
 // Public file routes
 Route::get('/materials/file/{filename}', [JournalController::class, 'downloadMaterialFile']);
 Route::get('/leave-requests/file/{filename}', [LeaveRequestController::class, 'downloadLeaveFile']);
+Route::get('/avatars/{filename}', [AuthController::class, 'serveAvatar']);
 
 // Protected routes (Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
@@ -27,6 +29,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/profile/send-sms-otp', [AuthController::class, 'sendProfileSmsOtp']);
     Route::post('/auth/profile/verify-sms-otp', [AuthController::class, 'verifyProfileSmsOtp']);
     Route::post('/auth/profile/password-via-sms', [AuthController::class, 'changePasswordViaSmsOtp']);
+
+    // Profile Avatar
+    Route::post('/auth/profile/avatar', [AuthController::class, 'uploadAvatar']);
+    Route::delete('/auth/profile/avatar', [AuthController::class, 'deleteAvatar']);
 
     // WhatsApp Gateway Management (Proxy ke Fonte lokal port 3000)
     Route::get('/wa-gateway/status', [AuthController::class, 'waStatus']);
@@ -40,8 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
-    Route::post('/auth/profile/avatar', [AuthController::class, 'uploadAvatar']);
-    Route::delete('/auth/profile/avatar', [AuthController::class, 'deleteAvatar']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     // Dashboard

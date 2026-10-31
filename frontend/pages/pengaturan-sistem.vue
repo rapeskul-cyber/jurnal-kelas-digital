@@ -31,7 +31,7 @@
           <CheckCircle2 class="w-4 h-4 text-emerald-600" />
           <span>{{ successMsg }}</span>
         </div>
-        <button @click="successMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="successMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <div v-if="errorMsg" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between shadow-2xs">
@@ -39,14 +39,14 @@
           <AlertCircle class="w-4 h-4 text-rose-600" />
           <span>{{ errorMsg }}</span>
         </div>
-        <button @click="errorMsg = ''" class="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="errorMsg = ''" class="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <!-- ============================================== -->
       <!-- TAB 1: KONFIGURASI INSTANSI & SEKOLAH          -->
       <!-- ============================================== -->
       <div v-if="activeTab === 'general'" class="space-y-6 max-w-4xl">
-        <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-5">
+        <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-5">
           <div class="border-b border-gray-100 pb-3">
             <h3 class="text-sm font-bold text-gray-900">Identitas Sekolah & Kop Surat Digital</h3>
             <p class="text-xs text-gray-400 mt-0.5">Informasi ini akan tertera pada seluruh cetakan PDF laporan rekap semester dan surat izin</p>
@@ -102,7 +102,7 @@
             </div>
 
             <div class="border-t border-gray-100 pt-4">
-              <h4 class="text-xs font-bold text-gray-900 mb-3">Parameter Presensi & Keamanan</h4>
+              <h4 class="text-xs font-bold text-gray-900 mb-3">Parameter Presensi, Branding & Mode SaaS</h4>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block font-semibold text-gray-700 mb-1">Jam Sekolah Standar</label>
@@ -123,6 +123,27 @@
                     placeholder="1234"
                     class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none text-xs font-mono font-bold tracking-wider"
                   />
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-gray-700 mb-1">URL / Path Logo Sekolah</label>
+                  <input
+                    v-model="settings.school_logo_url"
+                    type="text"
+                    placeholder="/images/logo-smkn71.png"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none text-xs font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-gray-700 mb-1">Akses Cepat Demo di Halaman Login</label>
+                  <select
+                    v-model="settings.enable_demo_login"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none text-xs bg-white"
+                  >
+                    <option value="true">Aktif (Tampilkan Tombol Quick Login Demo)</option>
+                    <option value="false">Nonaktif (Sembunyikan - Mode Produksi Sekolah)</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -169,7 +190,28 @@
           <div v-if="loadingLogs" class="py-12 text-center text-gray-400 text-xs">
             Memuat audit log aktivitas...
           </div>
-          <div v-else class="overflow-x-auto">
+          <div v-else>
+          <!-- Mobile Card List View -->
+          <div class="block md:hidden space-y-2.5 p-4">
+            <div
+              v-for="(log, idx) in displayedLogs"
+              :key="log.id"
+              class="p-3 bg-gray-50/70 border border-gray-150 rounded-xl space-y-1.5 text-xs"
+            >
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-gray-900">{{ log.user }}</span>
+                <span class="text-[10px] text-gray-400 font-mono">{{ log.time }}</span>
+              </div>
+              <p class="text-gray-700 font-medium">{{ log.action }}</p>
+              <div class="text-[10px] text-gray-400 font-mono">IP: {{ log.ip_address }}</div>
+            </div>
+            <div v-if="!displayedLogs.length" class="py-8 text-center text-gray-400 text-xs">
+              Tidak ditemukan rekaman log yang cocok.
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead>
                 <tr class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
@@ -196,6 +238,7 @@
               </tbody>
             </table>
           </div>
+          </div>
         </div>
       </div>
 
@@ -203,7 +246,7 @@
       <!-- TAB 3: CADANGAN & PEMELIHARAAN (BACKUP)        -->
       <!-- ============================================== -->
       <div v-else-if="activeTab === 'backup'" class="space-y-6 max-w-4xl">
-        <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-5">
+        <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-5">
           <div class="border-b border-gray-100 pb-3 flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-gray-900">Cadangan Data Institusi (Database Backup)</h3>
@@ -236,7 +279,7 @@
 
           <div class="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-2 text-xs text-blue-900">
             <p class="font-bold flex items-center gap-1.5">
-              <span>ℹ️ Informasi Pencadangan Data:</span>
+              <Info class="w-4 h-4 text-blue-600 shrink-0 inline mr-1" /><span>Informasi Pencadangan Data:</span>
             </p>
             <p class="text-blue-800 leading-relaxed">
               Berkas backup mencakup seluruh tabel master data: Pengguna, Rombel/Kelas, Mata Pelajaran, Jadwal Pelajaran, Semester/Tahun Ajaran, Pengaturan Sekolah, serta 200 Audit Log terkini. Disarankan melakukan pencadangan berkala setiap akhir semester.
@@ -268,6 +311,8 @@ import {
   Download,
   CheckCircle2,
   AlertCircle,
+  Info,
+  X,
 } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
@@ -296,6 +341,8 @@ const settings = ref({
   headmaster_nip: '197505101999031002',
   default_school_hours: '07:30 - 15:30',
   attendance_lock_pin: '1234',
+  school_logo_url: '/images/logo-smkn71.png',
+  enable_demo_login: 'true',
 })
 
 // Audit logs state

@@ -10,6 +10,8 @@ export interface User {
   specialization?: string
   is_active: boolean
   class_id?: number
+  avatar?: string | null
+  avatar_url?: string | null
   school_class?: {
     id: number
     name: string
@@ -67,10 +69,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(email: string, password: string) {
+  async function login(email: string, password: string, turnstileToken?: string) {
+    const body: Record<string, any> = { email, password }
+    if (turnstileToken) {
+      body.turnstile_token = turnstileToken
+    }
     const res = await $fetch<{ message: string; user: User; token: string }>(`${apiBase}/auth/login`, {
       method: 'POST',
-      body: { email, password },
+      body,
     })
     setAuth(res.user, res.token)
     return res

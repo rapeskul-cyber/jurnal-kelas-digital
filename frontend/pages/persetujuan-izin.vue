@@ -24,7 +24,7 @@
         <CheckCircle2Icon class="w-5 h-5 text-green-600" />
         {{ successMsg }}
       </div>
-      <button @click="successMsg = ''" class="text-green-500 hover:text-green-700 text-sm">✕</button>
+      <button @click="successMsg = ''" class="text-green-500 hover:text-green-700 text-sm"><X class="w-3.5 h-3.5" /></button>
     </div>
 
     <!-- Main Content: Split View (Mockup 27) -->
@@ -55,7 +55,7 @@
               class="p-3.5 rounded-xl border cursor-pointer transition text-left space-y-2"
               :class="[
                 selectedItem?.id === item.id
-                  ? 'border-brand-red bg-blue-50/20 shadow-xs'
+                  ? 'border-primary bg-blue-50/20 shadow-xs'
                   : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/50'
               ]"
             >
@@ -152,13 +152,49 @@
           <!-- Input Catatan Reviewer (jika masih PENDING) -->
           <div v-if="selectedItem.status === 'PENDING'" class="space-y-3 pt-2 border-t border-gray-100">
             <div>
-              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                Catatan Wali Kelas <span class="text-gray-400 font-normal">(Opsional)</span>
-              </label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Catatan / Alasan Penolakan Wali Kelas
+                </label>
+                <span class="text-[10px] text-gray-400">Pilih opsi cepat atau ketik</span>
+              </div>
+
+              <!-- Quick Presets Alasan Penolakan -->
+              <div class="flex flex-wrap gap-1.5 mb-2">
+                <button
+                  type="button"
+                  @click="reviewNote = 'Bukti surat dokter / lampiran fisik tidak jelas atau belum dilampirkan.'"
+                  class="px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-[11px] text-gray-600 transition cursor-pointer"
+                >
+                  Bukti Dokter Belum Sah
+                </button>
+                <button
+                  type="button"
+                  @click="reviewNote = 'Format pengajuan surat izin tidak sesuai dengan SOP resmi sekolah.'"
+                  class="px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-[11px] text-gray-600 transition cursor-pointer"
+                >
+                  Format Tidak Sesuai
+                </button>
+                <button
+                  type="button"
+                  @click="reviewNote = 'Terdapat agenda asesmen sumatif / ujian wajib di sekolah yang harus dihadiri.'"
+                  class="px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-[11px] text-gray-600 transition cursor-pointer"
+                >
+                  Jadwal Ujian Wajib
+                </button>
+                <button
+                  type="button"
+                  @click="reviewNote = 'Alasan yang dicantumkan tidak memenuhi kriteria izin / dispensasi sekolah.'"
+                  class="px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-[11px] text-gray-600 transition cursor-pointer"
+                >
+                  Tidak Memenuhi Syarat
+                </button>
+              </div>
+
               <textarea
                 v-model="reviewNote"
                 rows="2"
-                placeholder="Tuliskan catatan verifikasi atau alasan bila menolak..."
+                placeholder="Tuliskan catatan verifikasi atau alasan bila menolak izin..."
                 class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
               ></textarea>
             </div>
@@ -200,17 +236,20 @@
 </template>
 
 <script setup lang="ts">
+import { useToastStore } from '~/stores/toast'
 import {
   RefreshCw as RefreshCwIcon,
   CheckCircle2 as CheckCircle2Icon,
   FileText as FileTextIcon,
   Download as DownloadIcon,
   Check as CheckIcon,
-  X as XIcon
+  X as XIcon,
+  X,
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 const loading = ref(false)
 const processingReview = ref(false)
@@ -244,6 +283,10 @@ const fetchLeaves = async () => {
 
 const submitReview = async (status: 'APPROVED' | 'REJECTED') => {
   if (!selectedItem.value) return
+  if (status === 'REJECTED' && !reviewNote.value.trim()) {
+    toast.warning('Mohon cantumkan alasan penolakan izin terlebih dahulu agar siswa mengetahuinya.')
+    return
+  }
   processingReview.value = true
   successMsg.value = ''
   try {
@@ -259,7 +302,7 @@ const submitReview = async (status: 'APPROVED' | 'REJECTED') => {
     reviewNote.value = ''
     await fetchLeaves()
   } catch (err: any) {
-    alert(err?.data?.message || 'Gagal memproses permohonan izin')
+    toast.error(err?.data?.message || 'Gagal memproses permohonan izin')
   } finally {
     processingReview.value = false
   }

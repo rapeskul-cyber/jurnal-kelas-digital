@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#FAFAFA] flex flex-col justify-center items-center p-4">
-    <div class="w-full max-w-md bg-white border border-gray-200 rounded-3xl p-8 sm:p-10 shadow-sm text-center">
+    <div class="w-full max-w-md bg-white border border-gray-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm text-center">
       <!-- Icon Lock / Check -->
       <div
         v-if="currentStep !== 4"
@@ -62,8 +62,7 @@
               v-model="email"
               type="email"
               required
-              autocomplete="email"
-              placeholder="nama@sekolah.sch.id"
+              placeholder="sekretaris@gmail.com"
               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
@@ -72,10 +71,15 @@
           </p>
         </div>
 
+        <!-- Cloudflare Turnstile Anti-Bot Container -->
+        <div v-show="turnstileSiteKey" class="flex justify-center my-2">
+          <div ref="turnstileContainer"></div>
+        </div>
+
         <button
           type="submit"
           :disabled="isLoading"
-          class="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2"
+          class="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
         >
           <span>{{ isLoading ? 'Memproses...' : 'Verifikasi Akun & Kirim OTP →' }}</span>
         </button>
@@ -198,7 +202,11 @@
 </template>
 
 <script setup lang="ts">
-import { Lock, Check, CheckCircle2 } from 'lucide-vue-next'
+import {
+  Lock,
+  Check,
+  CheckCircle2,
+} from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({
@@ -206,8 +214,14 @@ definePageMeta({
 })
 
 const authStore = useAuthStore()
+const runtimeConfig = useRuntimeConfig()
+const turnstileSiteKey = computed(() => runtimeConfig.public.turnstileSiteKey || '')
+const turnstileContainer = ref<HTMLElement | null>(null)
+const turnstileToken = ref<string>('')
+const turnstileWidgetId = ref<string | null>(null)
+
 const currentStep = ref(1)
-const email = ref('')
+const email = ref('rina.safitri@gmail.com')
 const maskedEmail = ref('')
 const maskedPhone = ref('')
 const otp = ref('')
@@ -218,6 +232,43 @@ const isLoading = ref(false)
 const message = ref('')
 const isError = ref(false)
 let timer: any = null
+
+function renderTurnstile() {
+  if (typeof window === 'undefined' || !turnstileSiteKey.value) return
+  const win = window as any
+  if (win.turnstile && turnstileContainer.value && !turnstileWidgetId.value) {
+    try {
+      turnstileWidgetId.value = win.turnstile.render(turnstileContainer.value, {
+        sitekey: turnstileSiteKey.value,
+        size: 'invisible',
+        callback: (token: string) => {
+          turnstileToken.value = token
+        },
+        'expired-callback': () => {
+          turnstileToken.value = ''
+        },
+        'error-callback': () => {
+          turnstileToken.value = ''
+        },
+      })
+    } catch (e) {
+      console.warn('Turnstile render note:', e)
+    }
+  }
+}
+
+onMounted(() => {
+  if (turnstileSiteKey.value) {
+    const interval = setInterval(() => {
+      const win = window as any
+      if (win.turnstile && turnstileContainer.value) {
+        renderTurnstile()
+        clearInterval(interval)
+      }
+    }, 250)
+    setTimeout(() => clearInterval(interval), 6000)
+  }
+})
 
 function startCooldown(sec: number) {
   cooldown.value = sec
@@ -233,9 +284,28 @@ async function handleStep1() {
   message.value = ''
   isError.value = false
   try {
+    if (turnstileSiteKey.value && !turnstileToken.value && typeof window !== 'undefined') {
+      const win = window as any
+      if (win.turnstile && turnstileWidgetId.value) {
+        try {
+          win.turnstile.execute(turnstileWidgetId.value)
+          let waitCycles = 0
+          while (!turnstileToken.value && waitCycles < 15) {
+            await new Promise((r) => setTimeout(r, 100))
+            waitCycles++
+          }
+        } catch (e) {
+          console.warn('Turnstile execution note:', e)
+        }
+      }
+    }
+
     const res = await $fetch<any>(`${authStore.apiBase}/auth/forgot-password/step-1`, {
       method: 'POST',
-      body: { email: email.value }
+      body: {
+        email: email.value,
+        turnstile_token: turnstileToken.value,
+      }
     })
     maskedEmail.value = res.masked_email
     maskedPhone.value = res.masked_phone
@@ -244,6 +314,15 @@ async function handleStep1() {
   } catch (e: any) {
     isError.value = true
     message.value = e?.data?.message || 'Gagal mengirim OTP.'
+    if (typeof window !== 'undefined') {
+      const win = window as any
+      if (win.turnstile && turnstileWidgetId.value) {
+        try {
+          win.turnstile.reset(turnstileWidgetId.value)
+        } catch (err) {}
+        turnstileToken.value = ''
+      }
+    }
   } finally {
     isLoading.value = false
   }

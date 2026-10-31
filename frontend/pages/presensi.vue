@@ -77,8 +77,100 @@
       <!-- Main Layout: Table + Verification Panel -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Student Table (3 cols) -->
-        <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs flex flex-col justify-between">
-          <div class="overflow-x-auto">
+        <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs flex flex-col justify-between">
+          <!-- Mobile Card List View -->
+          <div class="block md:hidden space-y-3">
+            <div v-if="isLoading && students.length === 0" v-for="i in 6" :key="'skel-m-' + i" class="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 animate-pulse space-y-3">
+              <div class="h-4 w-32 bg-gray-200 rounded"></div>
+              <div class="h-10 w-full bg-gray-200 rounded-xl"></div>
+            </div>
+
+            <div v-else-if="filteredStudents.length > 0" v-for="student in filteredStudents" :key="'mob-' + student.student_id" class="p-3.5 sm:p-4 rounded-2xl border border-gray-200 bg-white shadow-2xs space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="w-6 h-6 rounded-lg bg-gray-100 text-gray-500 font-bold text-xs flex items-center justify-center shrink-0">{{ student.no }}</span>
+                    <span class="font-bold text-gray-900 text-sm truncate">{{ student.name }}</span>
+                  </div>
+                  <p class="text-xs text-gray-500 font-mono mt-0.5 ml-8">NIS: {{ student.nis }}</p>
+                </div>
+                <span
+                  v-if="student.is_rejected_leave"
+                  class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0"
+                >
+                  Izin Ditolak
+                </span>
+              </div>
+
+              <!-- Mobile Segmented Buttons with 44px min tap height -->
+              <div class="grid grid-cols-4 gap-1 p-1 bg-gray-100 rounded-xl">
+                <button
+                  type="button"
+                  @click="setStudentStatus(student, 'HADIR')"
+                  class="py-2.5 rounded-lg text-xs font-bold transition-all text-center cursor-pointer min-h-[44px] flex items-center justify-center touch-manipulation active:scale-95"
+                  :class="student.status === 'HADIR' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-gray-600 hover:text-gray-900'"
+                >
+                  Hadir
+                </button>
+                <button
+                  type="button"
+                  @click="setStudentStatus(student, 'SAKIT')"
+                  class="py-2.5 rounded-lg text-xs font-bold transition-all text-center cursor-pointer min-h-[44px] flex items-center justify-center touch-manipulation active:scale-95"
+                  :class="student.status === 'SAKIT' ? 'bg-amber-500 text-white shadow-2xs' : 'text-gray-600 hover:text-gray-900'"
+                >
+                  Sakit
+                </button>
+                <button
+                  type="button"
+                  @click="setStudentStatus(student, 'IZIN')"
+                  class="py-2.5 rounded-lg text-xs font-bold transition-all text-center cursor-pointer min-h-[44px] flex items-center justify-center touch-manipulation active:scale-95"
+                  :class="student.status === 'IZIN' ? 'bg-blue-600 text-white shadow-2xs' : 'text-gray-600 hover:text-gray-900'"
+                >
+                  Izin
+                </button>
+                <button
+                  type="button"
+                  @click="setStudentStatus(student, 'ALPHA')"
+                  class="py-2.5 rounded-lg text-xs font-bold transition-all text-center cursor-pointer min-h-[44px] flex items-center justify-center touch-manipulation active:scale-95"
+                  :class="student.status === 'ALPHA' ? 'bg-rose-600 text-white shadow-2xs' : 'text-gray-600 hover:text-gray-900'"
+                >
+                  ALFA
+                </button>
+              </div>
+
+              <!-- Note input -->
+              <input
+                v-model="student.note"
+                type="text"
+                placeholder="Catatan kehadiran (opsional)..."
+                class="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-gray-50/50"
+              />
+            </div>
+
+            <div v-else class="py-12 text-center text-gray-500">
+              <div v-if="loadError" class="space-y-3">
+                <div class="inline-flex p-3 bg-red-50 text-red-600 rounded-full mb-1">
+                  <AlertCircle class="w-6 h-6" />
+                </div>
+                <p class="text-xs text-red-600 font-semibold max-w-sm mx-auto">{{ loadError }}</p>
+                <div>
+                  <button
+                    type="button"
+                    @click="() => loadAttendance(false)"
+                    class="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl shadow-2xs transition cursor-pointer min-h-[44px]"
+                  >
+                    Coba Lagi
+                  </button>
+                </div>
+              </div>
+              <div v-else class="text-xs text-gray-400 py-6">
+                Tidak ada siswa yang cocok dengan pencarian "{{ searchQuery }}".
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs">
               <thead>
                 <tr class="text-gray-400 uppercase text-[10px] border-b border-gray-100">
@@ -102,7 +194,18 @@
                 <!-- Actual Student Rows -->
                 <tr v-else-if="filteredStudents.length > 0" v-for="student in filteredStudents" :key="student.student_id" class="hover:bg-gray-50/50 transition">
                   <td class="py-3 text-gray-400 whitespace-nowrap">{{ student.no }}</td>
-                  <td class="py-3 font-semibold text-gray-900 whitespace-nowrap">{{ student.name }}</td>
+                  <td class="py-3 font-semibold text-gray-900 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <span>{{ student.name }}</span>
+                      <span
+                        v-if="student.is_rejected_leave"
+                        class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200"
+                        title="Surat izin ditolak Wali Kelas - Wajib verifikasi fisik di kelas"
+                      >
+                        Izin Ditolak Walas
+                      </span>
+                    </div>
+                  </td>
                   <td class="py-3 text-gray-500 whitespace-nowrap">{{ student.nis }}</td>
                   <!-- Segmented Buttons for 4 statuses -->
                   <td class="py-3 whitespace-nowrap text-center">
@@ -203,7 +306,7 @@
         </div>
 
         <!-- Verification Panel (1 col) -->
-        <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-6 h-fit">
+        <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-6 h-fit">
           <h3 class="text-sm font-bold text-gray-900 pb-3 border-b border-gray-100">Verifikasi Status</h3>
 
           <div class="space-y-3 text-xs">
@@ -301,7 +404,13 @@
 </template>
 
 <script setup lang="ts">
-import { Check, Search, Lock, RefreshCw, AlertCircle } from 'lucide-vue-next'
+import {
+  Check,
+  Search,
+  Lock,
+  RefreshCw,
+  AlertCircle,
+} from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
 const route = useRoute()

@@ -3,7 +3,6 @@
     <AppHeader
       :title="authStore.user?.role === 'ORANG_TUA' ? 'Riwayat Surat Izin Anak' : 'Pengajuan Surat Izin Belajar'"
       :subtitle="authStore.user?.role === 'ORANG_TUA' ? 'Pantau status pengajuan izin belajar putra/putri Anda' : 'Ajukan permohonan izin/sakit secara mandiri langsung kepada Wali Kelas'"
-      :show-back="true"
     />
 
     <main class="px-4 sm:px-8 pb-10 space-y-5">
@@ -13,7 +12,7 @@
           <CheckCircle2Icon class="w-5 h-5 text-green-600" />
           {{ successMsg }}
         </div>
-        <button @click="successMsg = ''" class="text-green-500 hover:text-green-700 text-sm cursor-pointer">✕</button>
+        <button @click="successMsg = ''" class="text-green-500 hover:text-green-700 text-sm cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -30,8 +29,22 @@
             <p class="text-xs text-gray-400 mt-0.5">Surat izin akan langsung diteruskan ke Wali Kelas untuk diverifikasi</p>
           </div>
 
+          <!-- Banner Notifikasi: Jika siswa sudah memiliki izin yang DISETUJUI hari ini -->
+          <div
+            v-if="activeApprovedLeaveToday"
+            class="p-4 rounded-2xl bg-blue-50 border-2 border-primary/30 space-y-2 text-slate-800"
+          >
+            <div class="flex items-center gap-2">
+              <CheckCircle2Icon class="w-5 h-5 text-primary shrink-0" />
+              <h4 class="font-bold text-xs text-primary">Surat Izin Hari Ini Telah Disetujui Wali Kelas</h4>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Anda telah memiliki izin resmi berstatus <strong>DISETUJUI ({{ activeApprovedLeaveToday.type }})</strong> untuk tanggal <strong>{{ activeApprovedLeaveToday.start_date }} s/d {{ activeApprovedLeaveToday.end_date }}</strong>. Status absensi Anda telah tercatat otomatis tidak masuk sekolah.
+            </p>
+          </div>
+
           <form @submit.prevent="handleSubmit" class="space-y-4">
-            <!-- Informasi Pemohon (Otomatis sesuai akun Siswa yang login - Sesuai PDF Hal. 9) -->
+            <!-- Informasi Pemohon (Otomatis sesuai akun Siswa yang login) -->
             <div class="p-4 rounded-2xl bg-gray-50/80 border border-gray-200/80 space-y-2.5">
               <div class="flex items-center justify-between">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-primary">Informasi Pemohon (Otomatis)</span>
@@ -67,7 +80,7 @@
                   :class="[
                     'py-2.5 rounded-xl text-xs font-semibold border transition text-center cursor-pointer',
                     form.type === 'SAKIT'
-                      ? 'bg-orange-50 border-orange-500 text-orange-700 shadow-xs'
+                      ? 'bg-blue-50 border-primary text-primary font-bold shadow-2xs'
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   ]"
                 >
@@ -79,7 +92,7 @@
                   :class="[
                     'py-2.5 rounded-xl text-xs font-semibold border transition text-center cursor-pointer',
                     form.type === 'IZIN'
-                      ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-xs'
+                      ? 'bg-blue-50 border-primary text-primary font-bold shadow-2xs'
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   ]"
                 >
@@ -91,7 +104,7 @@
                   :class="[
                     'py-2.5 rounded-xl text-xs font-semibold border transition text-center cursor-pointer',
                     form.type === 'DISPENSASI'
-                      ? 'bg-purple-50 border-purple-500 text-purple-700 shadow-xs'
+                      ? 'bg-blue-50 border-primary text-primary font-bold shadow-2xs'
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   ]"
                 >
@@ -126,7 +139,21 @@
               </div>
             </div>
 
-            <!-- Ditujukan Kepada (Sesuai PDF Hal. 9 & Evaluasi Wali Kelas) -->
+            <!-- Peringatan Jika Tanggal Sudah Memiliki Izin Disetujui / Pending -->
+            <div
+              v-if="conflictingLeave"
+              class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1"
+            >
+              <div class="flex items-center gap-1.5 font-bold text-amber-800">
+                <AlertCircleIcon class="w-4 h-4 shrink-0 text-amber-600" />
+                <span>Tanggal Sudah Terdaftar ({{ conflictingLeave.status === 'APPROVED' ? 'Telah Disetujui' : 'Menunggu Konfirmasi' }})</span>
+              </div>
+              <p class="leading-relaxed text-amber-800">
+                Anda sudah memiliki permohonan surat izin untuk tanggal <strong>{{ conflictingLeave.start_date }} s/d {{ conflictingLeave.end_date }}</strong>. Anda tidak dapat mengirimkan surat izin ganda pada rentang waktu yang sama.
+              </p>
+            </div>
+
+            <!-- Ditujukan Kepada -->
             <div>
               <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                 Ditujukan Kepada *
@@ -189,11 +216,17 @@
 
             <button
               type="submit"
-              :disabled="submitting"
-              class="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-sm transition shadow-xs flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+              :disabled="submitting || !!conflictingLeave"
+              class="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-sm transition shadow-xs flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <SendIcon class="w-4 h-4" />
-              <span>{{ submitting ? 'Mengirimkan ke Wali Kelas...' : 'Kirim Permohonan ke Wali Kelas' }}</span>
+              <span>
+                {{
+                  conflictingLeave
+                    ? (conflictingLeave.status === 'APPROVED' ? 'Izin Sudah Disetujui (Terkunci)' : 'Izin Sedang Diproses (Pending)')
+                    : (submitting ? 'Mengirimkan ke Wali Kelas...' : 'Kirim Permohonan ke Wali Kelas')
+                }}
+              </span>
             </button>
           </form>
         </div>
@@ -262,7 +295,22 @@
                 </a>
               </div>
 
-              <div v-if="lv.review_note" class="text-[11px] text-gray-600 italic">
+              <div
+                v-if="lv.status === 'REJECTED'"
+                class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1"
+              >
+                <div class="flex items-center gap-1.5 font-bold text-rose-700">
+                  <AlertCircleIcon class="w-4 h-4 shrink-0 text-rose-600" />
+                  <span>Permohonan Izin Ditolak oleh Wali Kelas</span>
+                </div>
+                <p class="leading-relaxed">
+                  <strong>Alasan Penolakan:</strong> "{{ lv.review_note || 'Tidak memenuhi kriteria izin / bukti fisik tidak sah.' }}"
+                </p>
+                <p class="text-[11px] text-rose-600 font-medium pt-0.5">
+                  Catatan: Anda tercatat tidak memiliki izin resmi untuk tanggal tersebut. Silakan hadir di sekolah atau ajukan permohonan ulang dengan bukti yang sah.
+                </p>
+              </div>
+              <div v-else-if="lv.review_note" class="text-[11px] text-gray-600 italic">
                 Catatan Wali Kelas: "{{ lv.review_note }}"
               </div>
             </div>
@@ -274,18 +322,22 @@
 </template>
 
 <script setup lang="ts">
+import { useToastStore } from '~/stores/toast'
 import {
   Mail as MailIcon,
   CheckCircle2 as CheckCircle2Icon,
+  AlertCircle as AlertCircleIcon,
   Send as SendIcon,
   RefreshCw as RefreshCwIcon,
   UploadCloud as UploadCloudIcon,
   FileText as FileTextIcon,
-  Download as DownloadIcon
+  Download as DownloadIcon,
+  X,
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
@@ -310,6 +362,30 @@ const form = ref({
   reason: ''
 })
 
+const todayStr = computed(() => new Date().toISOString().slice(0, 10))
+
+// Cek apakah siswa sudah memiliki surat izin berstatus APPROVED yang aktif hari ini
+const activeApprovedLeaveToday = computed(() => {
+  return leaveList.value.find(lv =>
+    lv.status === 'APPROVED' &&
+    lv.start_date <= todayStr.value &&
+    lv.end_date >= todayStr.value
+  )
+})
+
+// Cek apakah rentang tanggal yang dipilih siswa bertabrakan dengan izin APPROVED atau PENDING
+const conflictingLeave = computed(() => {
+  if (!form.value.start_date || !form.value.end_date) return null
+  const s1 = form.value.start_date
+  const e1 = form.value.end_date
+  return leaveList.value.find(lv => {
+    if (lv.status !== 'APPROVED' && lv.status !== 'PENDING') return false
+    const s2 = lv.start_date
+    const e2 = lv.end_date
+    return (s1 <= e2 && e1 >= s2)
+  })
+})
+
 const fetchLeaves = async () => {
   loadingLeaves.value = true
   try {
@@ -325,6 +401,12 @@ const fetchLeaves = async () => {
 }
 
 const handleSubmit = async () => {
+  if (conflictingLeave.value) {
+    const statusText = conflictingLeave.value.status === 'APPROVED' ? 'DISETUJUI' : 'MENUNGGU VERIFIKASI (PENDING)'
+    toast.error(`Anda sudah memiliki surat izin berstatus ${statusText} pada tanggal tersebut.`)
+    return
+  }
+
   submitting.value = true
   successMsg.value = ''
   try {
@@ -360,7 +442,7 @@ const handleSubmit = async () => {
     if (fileInputRef.value) fileInputRef.value.value = ''
     await fetchLeaves()
   } catch (err: any) {
-    alert(err?.data?.message || 'Gagal mengajukan surat izin')
+    toast.error(err?.data?.message || 'Gagal mengajukan surat izin')
   } finally {
     submitting.value = false
   }

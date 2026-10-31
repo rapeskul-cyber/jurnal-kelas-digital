@@ -23,7 +23,7 @@
           <CheckCircle2Icon class="w-4 h-4 text-emerald-600" />
           <span>{{ successMsg }}</span>
         </div>
-        <button @click="successMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="successMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <!-- Filter Card -->
@@ -80,7 +80,51 @@
           Tidak ada data jurnal yang sesuai filter.
         </div>
 
-        <div v-else class="overflow-x-auto">
+        <div v-else>
+        <!-- Mobile Card List View -->
+        <div class="block md:hidden space-y-3.5 p-4">
+          <div
+            v-for="j in filteredJournals"
+            :key="j.id"
+            class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs space-y-3"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="font-bold text-gray-900 text-sm">{{ j.subject }}</span>
+                <p class="text-xs text-gray-500 font-medium mt-0.5">{{ j.date_time }} • {{ j.teacher }}</p>
+              </div>
+              <StatusBadge :status="j.status" />
+            </div>
+
+            <div class="p-3 bg-gray-50/70 rounded-xl space-y-1 text-xs">
+              <span class="text-gray-400">Kegiatan Belajar:</span>
+              <p class="text-gray-800 font-medium">{{ j.activity }}</p>
+            </div>
+
+            <div class="flex items-center justify-between pt-1 border-t border-gray-100 text-xs">
+              <span class="text-gray-500 text-[11px]">Oleh: <strong class="text-gray-800">{{ j.created_by || 'Siswa' }}</strong></span>
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="canConfirm && j.status !== 'TERVERIFIKASI'"
+                  @click="confirmJournal(j)"
+                  :disabled="confirmingId === j.id"
+                  class="min-h-[44px] px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition cursor-pointer"
+                >
+                  {{ confirmingId === j.id ? '...' : 'Verifikasi' }}
+                </button>
+                <button
+                  @click="selectedJournal = j"
+                  class="min-h-[44px] px-3.5 py-2 rounded-xl text-primary bg-primary/10 hover:bg-primary/20 font-bold transition cursor-pointer"
+                >
+                  Detail
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="bg-gray-50/70 border-b border-gray-100 text-gray-500 uppercase tracking-wider font-semibold">
@@ -139,20 +183,22 @@
             </tbody>
           </table>
         </div>
+        </div>
       </div>
 
       <!-- Modal Detail Jurnal -->
       <div
         v-if="selectedJournal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-xs"
       >
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto pb-safe">
+          <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 sm:hidden shrink-0"></div>
           <div class="flex items-center justify-between border-b border-gray-100 pb-3">
             <div>
               <h3 class="text-base font-bold text-gray-900">{{ selectedJournal.subject }}</h3>
               <p class="text-xs text-gray-400 mt-0.5">{{ selectedJournal.date_time }} • {{ selectedJournal.class }}</p>
             </div>
-            <button @click="selectedJournal = null" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer">✕</button>
+            <button @click="selectedJournal = null" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"><X class="w-3.5 h-3.5" /></button>
           </div>
 
           <div class="space-y-3 text-xs text-gray-700">
@@ -209,15 +255,18 @@
 </template>
 
 <script setup lang="ts">
+import { useToastStore } from '~/stores/toast'
 import {
   Download as DownloadIcon,
   Search as SearchIcon,
   BookOpen as BookOpenIcon,
-  CheckCircle2 as CheckCircle2Icon
+  CheckCircle2 as CheckCircle2Icon,
+  X,
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 const canConfirm = computed(() => {
   return ['GURU_PENGAJAR', 'GURU_PEMBIMBING', 'SUPERADMIN'].includes(authStore.user?.role || '')
@@ -290,7 +339,7 @@ const confirmJournal = async (journal: any) => {
     }
     successMsg.value = `Jurnal kegiatan belajar oleh ${journal.created_by || 'Siswa'} berhasil diverifikasi!`
   } catch (err: any) {
-    alert(err?.data?.message || 'Gagal memverifikasi jurnal kegiatan.')
+    toast.error(err?.data?.message || 'Gagal memverifikasi jurnal kegiatan.')
   } finally {
     confirmingId.value = null
   }
@@ -298,7 +347,7 @@ const confirmJournal = async (journal: any) => {
 
 const exportReport = () => {
   if (!filteredJournals.value || filteredJournals.value.length === 0) {
-    alert('Tidak ada data jurnal kelas untuk diekspor pada filter ini.')
+    toast.warning('Tidak ada data jurnal kelas untuk diekspor pada filter ini.')
     return
   }
 

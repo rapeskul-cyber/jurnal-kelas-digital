@@ -2,7 +2,7 @@
   <div class="flex-1 flex flex-col">
     <AppHeader
       title="Master Data Akademik"
-      subtitle="Kelola rombongan belajar, mata pelajaran, jadwal mengajar, dan tahun ajaran sekolah"
+      subtitle="Kelola kelas, mata pelajaran, jadwal mengajar, dan tahun ajaran sekolah"
     />
 
     <main class="px-4 sm:px-8 pb-10 space-y-5">
@@ -31,7 +31,7 @@
           <CheckCircle2 class="w-4 h-4 text-emerald-600" />
           <span>{{ successMsg }}</span>
         </div>
-        <button @click="successMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="successMsg = ''" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <div v-if="errorMsg" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between shadow-2xs">
@@ -39,18 +39,18 @@
           <AlertCircle class="w-4 h-4 text-rose-600" />
           <span>{{ errorMsg }}</span>
         </div>
-        <button @click="errorMsg = ''" class="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="errorMsg = ''" class="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <!-- ============================================== -->
-      <!-- TAB 1: ROMBONGAN BELAJAR (KELAS)               -->
+      <!-- TAB 1: KELAS               -->
       <!-- ============================================== -->
       <div v-if="activeTab === 'classes'" class="space-y-4">
         <!-- Top Row: Title & Action Buttons -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 class="text-sm font-bold text-gray-900">Daftar Rombongan Belajar (Kelas)</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Kelola rombongan belajar Kelas Industri RPL, penugasan wali kelas, dan sekretaris</p>
+            <h2 class="text-sm font-bold text-gray-900">Daftar Kelas</h2>
+            <p class="text-xs text-gray-400 mt-0.5">Kelola kelas, penugasan wali kelas, dan sekretaris</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
             <button
@@ -65,7 +65,7 @@
               class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer whitespace-nowrap"
             >
               <Plus class="w-4 h-4" />
-              <span>Tambah Rombel Baru</span>
+              <span>Tambah Kelas Baru</span>
             </button>
           </div>
         </div>
@@ -74,27 +74,97 @@
         <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-gray-150 shadow-2xs">
           <div class="flex items-center gap-2">
             <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">Program Keahlian:</span>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-              <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              Kelas Industri RPL
-            </span>
+            <div class="inline-flex items-center bg-gray-100 p-1 rounded-xl text-xs select-none">
+              <button
+                type="button"
+                @click="classMajorFilter = 'ALL'"
+                class="px-3 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                :class="classMajorFilter === 'ALL' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
+              >
+                Semua
+              </button>
+              <button
+                v-for="m in uniqueMajors"
+                :key="m"
+                type="button"
+                @click="classMajorFilter = m"
+                class="px-3 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                :class="classMajorFilter === m ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
+              >
+                {{ m }}
+              </button>
+            </div>
           </div>
 
           <div class="text-xs text-gray-500 font-medium px-2">
-            Total <span class="font-bold text-gray-900">{{ classes.length }}</span> Rombel Aktif
+            Total <span class="font-bold text-gray-900">{{ filteredClasses.length }}</span> Kelas
           </div>
         </div>
 
         <div class="bg-white rounded-2xl border border-gray-150 shadow-2xs overflow-hidden">
           <div v-if="loadingClasses" class="py-12 text-center text-gray-400 text-xs">
-            Memuat data rombongan belajar...
+            Memuat data kelas...
           </div>
-          <div v-else class="overflow-x-auto">
+          <div v-else>
+          <!-- Mobile Card List View -->
+          <div class="block md:hidden space-y-3 p-4">
+            <div
+              v-for="(cls, idx) in filteredClasses"
+              :key="cls.id"
+              class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs space-y-3"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-gray-400">#{{ idx + 1 }}</span>
+                    <span class="font-bold text-gray-900 text-sm">{{ cls.name }}</span>
+                  </div>
+                  <div class="mt-1">
+                    <span
+                      class="px-2 py-0.5 rounded-md text-[10px] font-bold border inline-block"
+                      :class="cls.name.toLowerCase().includes('industri') ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-primary/10 text-primary border-primary/20'"
+                    >
+                      {{ cls.major || 'Umum' }}{{ cls.name.toLowerCase().includes('industri') ? ' (Kelas Industri)' : '' }}
+                    </span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-primary text-xs">{{ cls.students_count || 0 }} Siswa</span>
+                  <span class="block text-[10px] text-gray-400">{{ cls.schedules_count || 0 }} Mapel</span>
+                </div>
+              </div>
+
+              <div class="p-3 bg-gray-50/70 rounded-xl space-y-1.5 text-xs text-gray-600">
+                <p><span class="text-gray-400">Wali Kelas:</span> <strong class="text-gray-800">{{ cls.advisor?.name || '-' }}</strong></p>
+                <p><span class="text-gray-400">Sekretaris:</span> <strong class="text-gray-800">{{ cls.secretary?.name || '-' }}</strong></p>
+              </div>
+
+              <div class="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
+                <button
+                  @click="editClass(cls)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition cursor-pointer"
+                  title="Edit Kelas"
+                >
+                  <Edit class="w-4 h-4" />
+                </button>
+                <button
+                  @click="deleteClass(cls)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                  title="Hapus Kelas"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead>
                 <tr class="bg-gray-50/70 border-b border-gray-150 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
                   <th class="py-3 px-4 w-12 text-center whitespace-nowrap">No</th>
-                  <th class="py-3 px-4 whitespace-nowrap">Nama Rombel</th>
+                  <th class="py-3 px-4 whitespace-nowrap">Nama Kelas</th>
                   <th class="py-3 px-4 whitespace-nowrap">Jurusan</th>
                   <th class="py-3 px-4 whitespace-nowrap">Wali Kelas</th>
                   <th class="py-3 px-4 whitespace-nowrap">Sekretaris Kelas</th>
@@ -108,8 +178,11 @@
                   <td class="py-3.5 px-4 text-center font-medium text-gray-400 whitespace-nowrap">{{ idx + 1 }}</td>
                   <td class="py-3.5 px-4 font-bold text-gray-900 text-sm whitespace-nowrap">{{ cls.name }}</td>
                   <td class="py-3.5 px-4 whitespace-nowrap">
-                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
-                      {{ cls.major || 'RPL' }} (Kelas Industri)
+                    <span
+                      class="px-2.5 py-1 rounded-lg text-[10px] font-bold border whitespace-nowrap"
+                      :class="cls.name.toLowerCase().includes('industri') ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-primary/10 text-primary border-primary/20'"
+                    >
+                      {{ cls.major || 'Umum' }}{{ cls.name.toLowerCase().includes('industri') ? ' (Kelas Industri)' : '' }}
                     </span>
                   </td>
                   <td class="py-3.5 px-4 text-gray-700 font-medium whitespace-nowrap">{{ cls.advisor?.name || '-' }}</td>
@@ -121,14 +194,14 @@
                       <button
                         @click="editClass(cls)"
                         class="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition cursor-pointer"
-                        title="Edit Rombel"
+                        title="Edit Kelas"
                       >
                         <Edit class="w-3.5 h-3.5" />
                       </button>
                       <button
                         @click="deleteClass(cls)"
                         class="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                        title="Hapus Rombel"
+                        title="Hapus Kelas"
                       >
                         <Trash2 class="w-3.5 h-3.5" />
                       </button>
@@ -137,6 +210,7 @@
                 </tr>
               </tbody>
             </table>
+          </div>
           </div>
         </div>
       </div>
@@ -149,7 +223,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 class="text-sm font-bold text-gray-900">Master Mata Pelajaran & Pengajar</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Daftar mata pelajaran kejuruan Kelas Industri RPL & muatan umum beserta guru pengampunya</p>
+            <p class="text-xs text-gray-400 mt-0.5">Daftar mata pelajaran kejuruan & muatan umum beserta guru pengampunya</p>
           </div>
           <button
             @click="openAddSubjectModal"
@@ -169,7 +243,7 @@
                 type="button"
                 @click="filterSubjectByMajor('ALL')"
                 class="px-3 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-                :class="subjectMajorFilter === 'ALL' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-500 hover:text-gray-900'"
+                :class="subjectMajorFilter === 'ALL' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
               >
                 Semua
               </button>
@@ -177,15 +251,31 @@
                 type="button"
                 @click="filterSubjectByMajor('RPL')"
                 class="px-3 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-                :class="subjectMajorFilter === 'RPL' ? 'bg-primary text-white shadow-2xs' : 'text-gray-500 hover:text-primary'"
+                :class="subjectMajorFilter === 'RPL' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
               >
-                RPL Kejuruan
+                RPL
+              </button>
+              <button
+                type="button"
+                @click="filterSubjectByMajor('DKV')"
+                class="px-3 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                :class="subjectMajorFilter === 'DKV' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
+              >
+                DKV
+              </button>
+              <button
+                type="button"
+                @click="filterSubjectByMajor('Animasi')"
+                class="px-3 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                :class="subjectMajorFilter === 'Animasi' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
+              >
+                Animasi
               </button>
               <button
                 type="button"
                 @click="filterSubjectByMajor('UMUM')"
                 class="px-3 py-1.5 text-center font-bold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-                :class="subjectMajorFilter === 'UMUM' ? 'bg-gray-800 text-white shadow-2xs' : 'text-gray-500 hover:text-gray-800'"
+                :class="subjectMajorFilter === 'UMUM' ? 'bg-white text-primary shadow-2xs font-bold border border-blue-200' : 'text-gray-500 hover:text-primary'"
               >
                 Muatan Umum
               </button>
@@ -201,7 +291,56 @@
           <div v-if="loadingSubjects" class="py-12 text-center text-gray-400 text-xs">
             Memuat data mata pelajaran...
           </div>
-          <div v-else class="overflow-x-auto">
+          <div v-else>
+          <!-- Mobile Card List View -->
+          <div class="block md:hidden space-y-3 p-4">
+            <div
+              v-for="(sub, idx) in filteredSubjects"
+              :key="sub.id"
+              class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs space-y-3"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-gray-400">#{{ idx + 1 }}</span>
+                    <span class="font-bold text-gray-900 text-sm">{{ sub.name }}</span>
+                  </div>
+                  <span class="font-mono text-xs font-bold text-primary">{{ sub.code || '-' }}</span>
+                </div>
+                <span
+                  class="px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0"
+                  :class="sub.major === 'UMUM' ? 'bg-gray-100 text-gray-700 border border-gray-200' : 'bg-primary/10 text-primary border border-primary/20'"
+                >
+                  {{ sub.major === 'UMUM' ? 'Umum' : sub.major }}
+                </span>
+              </div>
+
+              <div class="p-3 bg-gray-50/70 rounded-xl space-y-1.5 text-xs text-gray-600">
+                <p><span class="text-gray-400">Guru Utama:</span> <strong class="text-gray-800">{{ sub.teacher?.name || '-' }}</strong></p>
+                <p><span class="text-gray-400">Jadwal Aktif:</span> <strong class="text-gray-800">{{ sub.schedules_count || 0 }} Sesi KBM</strong></p>
+              </div>
+
+              <div class="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
+                <button
+                  @click="editSubject(sub)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition cursor-pointer"
+                  title="Edit Mapel"
+                >
+                  <Edit class="w-4 h-4" />
+                </button>
+                <button
+                  @click="deleteSubject(sub)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                  title="Hapus Mapel"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead>
                 <tr class="bg-gray-50/70 border-b border-gray-150 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
@@ -222,9 +361,9 @@
                   <td class="py-3.5 px-4 whitespace-nowrap">
                     <span
                       class="px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap"
-                      :class="sub.major === 'RPL' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-gray-100 text-gray-700 border border-gray-200'"
+                      :class="sub.major === 'UMUM' ? 'bg-gray-100 text-gray-700 border border-gray-200' : 'bg-primary/10 text-primary border border-primary/20'"
                     >
-                      {{ sub.major === 'RPL' ? 'RPL Kejuruan' : (sub.major || 'UMUM') }}
+                      {{ sub.major === 'UMUM' ? 'Muatan Umum' : `${sub.major} Kejuruan` }}
                     </span>
                   </td>
                   <td class="py-3.5 px-4 text-gray-700 font-medium whitespace-nowrap">
@@ -252,6 +391,7 @@
                 </tr>
               </tbody>
             </table>
+          </div>
           </div>
         </div>
       </div>
@@ -288,13 +428,60 @@
           <div v-if="loadingSchedules" class="py-12 text-center text-gray-400 text-xs">
             Memuat data jadwal pelajaran...
           </div>
-          <div v-else class="overflow-x-auto">
+          <div v-else>
+          <!-- Mobile Card List View -->
+          <div class="block md:hidden space-y-3 p-4">
+            <div
+              v-for="(sch, idx) in schedules"
+              :key="sch.id"
+              class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs space-y-3"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="font-bold text-sm text-gray-900">{{ sch.subject?.name || '-' }}</span>
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="text-xs font-bold text-primary">{{ sch.school_class?.name || '-' }}</span>
+                    <span class="text-gray-300">•</span>
+                    <span class="text-[11px] text-gray-500 font-medium">{{ sch.room || 'Lab. 1' }}</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-xs text-gray-900">{{ sch.day }}</span>
+                  <span class="block text-[10px] text-gray-500 font-mono">{{ sch.start_time }} - {{ sch.end_time }}</span>
+                </div>
+              </div>
+
+              <div class="text-xs text-gray-600">
+                <span class="text-gray-400">Guru:</span> <strong class="text-gray-800">{{ sch.teacher?.name || '-' }}</strong>
+              </div>
+
+              <div class="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
+                <button
+                  @click="editSchedule(sch)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition cursor-pointer"
+                  title="Edit Jadwal"
+                >
+                  <Edit class="w-4 h-4" />
+                </button>
+                <button
+                  @click="deleteSchedule(sch)"
+                  class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                  title="Hapus Jadwal"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead>
                 <tr class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
                   <th class="py-3 px-4 w-12 text-center whitespace-nowrap">No</th>
                   <th class="py-3 px-4 whitespace-nowrap">Hari & Jam</th>
-                  <th class="py-3 px-4 whitespace-nowrap">Rombel / Kelas</th>
+                  <th class="py-3 px-4 whitespace-nowrap">Kelas</th>
                   <th class="py-3 px-4 whitespace-nowrap">Mata Pelajaran</th>
                   <th class="py-3 px-4 whitespace-nowrap">Guru Pengajar</th>
                   <th class="py-3 px-4 whitespace-nowrap">Ruang</th>
@@ -334,6 +521,7 @@
               </tbody>
             </table>
           </div>
+          </div>
         </div>
       </div>
 
@@ -359,7 +547,50 @@
           <div v-if="loadingTerms" class="py-12 text-center text-gray-400 text-xs">
             Memuat data semester...
           </div>
-          <div v-else class="overflow-x-auto">
+          <div v-else>
+          <!-- Mobile Card List View -->
+          <div class="block md:hidden space-y-3 p-4">
+            <div
+              v-for="(t, idx) in terms"
+              :key="t.id"
+              class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs space-y-3"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="font-bold text-sm text-gray-900">{{ t.name }}</span>
+                  <p class="text-[11px] text-gray-500 font-mono mt-0.5">{{ t.start_date }} s.d. {{ t.end_date }}</p>
+                </div>
+                <span
+                  v-if="t.is_active"
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  ● Sedang Aktif
+                </span>
+                <span
+                  v-else
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-50 text-gray-400 border border-gray-200"
+                >
+                  Arsip
+                </span>
+              </div>
+
+              <div class="text-xs text-gray-600">
+                <span class="text-gray-400">Hari Efektif Belajar:</span> <strong class="text-gray-800">{{ t.effective_days }} Hari</strong>
+              </div>
+
+              <div v-if="!t.is_active" class="pt-1 border-t border-gray-100">
+                <button
+                  @click="activateTerm(t)"
+                  class="w-full min-h-[44px] flex items-center justify-center bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-2xs"
+                >
+                  Set Sebagai Semester Aktif
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead>
                 <tr class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
@@ -405,27 +636,32 @@
               </tbody>
             </table>
           </div>
+          </div>
         </div>
       </div>
     </main>
 
     <!-- MODAL FORM: KELAS -->
-    <div v-if="showClassModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+    <div v-if="showClassModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto pb-safe">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 sm:hidden shrink-0"></div>
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 class="text-sm font-bold text-gray-900">{{ editingClassId ? 'Edit Rombel' : 'Tambah Rombongan Belajar' }}</h3>
-          <button @click="showClassModal = false" class="text-gray-400 hover:text-gray-600 p-1">✕</button>
+          <h3 class="text-sm font-bold text-gray-900">{{ editingClassId ? 'Edit Kelas' : 'Tambah Kelas' }}</h3>
+          <button @click="showClassModal = false" class="text-gray-400 hover:text-gray-600 p-1"><X class="w-3.5 h-3.5" /></button>
         </div>
         <form @submit.prevent="saveClass" class="space-y-3.5 text-xs">
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">Nama Rombel / Kelas *</label>
+            <label class="block font-semibold text-gray-700 mb-1">Nama Kelas / Kelas *</label>
             <input v-model="classForm.name" type="text" placeholder="Contoh: XII RPL 1" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>
 
           <div>
             <label class="block font-semibold text-gray-700 mb-1">Jurusan / Program Keahlian *</label>
             <select v-model="classForm.major" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none bg-white font-semibold">
-              <option value="RPL">RPL (Rekayasa Perangkat Lunak - Kelas Industri)</option>
+              <option value="RPL">Rekayasa Perangkat Lunak (RPL)</option>
+              <option value="DKV">Desain Komunikasi Visual (DKV)</option>
+              <option value="Animasi">Animasi</option>
+              <option value="UMUM">Umum</option>
             </select>
           </div>
 
@@ -447,21 +683,22 @@
 
           <div class="pt-3 flex justify-end gap-2">
             <button type="button" @click="showClassModal = false" class="px-4 py-2 border rounded-xl text-gray-600">Batal</button>
-            <button type="submit" :disabled="saving" class="px-5 py-2 bg-primary text-white font-bold rounded-xl">{{ saving ? 'Menyimpan...' : 'Simpan Rombel' }}</button>
+            <button type="submit" :disabled="saving" class="px-5 py-2 bg-primary text-white font-bold rounded-xl">{{ saving ? 'Menyimpan...' : 'Simpan Kelas' }}</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- MODAL FORM: PROMOSI / MUTASI SISWA -->
-    <div v-if="showPromoteModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+    <div v-if="showPromoteModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto pb-safe">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 sm:hidden shrink-0"></div>
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 class="text-sm font-bold text-gray-900">Mutasi / Pindah Rombel Massal</h3>
-          <button @click="showPromoteModal = false" class="text-gray-400 hover:text-gray-600 p-1">✕</button>
+          <h3 class="text-sm font-bold text-gray-900">Mutasi / Pindah Kelas Massal</h3>
+          <button @click="showPromoteModal = false" class="text-gray-400 hover:text-gray-600 p-1"><X class="w-3.5 h-3.5" /></button>
         </div>
         <div class="space-y-3.5 text-xs">
-          <p class="text-gray-500">Pindahkan seluruh siswa dari satu rombel ke rombel berikutnya (misal kenaikan Kelas Industri RPL ke tingkat berikutnya).</p>
+          <p class="text-gray-500">Pindahkan seluruh siswa dari satu kelas ke kelas berikutnya.</p>
           <div>
             <label class="block font-semibold text-gray-700 mb-1">Kelas Asal (Sumber)</label>
             <select v-model="promoteForm.source_class_id" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none bg-white">
@@ -483,11 +720,12 @@
     </div>
 
     <!-- MODAL FORM: MAPEL -->
-    <div v-if="showSubjectModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+    <div v-if="showSubjectModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto pb-safe">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 sm:hidden shrink-0"></div>
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
           <h3 class="text-sm font-bold text-gray-900">{{ editingSubjectId ? 'Edit Mata Pelajaran' : 'Tambah Mata Pelajaran' }}</h3>
-          <button @click="showSubjectModal = false" class="text-gray-400 hover:text-gray-600 p-1">✕</button>
+          <button @click="showSubjectModal = false" class="text-gray-400 hover:text-gray-600 p-1"><X class="w-3.5 h-3.5" /></button>
         </div>
         <form @submit.prevent="saveSubject" class="space-y-3.5 text-xs">
           <div>
@@ -503,7 +741,9 @@
             <div>
               <label class="block font-semibold text-gray-700 mb-1">Kategori / Muatan</label>
               <select v-model="subjectForm.major" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none bg-white">
-                <option value="RPL">RPL (Kejuruan)</option>
+                <option value="RPL">RPL (Rekayasa Perangkat Lunak)</option>
+                <option value="DKV">DKV (Desain Komunikasi Visual)</option>
+                <option value="Animasi">Animasi</option>
                 <option value="UMUM">UMUM (Muatan Umum / Dasar)</option>
               </select>
             </div>
@@ -526,11 +766,12 @@
     </div>
 
     <!-- MODAL FORM: JADWAL -->
-    <div v-if="showScheduleModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+    <div v-if="showScheduleModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto pb-safe">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 sm:hidden shrink-0"></div>
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
           <h3 class="text-sm font-bold text-gray-900">{{ editingScheduleId ? 'Edit Jadwal Mengajar' : 'Tambah Jadwal Mengajar' }}</h3>
-          <button @click="showScheduleModal = false" class="text-gray-400 hover:text-gray-600 p-1">✕</button>
+          <button @click="showScheduleModal = false" class="text-gray-400 hover:text-gray-600 p-1"><X class="w-3.5 h-3.5" /></button>
         </div>
         <form @submit.prevent="saveSchedule" class="space-y-3 text-xs">
           <div>
@@ -587,11 +828,12 @@
     </div>
 
     <!-- MODAL FORM: SEMESTER -->
-    <div v-if="showTermModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+    <div v-if="showTermModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto pb-safe">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 sm:hidden shrink-0"></div>
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
           <h3 class="text-sm font-bold text-gray-900">Tambah Semester & Tahun Ajaran</h3>
-          <button @click="showTermModal = false" class="text-gray-400 hover:text-gray-600 p-1">✕</button>
+          <button @click="showTermModal = false" class="text-gray-400 hover:text-gray-600 p-1"><X class="w-3.5 h-3.5" /></button>
         </div>
         <form @submit.prevent="saveTerm" class="space-y-3 text-xs">
           <div>
@@ -638,6 +880,7 @@ import {
   ArrowRightLeft,
   CheckCircle2,
   AlertCircle,
+  X,
 } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
@@ -646,7 +889,7 @@ const config = useRuntimeConfig()
 const apiBase = config.public.apiBase || '/api'
 
 const tabs = [
-  { id: 'classes', label: 'Rombongan Belajar', icon: Layers },
+  { id: 'classes', label: 'Kelas', icon: Layers },
   { id: 'subjects', label: 'Mata Pelajaran', icon: BookOpen },
   { id: 'schedules', label: 'Jadwal Mengajar', icon: Clock },
   { id: 'terms', label: 'Tahun Ajaran & Semester', icon: Calendar },
@@ -668,8 +911,17 @@ const terms = ref<any[]>([])
 const teachers = ref<any[]>([])
 const candidateSecretaries = ref<any[]>([])
 
+const uniqueMajors = computed(() => {
+  const set = new Set<string>()
+  classes.value.forEach((c: any) => {
+    if (c.major) set.add(c.major)
+  })
+  return set.size ? Array.from(set) : ['RPL', 'DKV', 'Animasi']
+})
+
 const filteredClasses = computed(() => {
-  return classes.value
+  if (classMajorFilter.value === 'ALL') return classes.value
+  return classes.value.filter(c => c.major === classMajorFilter.value)
 })
 
 const filteredSubjects = computed(() => {
@@ -832,7 +1084,14 @@ async function saveClass() {
 }
 
 async function deleteClass(cls: any) {
-  if (!confirm(`Hapus rombongan belajar ${cls.name}? Siswa di dalamnya akan dilepaskan keterikatannya.`)) return
+  const ok = await confirmDialog({
+    title: 'Hapus Kelas?',
+    message: `Hapus kelas ${cls.name}? Siswa di dalamnya akan dilepaskan keterikatannya.`,
+    confirmText: 'Ya, Hapus Kelas',
+    cancelText: 'Batal',
+    type: 'danger',
+  })
+  if (!ok) return
   try {
     const res: any = await $fetch(`${apiBase}/master/classes/${cls.id}`, {
       method: 'DELETE',
@@ -902,7 +1161,14 @@ async function saveSubject() {
 }
 
 async function deleteSubject(sub: any) {
-  if (!confirm(`Hapus mata pelajaran ${sub.name}?`)) return
+  const ok = await confirmDialog({
+    title: 'Hapus Mata Pelajaran?',
+    message: `Apakah Anda yakin ingin menghapus mata pelajaran "${sub.name}"?`,
+    confirmText: 'Ya, Hapus Mapel',
+    cancelText: 'Batal',
+    type: 'danger',
+  })
+  if (!ok) return
   try {
     const res: any = await $fetch(`${apiBase}/master/subjects/${sub.id}`, {
       method: 'DELETE',
@@ -965,7 +1231,14 @@ async function saveSchedule() {
 }
 
 async function deleteSchedule(sch: any) {
-  if (!confirm('Hapus jadwal mengajar ini?')) return
+  const ok = await confirmDialog({
+    title: 'Hapus Jadwal Mengajar?',
+    message: 'Apakah Anda yakin ingin menghapus jadwal mengajar ini dari sistem?',
+    confirmText: 'Ya, Hapus Jadwal',
+    cancelText: 'Batal',
+    type: 'danger',
+  })
+  if (!ok) return
   try {
     const res: any = await $fetch(`${apiBase}/master/schedules/${sch.id}`, {
       method: 'DELETE',
@@ -1009,7 +1282,14 @@ async function saveTerm() {
 }
 
 async function activateTerm(t: any) {
-  if (!confirm(`Jadikan ${t.name} sebagai semester aktif sistem saat ini?`)) return
+  const ok = await confirmDialog({
+    title: 'Aktifkan Semester?',
+    message: `Jadikan "${t.name}" sebagai semester aktif sistem saat ini? Semua transaksi presensi dan jurnal akan mengacu ke semester ini.`,
+    confirmText: 'Ya, Aktifkan',
+    cancelText: 'Batal',
+    type: 'primary',
+  })
+  if (!ok) return
   try {
     const res: any = await $fetch(`${apiBase}/master/terms/${t.id}/activate`, {
       method: 'PUT',

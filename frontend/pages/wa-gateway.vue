@@ -12,7 +12,7 @@
           <CheckCircle2 class="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span>{{ successMsg }}</span>
         </div>
-        <button @click="successMsg = ''" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="successMsg = ''" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <div v-if="errorMsg" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between shadow-2xs">
@@ -20,14 +20,14 @@
           <AlertCircle class="w-4 h-4 text-rose-600 flex-shrink-0" />
           <span>{{ errorMsg }}</span>
         </div>
-        <button @click="errorMsg = ''" class="text-rose-700 hover:text-rose-900 text-xs font-bold cursor-pointer">✕</button>
+        <button @click="errorMsg = ''" class="text-rose-700 hover:text-rose-900 text-xs font-bold cursor-pointer"><X class="w-3.5 h-3.5" /></button>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <!-- LEFT (5 COLS): KONEKSI WHATSAPP GATEWAY -->
         <div class="lg:col-span-5 space-y-6">
           <!-- Connection Status Card -->
-          <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-5">
+          <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-5">
             <div class="flex items-center justify-between border-b border-gray-100 pb-4">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
@@ -119,7 +119,7 @@
           </div>
 
           <!-- Uji Coba Kirim Pesan WA Card -->
-          <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-4">
+          <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-4">
             <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
               <Send class="w-4 h-4 text-primary" />
               <span>Uji Coba Kirim Pesan Cepat</span>
@@ -161,7 +161,7 @@
 
         <!-- RIGHT (7 COLS): SIARAN PENGUMUMAN SIMPEL -->
         <div class="lg:col-span-7 space-y-6">
-          <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-5">
+          <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-5">
             <div class="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
                 <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
@@ -189,7 +189,7 @@
                     type="button"
                     @click="broadcastForm.target_role = 'GURU_PEMBIMBING'"
                     class="p-2.5 rounded-xl border text-center transition cursor-pointer"
-                    :class="broadcastForm.target_role === 'GURU_PEMBIMBING' ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
+                    :class="broadcastForm.target_role === 'GURU_PEMBIMBING' ? 'border-primary bg-white text-primary font-bold shadow-2xs' : 'border-gray-200 bg-white text-gray-500 hover:text-gray-700'"
                   >
                     Wali Kelas
                   </button>
@@ -205,7 +205,7 @@
                     type="button"
                     @click="broadcastForm.target_role = 'SISWA'"
                     class="p-2.5 rounded-xl border text-center transition cursor-pointer"
-                    :class="broadcastForm.target_role === 'SISWA' ? 'border-purple-600 bg-purple-50 text-purple-800 font-bold' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
+                    :class="broadcastForm.target_role === 'SISWA' ? 'border-primary bg-white text-primary font-bold shadow-2xs' : 'border-gray-200 bg-white text-gray-500 hover:text-gray-700'"
                   >
                     Siswa & Wali
                   </button>
@@ -236,7 +236,7 @@
                     type="button"
                     @click="broadcastForm.channel = 'WHATSAPP'"
                     class="p-2.5 rounded-xl border text-center transition cursor-pointer"
-                    :class="broadcastForm.channel === 'WHATSAPP' ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold' : 'border-gray-200 hover:bg-gray-50 text-gray-700'"
+                    :class="broadcastForm.channel === 'WHATSAPP' ? 'border-primary bg-white text-primary font-bold shadow-2xs' : 'border-gray-200 bg-white text-gray-500 hover:text-gray-700'"
                   >
                     WhatsApp Bot
                   </button>
@@ -281,7 +281,7 @@
           </div>
 
           <!-- Riwayat Siaran Terakhir -->
-          <div class="bg-white rounded-2xl border border-gray-150 p-6 shadow-2xs space-y-4">
+          <div class="bg-white rounded-2xl border border-gray-150 p-4 sm:p-6 shadow-2xs space-y-4">
             <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-3">Riwayat Siaran Terakhir</h3>
 
             <div v-if="loadingBroadcasts" class="text-center py-6 text-gray-400 text-xs">
@@ -327,6 +327,7 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertCircle,
+  X,
 } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
@@ -367,12 +368,16 @@ async function checkWaStatus() {
     const res = await $fetch<any>(`${authStore.apiBase}/wa-gateway/status`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
-    waStatus.value = res.connected ? 'connected' : 'disconnected'
-    waNumber.value = res.phone || res.number || (res.user?.id ? res.user.id.split('@')[0] : '')
-    if (res.connected) {
+    const isConn = res?.connected === true || res?.device_status === 'connected' || res?.data?.status === 'connected'
+    waStatus.value = isConn ? 'connected' : 'disconnected'
+
+    const phoneVal = res?.phone || res?.number || res?.data?.phone || (res?.user?.id ? res.user.id.split('@')[0] : '') || (res?.data?.user?.id ? res.data.user.id.split('@')[0] : '')
+    waNumber.value = phoneVal ? phoneVal.split(':')[0] : ''
+
+    if (isConn) {
       pairingCode.value = ''
-    } else if (res.pairing_code) {
-      pairingCode.value = res.pairing_code
+    } else if (res?.pairing_code || res?.data?.pairingCode) {
+      pairingCode.value = res.pairing_code || res.data.pairingCode
     }
   } catch (e) {
     waStatus.value = 'disconnected'
@@ -409,7 +414,14 @@ async function handleRequestPairing() {
 }
 
 async function handleLogoutWa() {
-  if (!confirm('Putuskan koneksi bot WhatsApp?')) return
+  const ok = await confirmDialog({
+    title: 'Putuskan Bot WhatsApp?',
+    message: 'Apakah Anda yakin ingin memutuskan bot WhatsApp? Sistem tidak akan dapat mengirim notifikasi otomatis hingga dipasangkan kembali.',
+    confirmText: 'Ya, Putuskan',
+    cancelText: 'Batal',
+    type: 'warning',
+  })
+  if (!ok) return
   try {
     await $fetch(`${authStore.apiBase}/wa-gateway/logout`, {
       method: 'POST',
@@ -427,10 +439,12 @@ async function handleLogoutWa() {
 async function handleTestSend() {
   if (!testNumber.value) {
     errorMsg.value = 'Masukkan nomor tujuan tes.'
+    successMsg.value = ''
     return
   }
   sendingTest.value = true
   errorMsg.value = ''
+  successMsg.value = ''
   try {
     const res = await $fetch<any>(`${authStore.apiBase}/wa-gateway/send-test`, {
       method: 'POST',
@@ -440,13 +454,16 @@ async function handleTestSend() {
         message: testMessage.value,
       }
     })
-    if (res?.status) {
-      successMsg.value = res.message || 'Pesan uji coba berhasil dikirim via WhatsApp!'
+    if (res?.status === true) {
+      successMsg.value = res.message || 'Pesan uji coba WhatsApp berhasil terkirim ke target!'
+      errorMsg.value = ''
     } else {
-      errorMsg.value = res?.message || 'Gagal mengirim pesan uji coba WhatsApp.'
+      errorMsg.value = res?.message || 'Pengiriman pesan WhatsApp gagal.'
+      successMsg.value = ''
     }
   } catch (e: any) {
-    errorMsg.value = e?.data?.message || 'Gagal mengirim pesan uji coba.'
+    errorMsg.value = e?.data?.message || e?.message || 'Gagal mengirim pesan uji coba ke WhatsApp.'
+    successMsg.value = ''
   } finally {
     sendingTest.value = false
   }

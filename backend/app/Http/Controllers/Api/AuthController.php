@@ -15,6 +15,11 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        // Point 3: Verifikasi Cloudflare Turnstile secara strict di baris paling awal sebelum cek password
+        if ($turnstileError = $this->verifyTurnstileToken($request)) {
+            return $turnstileError;
+        }
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -66,17 +71,9 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:20',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
             'old_password' => 'nullable|string',
             'new_password' => 'nullable|string|min:8|confirmed',
         ]);
-
-        if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
-            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('avatars', $filename, 'public');
-            $user->avatar_url = '/storage/avatars/' . $filename;
-        }
 
         if ($request->filled('old_password')) {
             if (!Hash::check($request->old_password, $user->password)) {
@@ -107,57 +104,95 @@ class AuthController extends Controller
 
     public function uploadAvatar(Request $request)
     {
-        $user = $request->user();
         $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
-        if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
-            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('avatars', $filename, 'public');
+        $user = $request->user();
+        $file = $request->file('avatar');
 
-            $user->avatar_url = '/storage/avatars/' . $filename;
-            $user->save();
-
-            AuditLog::create([
-                'user_id' => $user->id,
-                'action' => 'Mengunggah foto profil baru',
-                'ip_address' => $request->ip(),
-            ]);
-
-            return response()->json([
-                'message' => 'Foto profil berhasil diperbarui!',
-                'avatar_url' => $user->avatar_url,
-                'user' => $user->fresh()->load('schoolClass'),
-            ]);
+        $dir = storage_path('app/public/avatars');
+        if (!file_exists($dir)) {
+            mkdir($dir, 0777, true);
         }
 
-        return response()->json(['message' => 'Berkas gambar tidak ditemukan.'], 400);
+        // Delete previous avatar file if exists
+        if ($user->avatar) {
+            $oldFilename = basename($user->avatar);
+            $oldFilePath = $dir . '/' . $oldFilename;
+            if (file_exists($oldFilePath)) {
+                @unlink($oldFilePath);
+            }
+        }
+
+        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        $filename = 'avatar_' . $user->id . '_' . time() . '.' . $ext;
+        $file->move($dir, $filename);
+
+        $avatarUrl = '/api/avatars/' . $filename;
+        $user->avatar = $avatarUrl;
+        $user->avatar_url = $avatarUrl;
+        $user->save();
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'Mengunggah foto profil',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Foto profil berhasil diperbarui',
+            'avatar_url' => $avatarUrl,
+            'user' => $user->fresh()->load('schoolClass'),
+        ]);
     }
 
     public function deleteAvatar(Request $request)
     {
         $user = $request->user();
-        $user->avatar_url = null;
-        $user->save();
+        if ($user->avatar) {
+            $dir = storage_path('app/public/avatars');
+            $oldFilename = basename($user->avatar);
+            $oldFilePath = $dir . '/' . $oldFilename;
+            if (file_exists($oldFilePath)) {
+                @unlink($oldFilePath);
+            }
+            $user->avatar = null;
+            $user->avatar_url = null;
+            $user->save();
 
-        AuditLog::create([
-            'user_id' => $user->id,
-            'action' => 'Menghapus foto profil',
-            'ip_address' => $request->ip(),
-        ]);
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'Menghapus foto profil',
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         return response()->json([
-            'message' => 'Foto profil berhasil dihapus.',
-            'avatar_url' => null,
+            'message' => 'Foto profil berhasil dihapus',
             'user' => $user->fresh()->load('schoolClass'),
+        ]);
+    }
+
+    public function serveAvatar(Request $request, $filename)
+    {
+        $cleanFilename = basename($filename);
+        $path = storage_path('app/public/avatars/' . $cleanFilename);
+        if (!file_exists($path)) {
+            return response()->json(['message' => 'Foto profil tidak ditemukan.'], 404);
+        }
+        return response()->file($path, [
+            'Cache-Control' => 'public, max-age=86400',
         ]);
     }
 
     public function sendProfileSmsOtp(Request $request)
     {
         $user = $request->user();
+        if (!$user->phone) {
+            return response()->json(['message' => 'Nomor WhatsApp belum terdaftar di profil Anda. Silakan isi dan simpan nomor WhatsApp terlebih dahulu.'], 422);
+        }
+
         $otp = sprintf('%06d', mt_rand(100000, 999999));
         $hash = Hash::make($otp);
 
@@ -169,22 +204,38 @@ class AuthController extends Controller
             'attempts' => 0,
         ]);
 
-        Log::info("=== [SMS OTP SENDER PROFILE] ===");
-        Log::info("Tujuan SMS: {$user->phone} ({$user->name})");
-        Log::info("Kode OTP SMS: {$otp}");
-        Log::info("================================");
+        $message = "🔒 *KODE OTP JURNAL KELAS SMKN 71 JAKARTA*\n\n"
+            . "Halo *{$user->name}*,\n"
+            . "Kode verifikasi OTP untuk penggantian kata sandi akun Anda adalah:\n\n"
+            . "👉 *{$otp}* 👈\n\n"
+            . "Kode ini berlaku selama 5 menit. JANGAN bagikan kode ini kepada siapa pun demi keamanan akun Anda.";
+
+        $waResult = $this->sendWhatsAppMessage($user->phone, $message);
+
+        Log::info("=== [WA OTP SENDER PROFILE] ===");
+        Log::info("Tujuan WA: {$user->phone} ({$user->name})");
+        Log::info("Kode OTP: {$otp}");
+        Log::info("Status Pengiriman: " . ($waResult['status'] ? 'SUCCESS' : 'FAILED: ' . $waResult['message']));
+        Log::info("===============================");
 
         AuditLog::create([
             'user_id' => $user->id,
-            'action' => 'Meminta kode OTP via SMS untuk ubah kata sandi profil',
+            'action' => 'Meminta kode OTP via WhatsApp untuk ubah kata sandi profil',
             'ip_address' => $request->ip(),
         ]);
 
+        if (!$waResult['status']) {
+            return response()->json([
+                'message' => 'Gagal mengirim kode OTP ke WhatsApp: ' . $waResult['message'],
+            ], 500);
+        }
+
         return response()->json([
-            'message' => 'Kode OTP SMS berhasil dikirimkan.',
-            'masked_phone' => $this->maskPhone($user->phone ?? '081234567890'),
+            'message' => 'Kode OTP WhatsApp berhasil dikirimkan ke nomor WhatsApp Anda.',
+            'masked_phone' => $this->maskPhone($user->phone),
             'cooldown' => 60,
             'otp_preview' => config('app.debug') ? $otp : null,
+            'wa_sent' => true,
         ]);
     }
 
@@ -207,13 +258,13 @@ class AuthController extends Controller
 
         if (!Hash::check($request->otp, $tokenRecord->code_hash)) {
             $tokenRecord->increment('attempts');
-            return response()->json(['message' => 'Kode OTP SMS salah.'], 400);
+            return response()->json(['message' => 'Kode OTP WhatsApp tidak sesuai.'], 400);
         }
 
         $tokenRecord->update(['used_at' => Carbon::now()]);
 
         return response()->json([
-            'message' => 'Verifikasi OTP SMS berhasil.',
+            'message' => 'Verifikasi OTP WhatsApp berhasil.',
             'verified' => true
         ]);
     }
@@ -266,19 +317,46 @@ class AuthController extends Controller
                 ->get("{$baseUrl}/api/device/status");
 
             if ($resp->successful()) {
-                return response()->json($resp->json());
+                $raw = $resp->json();
+                $data = $raw['data'] ?? $raw;
+                $statusStr = $data['status'] ?? (($raw['status'] ?? false) === true ? 'connected' : 'disconnected');
+                $isConnected = ($statusStr === 'connected');
+                $user = $data['user'] ?? null;
+                $phone = $data['phone'] ?? ($user['id'] ?? ($user['rawJid'] ?? null));
+                if ($phone) {
+                    $phone = explode('@', explode(':', $phone)[0])[0];
+                }
+
+                return response()->json([
+                    'status' => true,
+                    'connected' => $isConnected,
+                    'device_status' => $isConnected ? 'connected' : 'disconnected',
+                    'phone' => $phone,
+                    'number' => $phone,
+                    'user' => $user,
+                    'pairing_code' => $data['pairingCode'] ?? null,
+                    'data' => $data,
+                ]);
             }
 
             return response()->json([
+                'status' => false,
                 'connected' => false,
-                'status' => 'disconnected',
+                'device_status' => 'disconnected',
+                'phone' => null,
+                'number' => null,
+                'user' => null,
                 'message' => 'Service WA Gateway offline',
             ]);
         } catch (\Exception $e) {
             return response()->json([
+                'status' => false,
                 'connected' => false,
-                'status' => 'disconnected',
-                'message' => 'Service WA Gateway offline',
+                'device_status' => 'disconnected',
+                'phone' => null,
+                'number' => null,
+                'user' => null,
+                'message' => 'Service WA Gateway offline: ' . $e->getMessage(),
             ]);
         }
     }
@@ -388,13 +466,43 @@ class AuthController extends Controller
                 ]);
 
             if ($resp->successful()) {
-                return response()->json($resp->json());
+                $json = $resp->json();
+                $isStatusOk = ($json['status'] ?? false) === true;
+                
+                // Cek rincian detail target jika ada
+                if (isset($json['details']) && is_array($json['details'])) {
+                    $failedTarget = collect($json['details'])->firstWhere('status', false);
+                    if ($failedTarget) {
+                        return response()->json([
+                            'status' => false,
+                            'message' => $failedTarget['error'] ?? 'Pengiriman ke nomor target tidak berhasil.',
+                            'details' => $json['details'],
+                        ], 422);
+                    }
+                }
+
+                if (!$isStatusOk) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => $json['message'] ?? 'Gateway WhatsApp melaporkan status pengiriman gagal.',
+                        'details' => $json['details'] ?? null,
+                    ], 422);
+                }
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Pesan WhatsApp berhasil terkirim ke target!',
+                    'data' => $json,
+                ]);
             }
+
+            $errorMsg = $resp->json('message') 
+                ?? ($resp->json('details.0.error') ?? 'Respon gateway WhatsApp gagal.');
 
             return response()->json([
                 'status' => false,
-                'message' => $resp->json('message') ?? 'Respon gateway tidak berhasil.',
-            ], $resp->status() ?: 500);
+                'message' => $errorMsg,
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -420,6 +528,11 @@ class AuthController extends Controller
 
     public function forgotPasswordStep1(Request $request)
     {
+        // Point 1: Wajibkan validasi token Cloudflare Turnstile sebelum men-trigger pengiriman OTP
+        if ($turnstileError = $this->verifyTurnstileToken($request)) {
+            return $turnstileError;
+        }
+
         $request->validate(['email' => 'required|email']);
 
         $user = User::where('email', $request->email)->first();
@@ -447,43 +560,16 @@ class AuthController extends Controller
             'attempts' => 0,
         ]);
 
-        // ConsoleOtpSender & Self-Hosted Fonte / Fonnte WhatsApp Gateway
-        Log::info("=== [CONSOLE OTP SENDER] ===");
-        Log::info("Tujuan: {$user->phone} ({$user->name})");
-        Log::info("Kode OTP: {$otp}");
-        Log::info("============================");
+        // Send OTP via Self-Hosted WhatsApp Gateway
+        $message = "🔒 *KODE OTP JURNAL KELAS SMKN 71 JAKARTA*\n\n"
+            . "Halo *{$user->name}*,\n"
+            . "Kode verifikasi pemulihan kata sandi akun Anda adalah:\n\n"
+            . "👉 *{$otp}* 👈\n\n"
+            . "Kode ini berlaku selama 5 menit. JANGAN bagikan kode ini kepada siapa pun demi keamanan akun Anda.";
 
-        $waGatewayUrl = env('WA_GATEWAY_URL', rtrim(env('WA_GATEWAY_BASE_URL', 'http://127.0.0.1:3000'), '/') . '/api/send');
-        $waGatewayToken = env('WA_GATEWAY_TOKEN', env('FONNTE_TOKEN', 'rapiuw-82cfac01ed88f6676d8f4c49de902697'));
-        $waSent = false;
-        $waError = null;
-
-        // Cegah pengiriman WA ke nomor dummy contoh/seeder (cth: 0812345678xx / 0858000000xx)
-        $isDummyPhone = preg_match('/^(62812345678|62858000000|0812345678|0858000000)/', (string) $user->phone);
-
-        if ($isDummyPhone) {
-            Log::info("Sandbox Testing: Nomor {$user->phone} adalah dummy testing. Pengiriman WA ril dibatalkan.");
-            $waSent = true;
-            $waError = 'Mode Uji: Nomor dummy tidak dikirim ke WhatsApp publik';
-        } elseif ($waGatewayUrl && $user->phone) {
-            try {
-                $response = \Illuminate\Support\Facades\Http::timeout(10)
-                    ->withHeaders([
-                        'Authorization' => "Bearer {$waGatewayToken}",
-                        'x-admin-token' => $waGatewayToken,
-                    ])->post($waGatewayUrl, [
-                        'target' => $user->phone,
-                        'message' => "🔒 *KODE OTP JURNAL KELAS*\n\nKode verifikasi Anda adalah: *{$otp}*\n\nKode ini berlaku selama 5 menit. JANGAN bagikan kode ini kepada siapa pun.",
-                    ]);
-                $waSent = $response->successful() && ($response->json('status') === true);
-                if (!$waSent) {
-                    $waError = $response->json('message') ?? 'Respon gateway tidak berhasil';
-                }
-            } catch (\Exception $e) {
-                Log::warning("Self-hosted WA Gateway gagal: " . $e->getMessage());
-                $waError = 'Service WA Gateway offline';
-            }
-        }
+        $waResult = $this->sendWhatsAppMessage($user->phone, $message);
+        $waSent = $waResult['status'];
+        $waError = $waSent ? null : $waResult['message'];
 
         return response()->json([
             'masked_email' => $this->maskEmail($user->email),
@@ -492,7 +578,7 @@ class AuthController extends Controller
             'expires_in_minutes' => 5,
             'otp_preview' => config('app.debug') ? $otp : null,
             'wa_gateway_active' => $waSent,
-            'wa_gateway_note' => $waSent ? 'Terkirim via Fonte Gateway mandiri' : ($waError ? "Gateway lokal belum terhubung ke nomor WA: {$waError}" : 'Gateway siap'),
+            'wa_gateway_note' => $waSent ? 'Terkirim via WhatsApp Gateway SMKN 71' : ($waError ?: 'Gateway siap'),
         ]);
     }
 
@@ -577,5 +663,121 @@ class AuthController extends Controller
             return '+62 ' . substr($clean, 2, 2) . '* **** ' . substr($clean, -4);
         }
         return '+62 85* **** 3414';
+    }
+
+    private function sendWhatsAppMessage($targetPhone, $messageText)
+    {
+        if (empty($targetPhone)) {
+            return ['status' => false, 'message' => 'Nomor WhatsApp belum diisi atau tidak valid.'];
+        }
+
+        $waGatewayUrl = env('WA_GATEWAY_URL', rtrim(env('WA_GATEWAY_BASE_URL', 'http://127.0.0.1:3000'), '/') . '/api/send');
+        $waGatewayToken = env('WA_GATEWAY_TOKEN', env('FONNTE_TOKEN', 'rapiuw-admin-secret-2026'));
+
+        $clean = preg_replace('/[^0-9]/', '', (string)$targetPhone);
+        if (str_starts_with($clean, '0')) {
+            $clean = '62' . substr($clean, 1);
+        } elseif (!str_starts_with($clean, '62') && strlen($clean) <= 11) {
+            $clean = '62' . $clean;
+        }
+
+        // Cegah spam ke nomor dummy contoh
+        $isDummy = preg_match('/^(62812345678|62858000000)/', $clean);
+        if ($isDummy) {
+            Log::info("Sandbox Testing: Nomor {$clean} adalah dummy seeder. Pengiriman WA ril dibatalkan.");
+            return ['status' => true, 'message' => 'Mode Uji: Nomor dummy tidak dikirim ke WhatsApp publik.'];
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(12)
+                ->withHeaders([
+                    'Authorization' => "Bearer {$waGatewayToken}",
+                    'x-admin-token' => $waGatewayToken,
+                ])->post($waGatewayUrl, [
+                    'target' => $clean,
+                    'message' => $messageText,
+                ]);
+
+            if ($response->successful() && ($response->json('status') === true)) {
+                return ['status' => true, 'message' => 'Pesan WhatsApp berhasil terkirim ke target!'];
+            }
+
+            $errMsg = $response->json('message') ?? 'Gateway WhatsApp tidak merespons sukses.';
+            Log::warning("Gagal kirim pesan WhatsApp ke {$clean}: {$errMsg}");
+            return ['status' => false, 'message' => $errMsg];
+        } catch (\Exception $e) {
+            Log::error("Koneksi ke WA Gateway lokal gagal: " . $e->getMessage());
+            return ['status' => false, 'message' => 'Layanan WhatsApp Gateway lokal sedang offline atau tidak dapat dijangkau.'];
+        }
+    }
+
+    /**
+     * Verifikasi ketat token Cloudflare Turnstile (Anti-Bot)
+     * Mengembalikan response 422/503 jika token tidak valid/gagal, atau null jika berhasil lolos.
+     */
+    private function verifyTurnstileToken(Request $request): ?\Illuminate\Http\JsonResponse
+    {
+        $turnstileSecret = config('services.turnstile.secret') ?: env('TURNSTILE_SECRET_KEY');
+        if (empty($turnstileSecret) || $turnstileSecret === 'OFF') {
+            return null;
+        }
+
+        $turnstileToken = $request->input('turnstile_token') ?: $request->input('cf-turnstile-response');
+        if (empty($turnstileToken)) {
+            return response()->json([
+                'message' => 'Verifikasi keamanan anti-bot (Cloudflare Turnstile) wajib diselesaikan.',
+            ], 422);
+        }
+
+        // Validasi format token & cegah token dummy/bypass (misal "anything", string pendek, dll)
+        $tokenClean = trim((string) $turnstileToken);
+        $tokenLower = strtolower($tokenClean);
+        if (strlen($tokenClean) < 20 || in_array($tokenLower, ['anything', 'dummy', 'test', 'sample', 'null', 'undefined', '1x00000000000000000000aa'])) {
+            Log::warning('Turnstile dummy bypass attempt blocked', [
+                'ip' => $request->ip(),
+                'token' => substr($tokenClean, 0, 15) . '...',
+            ]);
+            return response()->json([
+                'message' => 'Token verifikasi keamanan anti-bot (Cloudflare Turnstile) tidak valid.',
+            ], 422);
+        }
+
+        try {
+            $turnstileResp = \Illuminate\Support\Facades\Http::asForm()->timeout(6)->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                'secret' => $turnstileSecret,
+                'response' => $tokenClean,
+                'remoteip' => $request->ip(),
+            ]);
+
+            $respData = $turnstileResp->json() ?? [];
+            $isSuccess = ($turnstileResp->successful() && ($respData['success'] ?? false) === true);
+
+            // Tolak jika Cloudflare mendeteksi dummy testing key di production
+            if ($isSuccess && app()->environment('production') && ($respData['metadata']['result_with_testing_key'] ?? false)) {
+                Log::warning('Turnstile testing key rejected in production environment', [
+                    'ip' => $request->ip(),
+                ]);
+                return response()->json([
+                    'message' => 'Kunci pengujian Turnstile (testing key) tidak diizinkan pada server produksi.',
+                ], 422);
+            }
+
+            if (!$isSuccess) {
+                Log::warning('Turnstile verification failed', [
+                    'ip' => $request->ip(),
+                    'errors' => $respData['error-codes'] ?? [],
+                ]);
+                return response()->json([
+                    'message' => 'Verifikasi keamanan Turnstile gagal. Silakan muat ulang halaman.',
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            Log::error('Gagal menghubungi Cloudflare Turnstile API: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Layanan verifikasi anti-bot sementara tidak dapat dihubungi. Silakan coba beberapa saat lagi.',
+            ], 503);
+        }
+
+        return null;
     }
 }

@@ -12,6 +12,7 @@ use App\Models\Notification;
 use App\Models\AuditLog;
 use App\Models\Subject;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class JournalController extends Controller
@@ -21,60 +22,84 @@ class JournalController extends Controller
         $user = $request->user();
         $classId = $request->input('class_id');
         $month = $request->input('month');
-        $query = ClassJournal::with(['schoolClass', 'schedule.subject', 'createdBy', 'confirmedBy'])->latest('date')->latest('id');
+        $date = $request->input('date');
+        $type = $request->input('type'); // 'personal' or 'class_agenda'
+        $query = ClassJournal::with(['schoolClass', 'schedule.subject', 'schedule.teacher', 'createdBy', 'confirmedBy'])->latest('date')->latest('id');
 
-        // Privacy Policy:
-        // - SISWA: Hanya melihat catatan/jurnal miliknya sendiri (tidak boleh melihat catatan siswa lain)
-        // - ORANG_TUA: Hanya melihat catatan/jurnal anak kandungnya sendiri
-        // - SEKRETARIS: Mengelola jurnal KBM rombel / hanya catatan miliknya jika kegiatan pribadi
-        // - GURU_PEMBIMBING / GURU_PENGAJAR / SUPERADMIN: Melihat jurnal untuk keperluan monitoring & verifikasi akademik
         if ($user->role === 'SISWA') {
+            // SISWA HANYA BOLEH MELIHAT CATATAN PRIBADINYA SENDIRI! PRIVASI TERKUNCI RAPAT
             $query->where('created_by_id', $user->id);
         } elseif ($user->role === 'ORANG_TUA') {
-            $child = User::where('nip_nis', $user->nip_nis)
-                ->where('class_id', $user->class_id)
-                ->whereIn('role', ['SISWA', 'SEKRETARIS'])
-                ->first();
-
-            // Jika ada lebih dari satu atau spesialisasi memuat nama, cocokkan nama
-            if ($user->specialization && preg_match('/Wali Murid:\s*(.+)$/i', $user->specialization, $m)) {
-                $matchedChild = User::where('name', 'like', '%' . trim($m[1]) . '%')
+            $child = null;
+            if ($user->student_id) {
+                $child = User::find($user->student_id);
+            }
+            if (!$child && $user->nip_nis) {
+                $child = User::where('nip_nis', $user->nip_nis)
+                    ->where('class_id', $user->class_id ?: 1)
+                    ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                    ->first()
+                    ?? User::where('nip_nis', $user->nip_nis)
+                        ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                        ->first();
+            }
+            if (!$child && $user->class_id) {
+                $child = User::where('class_id', $user->class_id)
                     ->whereIn('role', ['SISWA', 'SEKRETARIS'])
                     ->first();
-                if ($matchedChild) {
-                    $child = $matchedChild;
-                }
             }
-
             if ($child) {
                 $query->where('created_by_id', $child->id);
             } else {
-                $query->where('created_by_id', -1);
+                $query->where('id', 0); // Cegah melihat catatan siswa lain
             }
         } elseif ($user->role === 'SEKRETARIS') {
-            // Sekretaris hanya melihat catatan miliknya sendiri di halaman kegiatan siswa
-            $classId = $user->class_id ?: 1;
-            $query->where('class_id', $classId)->where('created_by_id', $user->id);
-        } elseif (in_array($user->role, ['GURU_PEMBIMBING'])) {
-            $classId = $user->class_id ?? SchoolClass::where('advisor_id', $user->id)->value('id') ?? 1;
-            $query->where('class_id', $classId);
+            if ($type === 'class_agenda') {
+                // Buku Agenda KBM Kelas: Menampilkan agenda resmi tatap muka kelas
+                $classId = $user->class_id ?: 1;
+                $query->where('class_id', $classId);
+            } else {
+                // Catatan Belajar Mandiri: Walaupun sekretaris kelas, ia juga hanya bisa melihat catatan belajarnya sendiri!
+                $query->where('created_by_id', $user->id);
+            }
+        } elseif ($user->role === 'GURU_PEMBIMBING') {
+            $class = SchoolClass::where('advisor_id', $user->id)->first();
+            $targetClassId = $class ? $class->id : ($classId ?: $user->class_id);
+            if ($targetClassId) {
+                $query->where('class_id', $targetClassId);
+            }
+        } elseif ($user->role === 'GURU_PENGAJAR') {
+            if ($type === 'class_agenda') {
+                if ($classId) {
+                    $query->where('class_id', $classId);
+                }
+            } else {
+                // Guru Pengajar fokus pada Jurnal Materi (Agenda Mengajar), bukan memantau catatan pribadi harian siswa
+                $query->where('id', 0);
+            }
         } elseif ($classId) {
             $query->where('class_id', $classId);
         }
 
-        if ($month) {
+        if ($date) {
+            $query->whereDate('date', $date);
+        } elseif ($month) {
             $query->where('date', 'like', $month . '%');
         }
 
         $schedules = Schedule::with('subject', 'teacher')->get();
 
         $journals = $query->get()->map(function ($j) {
+            $timeSlot = ($j->schedule->start_time ?? '07:30') . ' - ' . ($j->schedule->end_time ?? '09:00');
             return [
                 'id' => $j->id,
                 'schedule_id' => $j->schedule_id,
                 'date' => Carbon::parse($j->date)->format('Y-m-d'),
                 'date_time' => Carbon::parse($j->date)->translatedFormat('d M,') . ' ' . ($j->schedule->start_time ?? '07:30'),
+                'time_slot' => $timeSlot,
+                'room' => $j->schedule->room ?? 'Lab. 1',
                 'class' => $j->schoolClass->name ?? '-',
+                'class_id' => $j->class_id,
                 'teacher' => $j->confirmedBy->name ?? ($j->schedule->teacher->name ?? '-'),
                 'subject' => $j->schedule->subject->name ?? ($j->notes ? explode(' | ', $j->activity)[0] : '-'),
                 'topic' => $j->notes ? explode(' | ', $j->activity)[0] : $j->activity,
@@ -84,6 +109,7 @@ class JournalController extends Controller
                 'confirmed_at' => $j->confirmed_at ? Carbon::parse($j->confirmed_at)->format('d M Y H:i') : null,
                 'confirmed_by' => $j->confirmedBy->name ?? null,
                 'created_by' => $j->createdBy->name ?? 'Siswa',
+                'created_by_id' => $j->created_by_id,
                 'created_by_role' => $j->createdBy->role ?? 'SISWA',
             ];
         });
@@ -169,10 +195,21 @@ class JournalController extends Controller
         $date = $request->date ?? Carbon::today()->toDateString();
         $activity = $request->topic ? ($request->topic . ' - ' . $request->activity) : $request->activity;
 
+        $type = $request->input('type'); // 'class_agenda' or 'personal'
+        $isAgenda = ($type === 'class_agenda');
         $isTeacher = in_array($user->role, ['GURU_PENGAJAR', 'GURU_PEMBIMBING', 'SUPERADMIN']);
-        $status = $isTeacher ? 'TERVERIFIKASI' : 'PENDING';
-        $confirmedById = $isTeacher ? $user->id : null;
-        $confirmedAt = $isTeacher ? Carbon::now() : null;
+
+        if ($isAgenda) {
+            // Agenda KBM Kelas: jika diisi guru otomatis TERVERIFIKASI, jika diisi sekretaris menunggu konfirmasi guru pengajar
+            $status = $isTeacher ? 'TERVERIFIKASI' : 'PENDING';
+            $confirmedById = $isTeacher ? $user->id : null;
+            $confirmedAt = $isTeacher ? Carbon::now() : null;
+        } else {
+            // Catatan belajar pribadi siswa langsung tercatat (TERVERIFIKASI) agar terpantau orang tua & wali kelas
+            $status = 'TERVERIFIKASI';
+            $confirmedById = $schedule?->teacher_id ?? $user->id;
+            $confirmedAt = Carbon::now();
+        }
 
         $journal = ClassJournal::create([
             'class_id' => $classId,
@@ -186,37 +223,48 @@ class JournalController extends Controller
             'created_by_id' => $user->id,
         ]);
 
-        // Kirim notifikasi ke Guru Pengajar & Wali Kelas jika diisi oleh Siswa / Sekretaris
-        if (in_array($user->role, ['SISWA', 'SEKRETARIS'])) {
-            if ($schedule && $schedule->teacher_id) {
+        if ($isAgenda) {
+            // Notifikasi ke guru pengajar mapel bersangkutan
+            if ($schedule && $schedule->teacher_id && $schedule->teacher_id !== $user->id) {
                 Notification::create([
                     'user_id' => $schedule->teacher_id,
                     'type' => 'JURNAL',
-                    'title' => 'Laporan Jurnal Kegiatan Siswa Baru',
-                    'body' => $user->name . ' telah melaporkan jurnal kegiatan belajar pada mapel ' . ($schedule->subject->name ?? 'Anda') . '.',
+                    'title' => 'Agenda KBM Kelas Menunggu Konfirmasi',
+                    'body' => 'Sekretaris kelas telah mengisi agenda KBM mapel ' . ($schedule->subject->name ?? 'Anda') . '. Silakan periksa dan berikan paraf/konfirmasi.',
                 ]);
             }
-            $schoolClass = SchoolClass::find($classId);
-            if ($schoolClass && $schoolClass->advisor_id && $schoolClass->advisor_id !== ($schedule->teacher_id ?? null)) {
-                Notification::create([
-                    'user_id' => $schoolClass->advisor_id,
-                    'type' => 'JURNAL',
-                    'title' => 'Laporan Jurnal Kegiatan Siswa Kelas Binaan',
-                    'body' => 'Siswa ' . $user->name . ' mencatat jurnal kegiatan belajar hari ini.',
-                ]);
+        } else {
+            // Catatan belajar mandiri siswa/sekretaris: Beri tahu Orang Tua secara real-time
+            if (in_array($user->role, ['SISWA', 'SEKRETARIS'])) {
+                $parent = User::where('role', 'ORANG_TUA')
+                    ->where(function($q) use ($user) {
+                        $q->where('student_id', $user->id)
+                          ->orWhere('nip_nis', $user->nip_nis)
+                          ->orWhere('class_id', $user->class_id);
+                    })
+                    ->first();
+
+                if ($parent) {
+                    Notification::create([
+                        'user_id' => $parent->id,
+                        'type' => 'JURNAL',
+                        'title' => 'Laporan Jurnal Belajar Putra/Putri Anda',
+                        'body' => $user->name . ' telah mengisi laporan kegiatan belajar: "' . \Illuminate\Support\Str::limit($activity, 80) . '" pada mapel ' . ($schedule->subject->name ?? 'KBM') . '.',
+                    ]);
+                }
             }
         }
 
         AuditLog::create([
             'user_id' => $user->id,
-            'action' => 'Melaporkan Jurnal Kegiatan Belajar tanggal ' . $date . ' (' . $user->name . ')',
+            'action' => ($isAgenda ? 'Mengisi Agenda KBM Kelas ' : 'Melaporkan Catatan Belajar ') . 'tanggal ' . $date . ' (' . $user->name . ')',
             'ip_address' => $request->ip(),
         ]);
 
         return response()->json([
-            'message' => $isTeacher
-                ? 'Jurnal kegiatan kelas berhasil disimpan & diverifikasi resmi'
-                : 'Jurnal kegiatan belajar berhasil dilaporkan dan dapat dipantau oleh Guru, Wali Kelas, serta Orang Tua!',
+            'message' => $isAgenda
+                ? ($isTeacher ? 'Agenda KBM kelas berhasil disimpan & diverifikasi' : 'Agenda KBM kelas berhasil dicatat dan menunggu verifikasi guru pengajar')
+                : 'Catatan kegiatan belajar berhasil dilaporkan dan otomatis terpantau oleh Orang Tua serta Wali Kelas!',
             'journal' => $journal,
         ]);
     }
@@ -225,6 +273,13 @@ class JournalController extends Controller
     {
         $user = $request->user();
         $journal = ClassJournal::findOrFail($id);
+
+        // Point 7: Access Control Policy (IDOR Protection)
+        if (in_array($user->role, ['SISWA', 'SEKRETARIS']) && $journal->created_by_id !== $user->id) {
+            return response()->json([
+                'message' => 'Akses ditolak (IDOR Policy): Anda hanya dapat menyunting catatan jurnal milik Anda sendiri.'
+            ], 403);
+        }
 
         if ($journal->verification_status === 'TERVERIFIKASI' && !in_array($user->role, ['GURU_PENGAJAR', 'GURU_PEMBIMBING', 'SUPERADMIN'])) {
             return response()->json([
@@ -332,12 +387,17 @@ class JournalController extends Controller
         if (!in_array($user->role, ['GURU_PENGAJAR', 'GURU_PEMBIMBING', 'SUPERADMIN'])) {
             return response()->json(['message' => 'Hanya Guru yang berhak mengunggah materi pelajaran.'], 403);
         }
+
+        // Point 7: Strict File Upload Hardening (MIME Type riil, max 10MB)
+        $allowedMimes = 'pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,jpg,jpeg,png';
+        $allowedMimeTypes = 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,application/x-rar-compressed,image/jpeg,image/png';
+
         $request->validate([
-            'topic' => 'required|string',
+            'topic' => 'required|string|max:255',
             'plan' => 'nullable|string',
             'assignment' => 'nullable|string',
-            'file' => 'nullable|file|max:10240',
-            'attachment' => 'nullable|file|max:10240',
+            'file' => "nullable|file|max:10240|mimes:{$allowedMimes}|mimetypes:{$allowedMimeTypes}",
+            'attachment' => "nullable|file|max:10240|mimes:{$allowedMimes}|mimetypes:{$allowedMimeTypes}",
         ]);
 
         $schedule = $request->schedule_id ? Schedule::find($request->schedule_id) : null;
@@ -345,11 +405,13 @@ class JournalController extends Controller
         $subjectId = $request->subject_id ?: ($schedule->subject_id ?? 1);
         $date = $request->date ?: Carbon::today()->toDateString();
 
+        // Point 7: Simpan file dengan nama acak UUID & ekstensi aman
         $attachmentPath = null;
-        if ($request->hasFile('file')) {
-            $attachmentPath = $request->file('file')->store('materials', 'public');
-        } elseif ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('materials', 'public');
+        $file = $request->file('file') ?: $request->file('attachment');
+        if ($file) {
+            $ext = strtolower($file->guessExtension() ?: $file->getClientOriginalExtension());
+            $randomName = Str::uuid()->toString() . '.' . $ext;
+            $attachmentPath = $file->storeAs('materials', $randomName, 'public');
         }
 
         $material = MaterialJournal::create([
@@ -397,7 +459,22 @@ class JournalController extends Controller
         if (!file_exists($path)) {
             return response()->json(['message' => 'Berkas lampiran materi tidak ditemukan.'], 404);
         }
-        return response()->file($path);
+
+        // Point 7: Access Control Policy (IDOR Protection) untuk berkas materi
+        $user = $request->user();
+        $material = MaterialJournal::where('attachment_path', 'like', "%{$cleanFilename}")->first();
+        if ($material && $user) {
+            if (!in_array($user->role, ['SUPERADMIN', 'GURU_PEMBIMBING', 'GURU_PENGAJAR'])) {
+                if ($user->class_id && $material->class_id !== $user->class_id) {
+                    return response()->json(['message' => 'Akses ditolak: Berkas materi ini tidak ditujukan untuk kelas Anda.'], 403);
+                }
+            }
+        }
+
+        return response()->file($path, [
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ]);
     }
 
     public function deleteClassJournal(Request $request, $id)
@@ -407,6 +484,12 @@ class JournalController extends Controller
             return response()->json(['message' => 'Anda tidak berhak menghapus jurnal kegiatan.'], 403);
         }
         $journal = ClassJournal::findOrFail($id);
+
+        // Point 7: Access Control Policy (IDOR) - Siswa & Sekretaris hanya dapat menghapus catatannya sendiri
+        if (in_array($user->role, ['SISWA', 'SEKRETARIS']) && $journal->created_by_id !== $user->id) {
+            return response()->json(['message' => 'Akses ditolak (IDOR Policy): Anda hanya dapat menghapus catatan jurnal milik Anda sendiri.'], 403);
+        }
+
         if ($journal->verification_status === 'TERVERIFIKASI' && !in_array($user->role, ['GURU_PEMBIMBING', 'SUPERADMIN'])) {
             return response()->json([
                 'message' => 'Jurnal kegiatan telah terverifikasi dan tidak dapat dihapus.'
@@ -424,10 +507,16 @@ class JournalController extends Controller
     public function updateMaterialJournal(Request $request, $id)
     {
         $user = $request->user();
-        if (!in_array($user->role, ['GURU_PENGAJAR', 'GURU_PEMBIMBING'])) {
+        if (!in_array($user->role, ['GURU_PENGAJAR', 'GURU_PEMBIMBING', 'SUPERADMIN'])) {
             return response()->json(['message' => 'Hanya Guru Pengajar atau Wali Kelas yang berhak menyunting materi pelajaran.'], 403);
         }
         $material = MaterialJournal::findOrFail($id);
+
+        // Point 7: Access Control Policy (IDOR Protection) - Memvalidasi ownership policy guru ($material->teacher_id === auth()->id())
+        if ($user->role !== 'SUPERADMIN' && $material->teacher_id !== $user->id) {
+            return response()->json(['message' => 'Akses ditolak (IDOR Policy): Anda hanya berhak menyunting materi pelajaran yang Anda buat sendiri.'], 403);
+        }
+
         $material->update([
             'topic' => $request->topic ?: $material->topic,
             'plan' => $request->plan ?: $material->plan,
@@ -444,10 +533,16 @@ class JournalController extends Controller
     public function deleteMaterialJournal(Request $request, $id)
     {
         $user = $request->user();
-        if (!in_array($user->role, ['GURU_PENGAJAR', 'GURU_PEMBIMBING'])) {
+        if (!in_array($user->role, ['GURU_PENGAJAR', 'GURU_PEMBIMBING', 'SUPERADMIN'])) {
             return response()->json(['message' => 'Hanya Guru Pengajar atau Wali Kelas yang berhak menghapus materi pelajaran.'], 403);
         }
         $material = MaterialJournal::findOrFail($id);
+
+        // Point 7: Access Control Policy (IDOR Protection) - Memvalidasi ownership policy guru ($material->teacher_id === auth()->id())
+        if ($user->role !== 'SUPERADMIN' && $material->teacher_id !== $user->id) {
+            return response()->json(['message' => 'Akses ditolak (IDOR Policy): Anda hanya berhak menghapus materi pelajaran milik Anda sendiri.'], 403);
+        }
+
         if ($material->attachment_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($material->attachment_path)) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($material->attachment_path);
         }

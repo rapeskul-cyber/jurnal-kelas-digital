@@ -1,16 +1,16 @@
 <template>
   <div class="md:hidden">
     <!-- Bottom Navigation Bar with Perfect Touch Target & Active State -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-3 py-1.5 flex items-center justify-around z-40 shadow-lg pb-safe select-none">
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 py-1 flex items-center justify-around z-40 shadow-lg pb-safe select-none">
       <NuxtLink
         v-for="item in primaryMenus"
         :key="item.to"
         :to="item.to"
-        class="flex flex-col items-center justify-center gap-1 py-1 px-2.5 rounded-xl text-[10px] transition-all min-h-[46px] min-w-[54px] active:scale-95 cursor-pointer"
+        class="flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-xl text-[10px] transition-all min-h-[48px] min-w-[56px] active:scale-95 cursor-pointer touch-manipulation"
         :class="isActive(item.to) ? 'text-primary font-bold bg-blue-50/90 shadow-2xs' : 'text-gray-500 hover:text-gray-900 font-medium'"
       >
         <component :is="resolveIcon(item.icon)" class="w-5 h-5 transition-transform" :class="isActive(item.to) ? 'scale-110' : ''" />
-        <span class="truncate max-w-[68px] leading-tight">{{ item.name }}</span>
+        <span class="truncate max-w-[64px] leading-tight text-center">{{ item.name }}</span>
       </NuxtLink>
 
       <!-- More Menu Button if menus > 4 -->
@@ -18,7 +18,7 @@
         v-if="hasMore"
         @click="showMore = !showMore"
         type="button"
-        class="flex flex-col items-center justify-center gap-1 py-1 px-2.5 rounded-xl text-[10px] transition-all min-h-[46px] min-w-[54px] active:scale-95 cursor-pointer"
+        class="flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-xl text-[10px] transition-all min-h-[48px] min-w-[56px] active:scale-95 cursor-pointer touch-manipulation"
         :class="showMore ? 'text-primary font-bold bg-blue-50/90' : 'text-gray-500 hover:text-gray-900 font-medium'"
       >
         <MoreHorizontal class="w-5 h-5" />
@@ -28,7 +28,7 @@
 
     <!-- More Sheet Modal (Bottom Drawer) -->
     <div v-if="showMore" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end animate-fade-in" @click.self="showMore = false">
-      <div class="w-full bg-white rounded-t-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[80vh] overflow-y-auto pb-12 animate-slide-up">
+      <div class="w-full bg-white rounded-t-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto pb-12 pb-safe animate-slide-up">
         <!-- Handle Bar for Gesture Intuition -->
         <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto -mt-1 mb-2"></div>
 
@@ -43,37 +43,6 @@
         </div>
 
         <div class="grid grid-cols-2 gap-2.5 pt-1">
-          <!-- Quick Access to Profile inside More Sheet -->
-          <NuxtLink
-            to="/profile"
-            @click="showMore = false"
-            class="flex items-center gap-3 p-3 rounded-2xl border transition active:scale-98 cursor-pointer"
-            :class="isActive('/profile') ? 'bg-blue-50 border-blue-200 text-primary font-bold' : 'border-gray-150 bg-gray-50/70 hover:bg-gray-100 text-gray-700 font-medium'"
-          >
-            <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 ring-1 ring-gray-200" :class="isActive('/profile') ? 'bg-primary text-white' : 'bg-white text-primary'">
-              <img
-                v-if="(authStore.user as any)?.avatar_url"
-                :src="(authStore.user as any)?.avatar_url"
-                :alt="authStore.user?.name || 'User'"
-                class="w-full h-full object-cover"
-              />
-              <User v-else class="w-4 h-4" />
-            </div>
-            <span class="truncate text-xs">Profil Saya</span>
-          </NuxtLink>
-
-          <!-- Quick Link to Feedback Form -->
-          <a
-            href="https://saran.rapiuw.ai.id"
-            target="_blank"
-            class="flex items-center gap-3 p-3 rounded-2xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-primary font-bold transition active:scale-98 cursor-pointer"
-          >
-            <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-blue-600 text-white shadow-2xs font-bold text-xs">
-              S
-            </div>
-            <span class="truncate text-xs">Kritik dan Saran</span>
-          </a>
-
           <NuxtLink
             v-for="item in secondaryMenus"
             :key="item.to"

@@ -13,6 +13,7 @@ const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
   SEKRETARIS: [
     '/dashboard',
     '/profile',
+    '/presensi',
     '/jurnal-kelas',
     '/surat-izin',
     '/laporan-jurnal',
@@ -57,6 +58,7 @@ const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
     '/profile',
     '/master-data',
     '/manajemen-guru',
+    '/manajemen-murid',
     '/manajemen-user',
     '/presensi-override',
     '/wa-gateway',
@@ -65,8 +67,14 @@ const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
     '/presensi',
     '/jurnal-kelas',
     '/jurnal-materi',
+    '/jurnal-pelajaran',
     '/persetujuan-izin',
     '/laporan-izin',
+    '/laporan-jurnal',
+    '/rekap-semester',
+    '/rekap-harian',
+    '/riwayat-kehadiran',
+    '/surat-izin',
     '/notifikasi',
   ],
 }
@@ -100,6 +108,11 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
     // 3. Check Role-Based Access Control (RBAC)
     const userRole = authStore.user?.role
+    // Superadmin has full unrestricted access to all routes
+    if (userRole === 'SUPERADMIN') {
+      return
+    }
+
     if (userRole && ROLE_ALLOWED_ROUTES[userRole]) {
       const allowed = ROLE_ALLOWED_ROUTES[userRole]
       const isAllowed = allowed.some((prefix) => to.path === prefix || to.path.startsWith(prefix + '/'))

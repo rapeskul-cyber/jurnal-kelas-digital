@@ -69,3 +69,12 @@ backend/bootstrap/cache/*
 *.doc
 PROMPT_ANTIGRAVITY_JURNAL_KELAS.md
 analisis/
+
+# Debug & Temporary Scripts
+*.log
+inspect.php
+inspect_runner.php
+backend/check_*.php
+backend/inspect_runner.php
+backend/sync_industry_data.php
+

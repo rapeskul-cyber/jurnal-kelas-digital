@@ -40,6 +40,8 @@ const badgeClass = computed(() => {
       return 'bg-orange-50 text-orange-700 border border-orange-200'
     case 'IZIN':
       return 'bg-blue-50 text-blue-700 border border-blue-200'
+    case 'BELUM_PRESENSI':
+      return 'bg-amber-50 text-amber-700 border border-amber-200'
     case 'ALPHA':
     case 'ALFA':
       return 'bg-red-50 text-red-700 border border-red-200'
@@ -102,6 +104,7 @@ const labelText = computed(() => {
   if (upper === 'APPROVED' || upper === 'DISETUJUI') return 'Disetujui'
   if (upper === 'REJECTED' || upper === 'DITOLAK') return 'Ditolak'
   if (upper === 'TERVERIFIKASI') return 'Terverifikasi'
+  if (upper === 'BELUM_PRESENSI') return 'Belum Presensi'
   if (upper === 'BELUM_KONFIRMASI') return 'Belum Dikonfirmasi'
   if (upper === 'SUDAH DIISI') return 'Sudah Diisi'
   if (upper === 'BELUM DIISI') return 'Belum Diisi'

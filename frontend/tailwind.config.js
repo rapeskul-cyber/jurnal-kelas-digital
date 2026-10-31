@@ -18,10 +18,10 @@ module.exports = {
           subtle: '#eff4fc'
         },
         'brand-red': {
-          DEFAULT: '#0f47ad',
-          dark: '#0c398a',
-          light: '#cfdaef',
-          50: '#eff4fc'
+          DEFAULT: '#DC2626',
+          dark: '#B91C1C',
+          light: '#FCA5A5',
+          50: '#FEF2F2'
         },
         'brand-blue': {
           DEFAULT: '#0f47ad',

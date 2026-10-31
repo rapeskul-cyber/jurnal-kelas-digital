@@ -58,7 +58,30 @@ class AttendanceController extends Controller
                 'status' => in_array($lr->type, ['SAKIT', 'IZIN', 'DISPENSASI']) ? $lr->type : 'IZIN',
                 'note' => $lr->reason ?: 'Surat izin disetujui Wali Kelas',
                 'attachment_path' => $lr->attachment_path,
+                'is_rejected_leave' => false,
             ];
+        }
+
+        // Cek surat izin siswa yang DITOLAK Wali Kelas untuk tanggal ini
+        $rejectedLeaves = LeaveRequest::where('status', 'REJECTED')
+            ->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
+            ->whereIn('student_id', $students->pluck('id'))
+            ->get();
+
+        foreach ($rejectedLeaves as $rl) {
+            $existing = $recordsMap[$rl->student_id] ?? null;
+            // Jika belum ada record verifikasi kelas fisik (atau hanya presensi mandiri HP), statusnya ALPHA (Ditolak)
+            if (!$existing || str_contains($existing['note'] ?? '', 'Presensi Mandiri Pukul')) {
+                $recordsMap[$rl->student_id] = [
+                    'status' => 'ALPHA',
+                    'note' => 'Izin Ditolak Walas: ' . ($rl->review_note ?: 'Tidak memenuhi syarat') . ' (Wajib Verifikasi di Kelas)',
+                    'attachment_path' => null,
+                    'is_rejected_leave' => true,
+                ];
+            } else {
+                $recordsMap[$rl->student_id]['is_rejected_leave'] = true;
+            }
         }
 
         $list = $students->map(function ($std, $idx) use ($recordsMap) {
@@ -71,6 +94,7 @@ class AttendanceController extends Controller
                 'status' => $rec['status'] ?? 'HADIR',
                 'note' => $rec['note'] ?? null,
                 'attachment' => $rec['attachment_path'] ?? null,
+                'is_rejected_leave' => !empty($rec['is_rejected_leave']),
             ];
         });
 
@@ -121,39 +145,48 @@ class AttendanceController extends Controller
             ->whereDate('end_date', '>=', $today)
             ->first();
 
-        // Jika siswa mengirimkan status eksplisit (misal mengubah Hadir atau Sakit secara mandiri)
-        // Kita izinkan siswa memilih statusnya sendiri
+        if ($approvedLeave) {
+            return response()->json([
+                'message' => 'Status kehadiran Anda hari ini telah tercatat sebagai ' . $approvedLeave->type . ' sesuai surat izin yang telah disetujui Wali Kelas. Anda tidak dapat melakukan presensi mandiri.',
+                'status' => $approvedLeave->type,
+            ], 422);
+        }
+
+        // Cek apakah siswa memiliki surat izin yang DITOLAK Wali Kelas untuk hari ini
+        $rejectedLeave = LeaveRequest::where('student_id', $user->id)
+            ->where('status', 'REJECTED')
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->first();
+
+        if ($rejectedLeave) {
+            return response()->json([
+                'message' => 'Surat izin Anda hari ini telah DITOLAK oleh Wali Kelas (' . ($rejectedLeave->review_note ?: 'Alasan izin tidak diterima') . '). Anda tidak dapat melakukan presensi mandiri dari HP. Kehadiran fisik Anda wajib diverifikasi langsung oleh Sekretaris Kelas atau Wali Kelas di sekolah.',
+                'status' => 'DITOLAK',
+                'is_leave_rejected' => true,
+            ], 422);
+        }
 
         $session = AttendanceSession::where('class_id', $classId)
             ->whereDate('date', $today)
             ->first();
 
         if (!$session) {
-            $session = AttendanceSession::firstOrCreate(
-                [
-                    'class_id' => $classId,
-                    'date' => $today,
-                ],
-                [
-                    'status' => 'DRAFT',
-                    'verification_status' => 'TERVERIFIKASI',
-                    'school_hours' => '07:30 - 15:30',
-                    'room' => 'Lab RPL Industri',
-                ]
-            );
+            $session = AttendanceSession::create([
+                'class_id' => $classId,
+                'date' => $today,
+                'status' => 'DRAFT',
+                'verification_status' => 'TERVERIFIKASI',
+                'school_hours' => '07:30 - 15:30',
+                'room' => 'Lab RPL Industri',
+            ]);
         }
 
         $timeStr = Carbon::now()->format('H:i');
         $customNote = trim((string) $request->input('note', ''));
-        $chosenStatus = strtoupper(trim((string) $request->input('status', 'HADIR')));
-        if (!in_array($chosenStatus, ['HADIR', 'SAKIT', 'IZIN'])) {
-            $chosenStatus = 'HADIR';
-        }
-
-        $defaultLabel = $chosenStatus === 'HADIR' ? 'Hadir Tepat Waktu' : ($chosenStatus === 'SAKIT' ? 'Sakit (Konfirmasi Mandiri)' : 'Izin (Konfirmasi Mandiri)');
         $note = $customNote !== ''
-            ? "Presensi Mandiri [{$chosenStatus}] ({$timeStr} WIB) - {$customNote}"
-            : "Presensi Mandiri [{$chosenStatus}] Pukul {$timeStr} WIB - {$defaultLabel}";
+            ? "Presensi Mandiri ({$timeStr} WIB) - {$customNote}"
+            : "Presensi Mandiri Pukul {$timeStr} WIB";
 
         $record = AttendanceRecord::updateOrCreate(
             [
@@ -161,19 +194,19 @@ class AttendanceController extends Controller
                 'student_id' => $user->id,
             ],
             [
-                'status' => $chosenStatus,
+                'status' => 'HADIR',
                 'note' => $note,
             ]
         );
 
         AuditLog::create([
             'user_id' => $user->id,
-            'action' => "Melakukan Presensi Mandiri ({$chosenStatus}) pukul {$timeStr} WIB",
+            'action' => "Melakukan Presensi Mandiri (HADIR) pukul {$timeStr} WIB",
             'ip_address' => $request->ip(),
         ]);
 
         return response()->json([
-            'message' => "Presensi Mandiri ({$chosenStatus}) berhasil dicatat pukul {$timeStr} WIB.",
+            'message' => "Presensi Mandiri berhasil! Kehadiran Anda tercatat pukul {$timeStr} WIB.",
             'record' => [
                 'id' => $record->id,
                 'status' => $record->status,
@@ -428,47 +461,133 @@ class AttendanceController extends Controller
 
         // Jika login sebagai ORANG_TUA, tampilkan riwayat kehadiran anaknya
         $targetStudentId = $user->id;
+        $classId = $user->class_id ?: 1;
         if ($user->role === 'ORANG_TUA') {
-            $child = User::where('nip_nis', $user->nip_nis)->where('role', 'SISWA')->first()
-                ?? User::where('class_id', $user->class_id)->where('role', 'SISWA')->first();
+            $child = null;
+            if ($user->student_id) {
+                $child = User::find($user->student_id);
+            }
+            if (!$child && $user->nip_nis) {
+                $child = User::where('nip_nis', $user->nip_nis)
+                    ->where('class_id', $user->class_id ?: 1)
+                    ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                    ->first()
+                    ?? User::where('nip_nis', $user->nip_nis)
+                        ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                        ->first();
+            }
+            if (!$child && $user->class_id) {
+                $child = User::where('class_id', $user->class_id)
+                    ->whereIn('role', ['SISWA', 'SEKRETARIS'])
+                    ->first();
+            }
             if ($child) {
                 $targetStudentId = $child->id;
+                $classId = $child->class_id ?: 1;
             }
         }
 
-        $records = AttendanceRecord::with(['session.schoolClass'])
-            ->where('student_id', $targetStudentId)
-            ->whereHas('session', function ($q) use ($month) {
-                $q->where('date', 'like', $month . '%');
-            })
-            ->latest()
+        // Ambil semua session kelas pada bulan tersebut
+        $sessions = AttendanceSession::where('class_id', $classId)
+            ->where('date', 'like', $month . '%')
+            ->orderBy('date', 'desc')
             ->get();
 
-        $total = $records->count();
-        $hadir = $records->where('status', 'HADIR')->count();
-        $sakit = $records->where('status', 'SAKIT')->count();
-        $izin = $records->where('status', 'IZIN')->count();
-        $alpha = $records->where('status', 'ALPHA')->count();
-        $percentage = $total > 0 ? round(($hadir / $total) * 100) : 0;
+        $sessionIds = $sessions->pluck('id');
+        $records = AttendanceRecord::whereIn('session_id', $sessionIds)
+            ->where('student_id', $targetStudentId)
+            ->get()
+            ->keyBy('session_id');
 
-        $detailedList = $records->map(function ($rec) {
-            return [
-                'id' => $rec->id,
-                'day_date' => Carbon::parse($rec->session->date)->translatedFormat('l, d M Y'),
-                'room' => $rec->session->room ?? 'Lab. 1',
+        // Ambil seluruh permohonan surat izin siswa yang relevan dengan bulan ini
+        $leaves = LeaveRequest::where('student_id', $targetStudentId)
+            ->where(function ($q) use ($month) {
+                $q->where('start_date', 'like', $month . '%')
+                  ->orWhere('end_date', 'like', $month . '%');
+            })
+            ->latest('id')
+            ->get();
+
+        $detailedList = [];
+        $hadir = 0;
+        $sakit = 0;
+        $izin = 0;
+        $alpha = 0;
+
+        foreach ($sessions as $session) {
+            $dateStr = Carbon::parse($session->date)->toDateString();
+            $rec = $records->get($session->id);
+
+            // Cek apakah ada surat izin untuk tanggal session ini
+            $leaveForDate = $leaves->first(function ($l) use ($dateStr) {
+                $start = Carbon::parse($l->start_date)->toDateString();
+                $end = Carbon::parse($l->end_date)->toDateString();
+                return $dateStr >= $start && $dateStr <= $end;
+            });
+
+            $status = 'ALPHA';
+            $note = '-';
+
+            if ($leaveForDate && $leaveForDate->status === 'APPROVED') {
+                $status = ($leaveForDate->type === 'SAKIT') ? 'SAKIT' : 'IZIN';
+                $note = 'Surat Izin ' . $leaveForDate->type . ' disetujui Wali Kelas: ' . ($leaveForDate->reason ?: '-');
+            } elseif ($leaveForDate && $leaveForDate->status === 'REJECTED') {
+                // Izin ditolak! Hanya berstatus HADIR jika diverifikasi langsung di kelas oleh Sekretaris / Wali Kelas (bukan klaim mandiri dari HP)
+                $verifiedInClass = false;
+                if ($rec && $rec->status === 'HADIR' && !str_contains($rec->note ?? '', 'Presensi Mandiri Pukul')) {
+                    $verifiedInClass = true;
+                }
+
+                if ($verifiedInClass) {
+                    $status = 'HADIR';
+                    $note = $rec->note ?: 'Diverifikasi Hadir di Kelas oleh Sekretaris Kelas';
+                } else {
+                    $status = 'DITOLAK';
+                    $reason = $leaveForDate->review_note ? ": {$leaveForDate->review_note}" : '';
+                    $note = "Surat Izin Ditolak Wali Kelas{$reason} • Wajib Verifikasi di Kelas";
+                }
+            } elseif ($leaveForDate && $leaveForDate->status === 'PENDING') {
+                $status = 'PENDING';
+                $note = 'Surat Izin diajukan, menunggu persetujuan Wali Kelas';
+            } elseif ($rec) {
+                $status = $rec->status;
+                $note = $rec->note ?: 'Presensi Mandiri Terverifikasi';
+            } else {
+                if ($session->status === 'DRAFT' && $dateStr === Carbon::today()->toDateString()) {
+                    $status = 'BELUM_PRESENSI';
+                    $note = 'Belum melakukan presensi mandiri hari ini';
+                } else {
+                    $status = 'ALPHA';
+                    $note = 'Tidak hadir tanpa keterangan';
+                }
+            }
+
+            if ($status === 'HADIR') $hadir++;
+            elseif ($status === 'SAKIT') $sakit++;
+            elseif ($status === 'IZIN') $izin++;
+            elseif (in_array($status, ['ALPHA', 'DITOLAK', 'BELUM_PRESENSI'])) $alpha++;
+
+            $detailedList[] = [
+                'id' => $rec ? $rec->id : ('session_' . $session->id),
+                'raw_date' => $dateStr,
+                'day_date' => Carbon::parse($session->date)->translatedFormat('l, d M Y'),
+                'room' => $session->room ?? 'Lab RPL Industri',
                 'subject' => 'Kelas Industri',
-                'hours' => $rec->session->school_hours ?? '07:30 - 15:30',
-                'status' => $rec->status,
-                'note' => $rec->note ?: 'Presensi Mandiri Terverifikasi',
+                'hours' => $session->school_hours ?? '07:30 - 15:30',
+                'status' => $status,
+                'note' => $note,
             ];
-        });
+        }
+
+        $total = count($detailedList);
+        $percentage = $total > 0 ? round(($hadir / $total) * 100) : 0;
 
         // Weekly breakdown computed from actual records
         $weekly = [
-            ['week' => 'Minggu 1', 'count' => $records->filter(fn($r) => Carbon::parse($r->session->date)->day <= 7 && $r->status === 'HADIR')->count()],
-            ['week' => 'Minggu 2', 'count' => $records->filter(fn($r) => Carbon::parse($r->session->date)->day > 7 && Carbon::parse($r->session->date)->day <= 14 && $r->status === 'HADIR')->count()],
-            ['week' => 'Minggu 3', 'count' => $records->filter(fn($r) => Carbon::parse($r->session->date)->day > 14 && Carbon::parse($r->session->date)->day <= 21 && $r->status === 'HADIR')->count()],
-            ['week' => 'Minggu 4', 'count' => $records->filter(fn($r) => Carbon::parse($r->session->date)->day > 21 && $r->status === 'HADIR')->count()],
+            ['week' => 'Minggu 1', 'count' => collect($detailedList)->filter(fn($r) => Carbon::parse($r['raw_date'])->day <= 7 && $r['status'] === 'HADIR')->count()],
+            ['week' => 'Minggu 2', 'count' => collect($detailedList)->filter(fn($r) => Carbon::parse($r['raw_date'])->day > 7 && Carbon::parse($r['raw_date'])->day <= 14 && $r['status'] === 'HADIR')->count()],
+            ['week' => 'Minggu 3', 'count' => collect($detailedList)->filter(fn($r) => Carbon::parse($r['raw_date'])->day > 14 && Carbon::parse($r['raw_date'])->day <= 21 && $r['status'] === 'HADIR')->count()],
+            ['week' => 'Minggu 4', 'count' => collect($detailedList)->filter(fn($r) => Carbon::parse($r['raw_date'])->day > 21 && $r['status'] === 'HADIR')->count()],
         ];
 
         return response()->json([
@@ -562,8 +681,8 @@ class AttendanceController extends Controller
     public function semesterRecap(Request $request)
     {
         $user = $request->user();
-        if ($user && in_array($user->role, ['SEKRETARIS', 'SISWA', 'ORANG_TUA', 'GURU_PEMBIMBING'])) {
-            $classId = $user->class_id ?? SchoolClass::where('advisor_id', $user->id)->value('id') ?? 1;
+        if ($user && in_array($user->role, ['SEKRETARIS', 'SISWA', 'ORANG_TUA'])) {
+            $classId = $user->class_id ?: 1;
         } else {
             $classId = $request->input('class_id', 1);
         }

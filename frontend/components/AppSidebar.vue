@@ -19,11 +19,11 @@
         class="bg-gray-50 hover:bg-blue-50/60 border border-gray-100 hover:border-blue-100 rounded-2xl p-3 flex items-center gap-2.5 mb-6 transition group cursor-pointer"
         title="Buka Pengaturan Profil"
       >
-        <div class="w-9 h-9 rounded-full overflow-hidden bg-blue-100 text-primary font-bold flex items-center justify-center text-xs flex-shrink-0 group-hover:ring-2 group-hover:ring-primary/20 transition">
+        <div class="w-9 h-9 rounded-full bg-blue-100 text-primary font-bold flex items-center justify-center text-xs flex-shrink-0 group-hover:ring-2 group-hover:ring-primary/20 transition overflow-hidden">
           <img
-            v-if="(authStore.user as any)?.avatar_url"
-            :src="(authStore.user as any)?.avatar_url"
-            :alt="authStore.user?.name || 'User'"
+            v-if="authStore.user?.avatar || authStore.user?.avatar_url"
+            :src="authStore.user?.avatar || authStore.user?.avatar_url"
+            alt="Avatar"
             class="w-full h-full object-cover"
           />
           <span v-else>{{ userInitial }}</span>
@@ -57,7 +57,7 @@
     <!-- Bottom Academic Year Footer -->
     <div class="p-6 border-t border-gray-100">
       <p class="text-[11px] text-gray-400 font-medium">Tahun Ajaran</p>
-      <p class="text-xs font-bold text-gray-800 mt-0.5">2026/2027 • Semester Ganjil</p>
+      <p class="text-xs font-bold text-gray-800 mt-0.5">{{ appConfig.active_term }}</p>
     </div>
   </aside>
 </template>
@@ -87,10 +87,18 @@ import {
   MessageSquare,
 } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
+import { useAppConfigStore } from '~/stores/appConfig'
 import { ROLE_MENUS, ROLE_LABELS } from '~/config/access'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const appConfig = useAppConfigStore()
+
+onMounted(() => {
+  if (!appConfig.loaded) {
+    appConfig.fetchConfig()
+  }
+})
 
 const currentMenus = computed(() => {
   const role = authStore.user?.role || 'SISWA'

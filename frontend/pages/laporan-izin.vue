@@ -33,15 +33,17 @@
             <option value="REJECTED">Ditolak</option>
           </select>
         </div>
-        <!-- Dropdown Pilih Kelas (Hanya untuk Superadmin/Guru Pengajar multi-kelas) -->
-        <div v-if="authStore.user?.role !== 'GURU_PEMBIMBING' && authStore.user?.role !== 'SEKRETARIS' && authStore.user?.role !== 'SISWA'">
+        <div>
           <label class="block text-[11px] font-semibold text-gray-500 mb-1">Pilih Kelas</label>
           <select
             v-model="classFilter"
-            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer min-h-[38px]"
+            class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white cursor-pointer"
           >
             <option value="Semua">Semua Kelas</option>
             <option value="1">Kelas Industri RPL</option>
+            <option value="2">XI RPL 2 (Kelas Industri)</option>
+            <option value="3">XII RPL 1 (Kelas Industri)</option>
+            <option value="4">XII RPL 2 (Kelas Industri)</option>
           </select>
         </div>
       </div>
@@ -77,7 +79,59 @@
         Tidak ada data permohonan izin yang sesuai filter.
       </div>
 
-      <div v-else class="overflow-x-auto">
+      <div v-else>
+      <!-- Mobile Card List View -->
+      <div class="block md:hidden space-y-3.5 p-4">
+        <div
+          v-for="(item, idx) in filteredList"
+          :key="item.id"
+          class="bg-white rounded-2xl border border-gray-150 p-4 shadow-2xs space-y-3"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-gray-400">#{{ idx + 1 }}</span>
+                <span class="font-bold text-gray-900 text-sm">{{ item.student_name }}</span>
+              </div>
+              <p class="text-xs text-gray-500">{{ item.class }} • NIS: {{ item.nis }}</p>
+            </div>
+            <span
+              class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase shrink-0"
+              :class="item.type === 'SAKIT' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'"
+            >
+              {{ item.type }}
+            </span>
+          </div>
+
+          <div class="p-3 bg-gray-50/70 rounded-xl space-y-1.5 text-xs text-gray-600">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-400">Tanggal:</span>
+              <span class="font-semibold text-gray-800">{{ item.start_date }} s/d {{ item.end_date }}</span>
+            </div>
+            <div class="pt-1">
+              <span class="text-gray-400 block mb-0.5">Alasan:</span>
+              <p class="text-gray-700 italic">{{ item.reason }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1 border-t border-gray-100">
+            <StatusBadge :status="item.status" context="pembimbing" />
+            <a
+              v-if="item.attachment || item.attachment_url"
+              :href="item.attachment_url || `/api/leave-requests/file/${item.attachment}`"
+              target="_blank"
+              download
+              class="min-h-[44px] px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold border border-blue-200 transition inline-flex items-center gap-1.5 text-xs"
+            >
+              <FileTextIcon class="w-4 h-4 text-blue-600" />
+              <span>Unduh Lampiran</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Table View -->
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-gray-50/70 border-b border-gray-100 text-gray-500 uppercase tracking-wider font-semibold">
@@ -143,20 +197,23 @@
           </tbody>
         </table>
       </div>
+      </div>
     </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useToastStore } from '~/stores/toast'
 import {
   Download as DownloadIcon,
   Search as SearchIcon,
-  FileText as FileTextIcon
+  FileText as FileTextIcon,
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 const loading = ref(false)
 const list = ref<any[]>([])
@@ -192,7 +249,7 @@ const fetchList = async () => {
 
 const exportExcel = () => {
   if (!filteredList.value || filteredList.value.length === 0) {
-    alert('Tidak ada data surat izin untuk diekspor.')
+    toast.warning('Tidak ada data surat izin untuk diekspor.')
     return
   }
 
